@@ -1,0 +1,24 @@
+rules:
+  - name: flaky_test
+    failure_type: flaky_test
+    pattern: "(Flaky|intermittent|RERUN|AssertionError|test.*failed)"
+
+  - name: env_issue
+    failure_type: env_issue
+    pattern: "(env.*not.*set|environment variable|secret.*not.*found|permission denied|config not found|ENV)"
+
+  - name: dependency_error
+    failure_type: dependency_error
+    pattern: "(ENOTFOUND|Could not resolve|artifact not found|ModuleNotFoundError|ImportError|pip install|npm ERR)"
+
+  - name: build_config
+    failure_type: build_config
+    pattern: "(WorkflowScript.*error|org\\.jenkinsci\\.plugins|Jenkinsfile|syntax error)"
+
+  - name: infrastructure
+    failure_type: infrastructure
+    pattern: "(agent.*offline|OutOfMemoryError|MemoryError|OOM|No space left|disk.*full)"
+
+  - name: oom
+    failure_type: infrastructure
+    pattern: "(OutOfMemoryError|MemoryError|OOM)"
