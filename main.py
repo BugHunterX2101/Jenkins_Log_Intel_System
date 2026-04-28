@@ -10,19 +10,24 @@ from app.routers import webhook
 from app.routers import jobs
 from app.routers import workers
 from app.routers import github_webhook
+from app.models import Base
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Seed workers on startup if the table is empty."""
+    """Create database tables and seed workers on startup."""
     try:
         from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
         from sqlalchemy.orm import sessionmaker
         from app.config import settings
         from app.services.worker_pool import seed_workers
+        import app.pipeline_models  # noqa: F401
+        import app.worker_models  # noqa: F401
 
         engine  = create_async_engine(settings.DATABASE_URL, echo=False)
         Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
         async with Session() as session:
             await seed_workers(session)
         await engine.dispose()

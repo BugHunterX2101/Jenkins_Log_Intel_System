@@ -12,18 +12,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                script {
-                    if (isUnix()) {
-                        sh 'git clone --branch main https://github.com/BugHunterX2101/Jenkins_Log_Intel_System.git .'
-                    } else {
-                        bat 'git clone --branch main https://github.com/BugHunterX2101/Jenkins_Log_Intel_System.git .'
-                    }
-                }
-            }
-        }
-
         stage('Bootstrap Python') {
             steps {
                 script {
