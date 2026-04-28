@@ -1,0 +1,18 @@
+# ngrok configuration — exposes local services to the internet for webhook testing
+# Usage: ngrok start --config ngrok.yml --all
+
+version: 3
+authtoken: ${NGROK_AUTH_TOKEN}
+
+tunnels:
+  # FastAPI application tunnel — receives GitHub/Jenkins webhooks
+  api:
+    proto: http
+    addr: localhost:8000
+    host_header: localhost:8000
+
+  # Jenkins tunnel — for webhook callbacks and build log fetching
+  jenkins:
+    proto: http
+    addr: localhost:8080
+    host_header: localhost:8080

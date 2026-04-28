@@ -160,6 +160,38 @@ celery -A app.scheduler beat --loglevel=info
 
 With Redis + Celery running and `SLACK_BOT_TOKEN` set, notifications and task scheduling operate in real-time.
 
+## Webhook Testing with ngrok
+
+To test webhooks locally (e.g., from GitHub or Jenkins), use ngrok to expose your local API and Jenkins to the internet.
+
+ngrok is already installed on Windows. To set up tunnels:
+
+```bash
+# 1. Create or retrieve your ngrok authtoken from https://dashboard.ngrok.com
+#    (Optional — free tier works without it, but with rate limits)
+
+# 2. Set the auth token (one-time setup):
+ngrok config add-authtoken YOUR_AUTH_TOKEN_HERE
+
+# 3. Start the tunnels (exposes both API and Jenkins):
+ngrok start --config ngrok.yml --all
+```
+
+ngrok will display URLs like:
+
+```
+api -> http://localhost:8000                https://...ngrok-free.app
+jenkins -> http://localhost:8080            https://...ngrok-free.app
+```
+
+Use the ngrok URLs in:
+
+- **GitHub webhook**: Set the payload URL to `https://...ngrok-free.app/webhook/github`
+- **Jenkins webhook**: Point to `https://...ngrok-free.app/webhook/jenkins`
+- **External tests**: Call the dashboard at `https://...ngrok-free.app/jobs`
+
+The tunnels stay active as long as the ngrok process runs. Each time you restart ngrok, you get new URLs.
+
 **Endpoints:**
 
 | Method | Path | Purpose |
@@ -189,6 +221,7 @@ With Redis + Celery running and `SLACK_BOT_TOKEN` set, notifications and task sc
 | `ANTHROPIC_API_KEY` | ⬜ | Secondary LLM fallback |
 | `GITHUB_TOKEN` | ⬜ | For fetching Jenkinsfiles from private repos |
 | `JENKINS_WEBHOOK_SECRET` | ⬜ | HMAC secret — omit to disable signature verification |
+| `GITHUB_WEBHOOK_SECRET` | ⬜ | HMAC secret for GitHub webhook signature verification |
 
 ---
 
