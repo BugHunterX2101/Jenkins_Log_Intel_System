@@ -2,7 +2,6 @@
 # Usage: ngrok start --config ngrok.yml --all
 
 version: 3
-authtoken: ${NGROK_AUTH_TOKEN}
 
 tunnels:
   # FastAPI application tunnel — receives GitHub/Jenkins webhooks

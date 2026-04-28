@@ -7,19 +7,19 @@ import hashlib
 import hmac
 import json
 import logging
-import os
 import random
 import string
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 from pydantic import BaseModel
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/webhook", tags=["webhooks"])
 
-_GH_SECRET: str = os.getenv("GITHUB_WEBHOOK_SECRET", "")
+_GH_SECRET: str = settings.GITHUB_WEBHOOK_SECRET
 
 
 def _verify_github_sig(body: bytes, sig_header: str | None) -> bool:

@@ -5,13 +5,13 @@ Jenkins Webhook Listener — POST /webhook/jenkins
 import hashlib
 import hmac
 import json
-import os
 
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
+from app.config import settings
 
 router = APIRouter(prefix="/webhook", tags=["webhooks"])
 
-_WEBHOOK_SECRET: str = os.getenv("JENKINS_WEBHOOK_SECRET", "")
+_WEBHOOK_SECRET: str = settings.JENKINS_WEBHOOK_SECRET
 
 
 def _verify_signature(body: bytes, signature_header: str | None) -> bool:
