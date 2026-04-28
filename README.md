@@ -121,6 +121,45 @@ celery -A app.scheduler beat   --loglevel=info
 pytest
 ```
 
+## Local Setup (Redis, Celery, Slack)
+
+For full real-time behavior run Redis and Celery locally and provide a Slack bot token in `.env`.
+
+- Start Redis (recommended via Docker):
+
+```bash
+docker run --rm -p 6379:6379 --name redis-local redis:7
+```
+
+- Create and activate the project venv and install deps:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate   # PowerShell/CMD on Windows
+pip install -e ".[dev]"
+```
+
+- Provide a Slack bot token in `.env`:
+
+```
+SLACK_BOT_TOKEN=xoxb-your-token-here
+```
+
+- Run the API and background workers in separate terminals:
+
+```bash
+# Terminal 1: API
+uvicorn main:app --reload
+
+# Terminal 2: Celery worker
+celery -A app.scheduler worker --loglevel=info
+
+# Terminal 3: Celery beat (scheduler)
+celery -A app.scheduler beat --loglevel=info
+```
+
+With Redis + Celery running and `SLACK_BOT_TOKEN` set, notifications and task scheduling operate in real-time.
+
 **Endpoints:**
 
 | Method | Path | Purpose |
