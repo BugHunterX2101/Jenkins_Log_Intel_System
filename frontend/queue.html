@@ -206,7 +206,7 @@
 <span class="material-symbols-outlined text-[16px]">list_alt</span>
 <h3 class="text-label-md font-label-md uppercase tracking-widest">Total Jobs in Queue</h3>
 </div>
-<div data-ui="queue-total" class="text-headline-lg font-headline-lg text-on-surface">3,492</div>
+<div data-ui="queue-total" class="text-headline-lg font-headline-lg text-on-surface">—</div>
 <div class="mt-sm h-unit w-full bg-surface-container rounded-full overflow-hidden">
 <div class="h-full bg-primary w-3/4 rounded-full"></div>
 </div>
@@ -216,7 +216,7 @@
 <span class="material-symbols-outlined text-[16px]">timer</span>
 <h3 class="text-label-md font-label-md uppercase tracking-widest">Avg Wait Time</h3>
 </div>
-<div data-ui="avg-wait-queue" class="text-headline-lg font-headline-lg text-on-surface">1.2<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span></div>
+<div data-ui="avg-wait-queue" class="text-headline-lg font-headline-lg text-on-surface">—</div>
 <p class="text-body-md font-body-md text-surface-tint mt-sm flex items-center gap-1">
 <span class="material-symbols-outlined text-[14px]">arrow_downward</span>
                         0.3s from baseline
@@ -227,15 +227,15 @@
 <span class="material-symbols-outlined text-[16px]">warning</span>
 <h3 class="text-label-md font-label-md uppercase tracking-widest">Longest Waiting</h3>
 </div>
-<div data-ui="longest-wait" class="text-headline-lg font-headline-lg text-on-surface">45<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span></div>
-<p class="text-body-md font-body-md text-on-surface-variant mt-sm">Job ID: <span class="text-code-sm font-code-sm bg-surface-container px-1 py-0.5 rounded">JENK-9921</span></p>
+<div data-ui="longest-wait" class="text-headline-lg font-headline-lg text-on-surface">—</div>
+<p class="text-body-md font-body-md text-on-surface-variant mt-sm">Longest queued job</p>
 </div>
 <div class="col-span-3 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_4px_6px_rgba(0,0,0,0.02)] flex flex-col justify-between">
 <div class="flex items-center gap-2 text-on-surface-variant mb-sm">
 <span class="material-symbols-outlined text-[16px]">speed</span>
 <h3 class="text-label-md font-label-md uppercase tracking-widest">Throughput</h3>
 </div>
-<div data-ui="throughput" class="text-headline-lg font-headline-lg text-on-surface">850<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">/min</span></div>
+<div data-ui="throughput" class="text-headline-lg font-headline-lg text-on-surface">—</div>
 <p class="text-body-md font-body-md text-on-surface-variant mt-sm flex items-center gap-1">
 <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                         Workers active
@@ -279,8 +279,8 @@
 </div>
 <div class="mb-md">
 <p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-widest mb-xs">Total Records</p>
-<div data-ui="queue-db-total-records" class="text-headline-md font-headline-md text-on-surface">1,492,034</div>
-<p data-ui="queue-db-size" class="text-body-md font-body-md text-on-surface-variant text-[12px]">File size: 2.4 GB</p>
+<div data-ui="queue-db-total-records" class="text-headline-md font-headline-md text-on-surface">—</div>
+<p data-ui="queue-db-size" class="text-body-md font-body-md text-on-surface-variant text-[12px]">File size: —</p>
 </div>
 <!-- Simplified Table Grid -->
 <div class="flex-1 overflow-y-auto pr-sm space-y-sm">
@@ -289,28 +289,28 @@
 <span class="material-symbols-outlined text-[16px] text-surface-tint">table_rows</span>
 <span class="text-body-md font-body-md text-on-surface">job_queue</span>
 </div>
-<span data-ui="queue-db-job-rows" class="text-code-sm font-code-sm text-on-surface-variant">3,492 rows</span>
+<span data-ui="queue-db-job-rows" class="text-code-sm font-code-sm text-on-surface-variant">— rows</span>
 </div>
 <div class="flex items-center justify-between p-sm rounded bg-surface-container hover:bg-surface-container-high transition-colors">
 <div class="flex items-center gap-2">
 <span class="material-symbols-outlined text-[16px] text-surface-tint">table_rows</span>
 <span class="text-body-md font-body-md text-on-surface">execution_logs</span>
 </div>
-<span data-ui="queue-db-exec-rows" class="text-code-sm font-code-sm text-on-surface-variant">1.2M rows</span>
+<span data-ui="queue-db-exec-rows" class="text-code-sm font-code-sm text-on-surface-variant">— rows</span>
 </div>
 <div class="flex items-center justify-between p-sm rounded bg-surface-container hover:bg-surface-container-high transition-colors">
 <div class="flex items-center gap-2">
 <span class="material-symbols-outlined text-[16px] text-surface-tint">table_rows</span>
 <span class="text-body-md font-body-md text-on-surface">worker_metrics</span>
 </div>
-<span data-ui="queue-db-worker-rows" class="text-code-sm font-code-sm text-on-surface-variant">85K rows</span>
+<span data-ui="queue-db-worker-rows" class="text-code-sm font-code-sm text-on-surface-variant">— rows</span>
 </div>
 <div class="flex items-center justify-between p-sm rounded bg-surface-container hover:bg-surface-container-high transition-colors">
 <div class="flex items-center gap-2">
 <span class="material-symbols-outlined text-[16px] text-surface-tint">table_rows</span>
 <span class="text-body-md font-body-md text-on-surface">webhook_events</span>
 </div>
-<span data-ui="queue-db-webhook-rows" class="text-code-sm font-code-sm text-on-surface-variant">400K rows</span>
+<span data-ui="queue-db-webhook-rows" class="text-code-sm font-code-sm text-on-surface-variant">— rows</span>
 </div>
 </div>
 </div>

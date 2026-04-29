@@ -29,6 +29,19 @@ def _make_session_factory():
 _SessionFactory = _make_session_factory()
 
 
+def _repo_short_name(url: str) -> str:
+    name = (url or "").rstrip("/").rstrip(".git").rstrip("/")
+    return name.split("/")[-1] if name else "unknown"
+
+
+def _clean_trigger(t: str) -> str:
+    if "simulated" in t:
+        return "simulated"
+    if t.startswith("github-"):
+        return "github"
+    return t or "system"
+
+
 def _format_duration(seconds: int) -> str:
     days, remainder = divmod(max(0, int(seconds)), 86400)
     hours, remainder = divmod(remainder, 3600)
@@ -226,6 +239,19 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(_get_sessi
             }
             for event in build_events
         ],
+        "activity_stream": [
+            {
+                "timestamp": run.get("queued_at"),
+                "source": run.get("author") or _clean_trigger(run.get("triggered_by", "system")),
+                "event": (
+                    f"Push to {run.get('branch', 'unknown')} — "
+                    f"{_repo_short_name(run.get('repo_url', ''))}"
+                    + (f" ({(run.get('commit_sha') or '')[:7]})" if run.get('commit_sha') else "")
+                ),
+                "status": run.get("status", "QUEUED"),
+            }
+            for run in latest_runs[:15]
+        ],
     }
 
 
@@ -326,7 +352,35 @@ async def get_scheduler_data(session: AsyncSession = Depends(_get_session)) -> d
         job["summary"] = f"{job.get('job_name') or 'job'} / {job.get('branch') or 'main'}"
         job["description"] = f"{job.get('repo', '')} triggered by {job.get('author', 'system')}"
 
-    return {"queued": scheduled_jobs, "scheduled": scheduled_jobs, "running": running_jobs, "active": running_jobs}
+    # Recently completed jobs for kanban completed column
+    completed_result = await session.execute(
+        select(PipelineRun)
+        .where(PipelineRun.status == RunStatus.COMPLETED)
+        .order_by(PipelineRun.completed_at.desc())
+        .limit(10)
+    )
+    completed_runs_list = completed_result.scalars().all()
+    completed_jobs = [
+        {
+            "id": run.id,
+            "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
+            "branch": run.branch,
+            "job_name": run.jenkins_job_name,
+            "completed": run.completed_at.isoformat() if run.completed_at else None,
+            "duration_s": run.duration_s or 0,
+            "summary": f"{run.jenkins_job_name or 'job'} / {run.branch or 'main'}",
+            "priority": "high" if run.branch == "main" else "normal",
+        }
+        for run in completed_runs_list
+    ]
+
+    return {
+        "queued": scheduled_jobs,
+        "scheduled": scheduled_jobs,
+        "running": running_jobs,
+        "completed": completed_jobs,
+        "active": running_jobs,
+    }
 
 
 @router.post("/queue/flush", summary="Remove queued pipeline runs")

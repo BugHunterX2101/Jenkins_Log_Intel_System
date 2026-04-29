@@ -4,7 +4,7 @@ SQLAlchemy ORM models — core tables.
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text, Float
+from sqlalchemy import BigInteger, Boolean, DateTime, Integer, String, Text, Float
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -59,8 +59,8 @@ class SystemMetrics(Base):
     id:                 Mapped[int]      = mapped_column(Integer, primary_key=True, autoincrement=True)
     timestamp:          Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     uptime_seconds:     Mapped[int]      = mapped_column(Integer, nullable=False)
-    memory_used_bytes:  Mapped[int]      = mapped_column(Integer, nullable=False)
-    memory_total_bytes: Mapped[int]      = mapped_column(Integer, nullable=False)
+    memory_used_bytes:  Mapped[int]      = mapped_column(BigInteger, nullable=False)
+    memory_total_bytes: Mapped[int]      = mapped_column(BigInteger, nullable=False)
     cpu_percent:        Mapped[float]    = mapped_column(Float, nullable=False)
     queue_total:        Mapped[int]      = mapped_column(Integer, nullable=False)
     busy_workers:       Mapped[int]      = mapped_column(Integer, nullable=False)

@@ -181,7 +181,7 @@
 <div class="flex flex-col sm:flex-row gap-sm w-full">
 <div class="relative flex-1">
 <span class="absolute left-3 top-2.5 material-symbols-outlined text-outline" style="font-size: 20px;">link</span>
-<input class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="https://a1b2-3c4d.ngrok.io/github-webhook/"/>
+<input data-ui="ngrok-url" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="[configure NGROK_URL in server environment]"/>
 </div>
 <button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded font-label-md text-label-md text-on-surface flex items-center justify-center gap-2 transition-colors whitespace-nowrap">
 <span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span> Copy URL
@@ -193,7 +193,7 @@
 <div class="flex gap-sm w-full">
 <div class="relative flex-1">
 <span class="absolute left-3 top-2.5 material-symbols-outlined text-outline" style="font-size: 20px;">key</span>
-<input class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="password" value="super_secret_token_99"/>
+<input class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="password" placeholder="[set via GITHUB_WEBHOOK_SECRET env var]" value=""/>
 </div>
 <button class="px-3 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded text-on-surface transition-colors flex items-center justify-center">
 <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>

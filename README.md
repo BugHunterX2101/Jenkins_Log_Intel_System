@@ -1,10 +1,28 @@
 # Jenkins Log Intelligence Engine
 
-A FastAPI service that intercepts Jenkins build failures, analyses logs with an LLM-backed root-cause engine, dispatches pipeline runs across a simulated worker pool, and fires Slack/email alerts — all autonomously.
+A full-stack CI/CD intelligence platform built with FastAPI and vanilla JS. It intercepts Jenkins build failures, analyses logs with an LLM-backed root-cause engine, dispatches pipeline runs across a simulated worker pool, streams live commit activity to a real-time dashboard, and fires Slack/email alerts — all autonomously.
 
 ---
 
-## Architectur  e
+## Dashboard
+
+Seven live pages served at `http://localhost:8000`:
+
+| Page | Path | What it shows |
+| --- | --- | --- |
+| **Overview** | `/` | Live activity stream (commits → pipeline status), worker utilisation, queue depth, system health |
+| **Queue Explorer** | `/queue` | All pipeline runs by status, wait times, database state |
+| **Scheduler** | `/scheduler` | Kanban board (Queued → Scheduled → Running → Completed), decision log |
+| **Workers** | `/workers` | Worker pool cards, assignment log, load timeline |
+| **Webhooks** | `/webhooks` | Webhook event stream, simulated payload generator |
+| **Backend Console** | `/backend` | API route health, live request feed, memory/CPU metrics |
+| **Simulation** | `/simulation` | Chaos controls, job arrival randomiser, LLM analysis panel |
+
+Every panel polls live data from the backend — no hardcoded placeholder values anywhere. Commits pushed via the GitHub webhook appear in the Live Activity Stream within 10 seconds.
+
+---
+
+## Architecture
 
 ```mermaid
 flowchart TD
@@ -23,31 +41,28 @@ flowchart TD
 
     I & J & K --> L[Notifier\nSlack Block Kit\nHTML email]
 
-    M([API · POST /jobs/trigger]) --> N[Job Scheduler\nschedule_pipeline]
+    M([GitHub Push]) -->|webhook| N[Job Scheduler\nschedule_pipeline]
     N --> O[(PostgreSQL\nPipelineRun · Worker)]
     P[Celery Beat\nscheduler_tick · 5 s] --> Q{Atomic claim\nUPDATE WHERE QUEUED}
     Q -->|claimed| R[Worker Pool\nassign by language]
     R --> S[execute_pipeline_run\nCelery task]
     S -->|stage events| O
-    S --> T[Dashboard\nGET /jobs]
-
-    U[random_job_arrival\n45 s] -->|synthetic load| N
-    V[worker_load_drift\n15 s] --> O
+    O -->|poll /ui/bootstrap| T[Live Dashboard]
 ```
 
 ---
 
 ## File Structure
 
-```
+```text
 Jenkins_Log_Intel_System/
 ├── main.py                          # FastAPI app factory, router mounting, lifespan
 ├── pyproject.toml                   # Dependencies, build config, pytest settings
 │
 ├── app/
 │   ├── config.py                    # Pydantic settings — env vars & secrets
-│   ├── models.py                    # SQLAlchemy ORM base models
-│   ├── pipeline_models.py           # PipelineRun, RunStatus, stage tracking
+│   ├── models.py                    # SQLAlchemy ORM: BuildEvent, SystemMetrics
+│   ├── pipeline_models.py           # PipelineRun, RunStatus, StageExecution
 │   ├── worker_models.py             # Worker, WorkerStatus, language enum
 │   ├── tasks.py                     # process_build_failure — orchestrates full pipeline
 │   ├── pipeline_tasks.py            # Stage simulation and event emission
@@ -57,7 +72,8 @@ Jenkins_Log_Intel_System/
 │   │   ├── webhook.py               # POST /webhook/jenkins — HMAC-verified ingestion
 │   │   ├── github_webhook.py        # POST /webhook/github  — push event handler
 │   │   ├── jobs.py                  # POST /jobs/trigger · GET /jobs · stage events
-│   │   └── workers.py               # GET /workers — pool status
+│   │   ├── workers.py               # GET /api/workers — pool status
+│   │   └── ui.py                    # GET /ui/* — all dashboard data endpoints
 │   │
 │   ├── services/
 │   │   ├── log_fetcher.py           # Jenkins REST client, retry, 10 MB truncation
@@ -80,6 +96,16 @@ Jenkins_Log_Intel_System/
 │       ├── test_jenkinsfile_parser.py
 │       └── test_bug_fixes.py
 │
+├── frontend/
+│   ├── index.html                   # Dashboard overview — live activity stream
+│   ├── queue.html                   # Queue explorer
+│   ├── scheduler.html               # Kanban + decision log
+│   ├── workers.html                 # Worker pool monitor
+│   ├── webhooks.html                # Webhook event log + payload generator
+│   ├── backend.html                 # Backend console
+│   ├── simulation.html              # Chaos + trigger controls
+│   └── assets/app.js               # All UI logic — polling, rendering, empty states
+│
 └── rules/
     └── classifier_rules.yaml        # Regex failure rules: flaky_test · env_issue · dependency_error · build_config · infrastructure
 ```
@@ -91,7 +117,7 @@ Jenkins_Log_Intel_System/
 Rules are defined in `rules/classifier_rules.yaml` and evaluated against every log line at runtime — no redeployment needed to add patterns.
 
 | Category | Severity | Triggers |
-|---|---|---|
+| --- | --- | --- |
 | `flaky_test` | P2 | `AssertionError`, `RERUN`, `test.*failed` |
 | `env_issue` | P1 | `secret.*not.*found`, `permission denied`, `ENV` |
 | `dependency_error` | P2 | `ModuleNotFoundError`, `npm ERR`, `Could not resolve` |
@@ -108,44 +134,45 @@ Rules are defined in `rules/classifier_rules.yaml` and evaluated against every l
 pip install -e ".[dev]"
 
 # 2. Configure
-# Edit .env with your Jenkins, database, Redis, Slack, and webhook values.
+cp .env.example .env
+# Edit .env with your Jenkins, database, Redis, Slack, and webhook values
 
 # 3. Run API
-uvicorn main:app --reload --port 8001
+uvicorn main:app --reload --port 8000
 
-# 4. Run Celery worker + beat
+# 4. Run Celery worker + beat (optional — needed for background scheduling)
 celery -A app.scheduler worker --loglevel=info --pool=solo &
 celery -A app.scheduler beat   --loglevel=info
 
-# 5. Test
+# 5. Open the dashboard
+open http://localhost:8000
+
+# 6. Run tests
 pytest
 ```
 
+---
+
 ## Local Setup (Redis, Celery, Slack)
 
-For full real-time behavior run Redis and Celery locally and provide a Slack bot token in `.env`.
+For full real-time behaviour run Redis and Celery locally and provide a Slack bot token in `.env`.
 
-- Start Redis (recommended via Docker):
+**Start Redis:**
 
 ```bash
 docker run --rm -p 6379:6379 --name redis-local redis:7
 ```
 
-- Create and activate the project venv and install deps:
+**Create venv and install deps:**
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate   # PowerShell/CMD on Windows
+.venv\Scripts\activate        # Windows
+# or: source .venv/bin/activate  # macOS/Linux
 pip install -e ".[dev]"
 ```
 
-- Provide a Slack bot token in `.env`:
-
-```
-SLACK_BOT_TOKEN=xoxb-your-token-here
-```
-
-- Run the API and background workers in separate terminals:
+**Run all three services:**
 
 ```bash
 # Terminal 1: API
@@ -154,59 +181,73 @@ uvicorn main:app --reload
 # Terminal 2: Celery worker
 celery -A app.scheduler worker --loglevel=info
 
-# Terminal 3: Celery beat (scheduler)
+# Terminal 3: Celery beat (scheduler tick every 5s)
 celery -A app.scheduler beat --loglevel=info
 ```
 
-With Redis + Celery running and `SLACK_BOT_TOKEN` set, notifications and task scheduling operate in real-time.
+---
 
 ## Webhook Testing with ngrok
 
-To test webhooks locally (e.g., from GitHub or Jenkins), use ngrok to expose your local API and Jenkins to the internet.
-
-ngrok is already installed on Windows. To set up tunnels:
+To receive real GitHub or Jenkins webhooks locally, expose the API via ngrok:
 
 ```bash
-# 1. Create or retrieve your ngrok authtoken from https://dashboard.ngrok.com
-#    (Optional — free tier works without it, but with rate limits)
-
-# 2. Set the auth token (one-time setup):
+# One-time setup
 ngrok config add-authtoken YOUR_AUTH_TOKEN_HERE
 
-# 3. Start the tunnels (exposes both API and Jenkins):
+# Start tunnel
 ngrok start --config ngrok.yml --all
 ```
 
-ngrok will display URLs like:
+ngrok displays URLs like:
 
+```text
+api     -> http://localhost:8000    https://xxxx.ngrok-free.app
+jenkins -> http://localhost:8080    https://xxxx.ngrok-free.app
 ```
-api -> http://localhost:8001                https://...ngrok-free.app
-jenkins -> http://localhost:8080            https://...ngrok-free.app
-```
 
-Use the ngrok URLs in:
+Configure GitHub to send push events to `https://xxxx.ngrok-free.app/webhook/github`. Within 10 seconds of a push, the commit appears in the Live Activity Stream on the dashboard.
 
-- **GitHub webhook**: Set the payload URL to `https://...ngrok-free.app/webhook/github`
-- **Jenkins webhook**: Point to `https://...ngrok-free.app/webhook/jenkins`
-- **External tests**: Call the dashboard at `https://...ngrok-free.app/jobs`
+---
 
-The tunnels stay active as long as the ngrok process runs. Each time you restart ngrok, you get new URLs.
+## API Reference
 
-### Slack alert verification
-
-The Slack notifier is wired to `#build-alerts` by default. You can verify it by triggering a Jenkins failure webhook or by calling the notifier directly from the project code.
-
-**Endpoints:**
+### Webhooks
 
 | Method | Path | Purpose |
-|---|---|---|
-| `POST` | `/webhook/jenkins` | Ingest Jenkins build result |
-| `POST` | `/webhook/github` | Ingest GitHub push event |
+| --- | --- | --- |
+| `POST` | `/webhook/jenkins` | Ingest Jenkins build result (HMAC-verified) |
+| `POST` | `/webhook/jenkins/simulate` | Inject a synthetic Jenkins failure |
+| `POST` | `/webhook/github` | Ingest GitHub push/PR event (HMAC-verified) |
+| `POST` | `/webhook/github/simulate` | Inject a synthetic GitHub push |
+
+### Jobs & Workers
+
+| Method | Path | Purpose |
+| --- | --- | --- |
 | `POST` | `/jobs/trigger` | Manually trigger a pipeline run |
-| `GET` | `/jobs` | Dashboard snapshot |
+| `GET` | `/jobs` | Dashboard snapshot — runs grouped by status |
 | `GET` | `/jobs/{run_id}` | Single run detail |
-| `POST` | `/jobs/{run_id}/stage-event` | Emit stage progress |
-| `GET` | `/workers` | Worker pool status |
+| `POST` | `/jobs/{run_id}/stage-event` | Emit a stage progress event |
+| `GET` | `/api/workers` | Worker pool status |
+| `GET` | `/api/workers/{worker_id}` | Single worker detail |
+
+### Dashboard Data (UI endpoints)
+
+| Method | Path | Purpose | Poll interval |
+| --- | --- | --- | --- |
+| `GET` | `/ui/bootstrap` | Full dashboard snapshot (health, workers, queue, activity stream) | 10 s |
+| `GET` | `/ui/queue` | All pipeline runs by status | 5 s |
+| `GET` | `/ui/scheduler` | Kanban data (queued, running, completed) | 5 s |
+| `GET` | `/ui/build_events` | Latest Jenkins failure analysis records | 5 s |
+| `GET` | `/ui/metrics/live` | Real-time CPU, memory, chaos intensity | 5 s |
+| `GET` | `/ui/metrics/history` | Historical metrics for the last N minutes | on-demand |
+| `POST` | `/ui/queue/flush` | Delete all queued runs | — |
+
+### System
+
+| Method | Path | Purpose |
+| --- | --- | --- |
 | `GET` | `/health` | Liveness probe |
 
 ---
@@ -214,17 +255,18 @@ The Slack notifier is wired to `#build-alerts` by default. You can verify it by 
 ## Environment Variables
 
 | Variable | Required | Description |
-|---|---|---|
+| --- | --- | --- |
 | `JENKINS_URL` | ✅ | Base URL of your Jenkins instance |
 | `JENKINS_USER` | ✅ | Jenkins username |
 | `JENKINS_TOKEN` | ✅ | Read-only API token |
-| `DATABASE_URL` | ✅ | `postgresql+asyncpg://...` |
-| `REDIS_URL` | ✅ | Celery broker, default `redis://localhost:6379` |
-| `SLACK_BOT_TOKEN` | ✅ | Bot token for alert delivery |
+| `DATABASE_URL` | ✅ | `postgresql+asyncpg://user:pass@host/db` |
+| `REDIS_URL` | ✅ | Celery broker — default `redis://localhost:6379` |
+| `SLACK_BOT_TOKEN` | ⬜ | Bot token for Slack alert delivery |
 | `GROQ_API_KEY` | ⬜ | Primary LLM (Groq). Falls back to Anthropic if absent |
 | `ANTHROPIC_API_KEY` | ⬜ | Secondary LLM fallback |
 | `GITHUB_TOKEN` | ⬜ | For fetching Jenkinsfiles from private repos |
-| `JENKINS_WEBHOOK_SECRET` | ⬜ | HMAC secret — omit to disable signature verification |
+| `NGROK_URL` | ⬜ | Public URL shown in the Webhooks page |
+| `JENKINS_WEBHOOK_SECRET` | ⬜ | HMAC secret — omit to disable Jenkins signature verification |
 | `GITHUB_WEBHOOK_SECRET` | ⬜ | HMAC secret for GitHub webhook signature verification |
 
 ---

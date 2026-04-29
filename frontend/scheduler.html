@@ -275,111 +275,36 @@
 <div class="flex flex-col min-w-[260px] max-w-[260px] bg-surface-container rounded-lg p-sm gap-sm border border-outline-variant/30 h-full">
 <div class="flex justify-between items-center px-1 pt-1">
 <span class="font-label-md text-label-md text-on-surface-variant">QUEUED</span>
-<span data-ui="kanban-queued-count" class="bg-surface-variant text-on-surface-variant font-code-sm text-[11px] px-2 py-0.5 rounded-full">3</span>
+<span data-ui="kanban-queued-count" class="bg-surface-variant text-on-surface-variant font-code-sm text-[11px] px-2 py-0.5 rounded-full">0</span>
 </div>
 <div data-ui="kanban-queued-list" class="flex flex-col gap-sm overflow-y-auto pr-1">
-<!-- Job Card -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm hover:shadow-[0px_10px_15px_rgba(0,0,0,0.05)] transition-shadow cursor-grab">
-<div class="flex justify-between items-start mb-2">
-<span class="font-code-sm text-code-sm font-semibold text-on-surface">JOB-104</span>
-<span class="material-symbols-outlined text-outline text-[16px]">more_horiz</span>
-</div>
-<div class="font-body-md text-[13px] text-on-surface-variant mb-3 line-clamp-2">Build &amp; Test / main branch triggered by webhook</div>
-<div class="flex items-center gap-2 mt-auto border-t border-outline-variant/50 pt-2">
-<span class="font-label-md text-[10px] text-outline">PRIORITY: HIGH</span>
-</div>
-</div>
-<!-- Job Card -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm hover:shadow-[0px_10px_15px_rgba(0,0,0,0.05)] transition-shadow cursor-grab">
-<div class="flex justify-between items-start mb-2">
-<span class="font-code-sm text-code-sm font-semibold text-on-surface">JOB-105</span>
-<span class="material-symbols-outlined text-outline text-[16px]">more_horiz</span>
-</div>
-<div class="font-body-md text-[13px] text-on-surface-variant mb-3 line-clamp-2">Deploy Staging / release-v2.1</div>
-<div class="flex items-center gap-2 mt-auto border-t border-outline-variant/50 pt-2">
-<span class="font-label-md text-[10px] text-outline">PRIORITY: MED</span>
-</div>
-</div>
 </div>
 </div>
 <!-- Column: SCHEDULED -->
 <div class="flex flex-col min-w-[260px] max-w-[260px] bg-surface-container rounded-lg p-sm gap-sm border border-outline-variant/30 h-full">
 <div class="flex justify-between items-center px-1 pt-1">
 <span class="font-label-md text-label-md text-on-surface-variant">SCHEDULED</span>
-<span data-ui="kanban-scheduled-count" class="bg-primary-fixed-dim text-on-primary-fixed font-code-sm text-[11px] px-2 py-0.5 rounded-full">1</span>
+<span data-ui="kanban-scheduled-count" class="bg-primary-fixed-dim text-on-primary-fixed font-code-sm text-[11px] px-2 py-0.5 rounded-full">0</span>
 </div>
 <div data-ui="kanban-scheduled-list" class="flex flex-col gap-sm overflow-y-auto pr-1">
-<!-- Job Card -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm hover:shadow-[0px_10px_15px_rgba(0,0,0,0.05)] transition-shadow cursor-grab border-l-4 border-l-primary">
-<div class="flex justify-between items-start mb-2">
-<span class="font-code-sm text-code-sm font-semibold text-on-surface">JOB-103</span>
-<span class="bg-primary-fixed text-on-primary-fixed text-[10px] px-1.5 rounded font-label-md">Worker-1</span>
-</div>
-<div class="font-body-md text-[13px] text-on-surface-variant mb-3 line-clamp-2">Data Sync / nighty-batch</div>
-<div class="flex items-center gap-2 mt-auto border-t border-outline-variant/50 pt-2">
-<span class="material-symbols-outlined text-outline text-[14px]">schedule</span>
-<span class="font-code-sm text-[11px] text-outline">Starts in 5s</span>
-</div>
-</div>
 </div>
 </div>
 <!-- Column: RUNNING -->
 <div class="flex flex-col min-w-[260px] max-w-[260px] bg-surface-container rounded-lg p-sm gap-sm border border-outline-variant/30 h-full">
 <div class="flex justify-between items-center px-1 pt-1">
 <span class="font-label-md text-label-md text-primary">RUNNING</span>
-<span data-ui="kanban-running-count" class="bg-primary text-on-primary font-code-sm text-[11px] px-2 py-0.5 rounded-full">2</span>
+<span data-ui="kanban-running-count" class="bg-primary text-on-primary font-code-sm text-[11px] px-2 py-0.5 rounded-full">0</span>
 </div>
 <div data-ui="kanban-running-list" class="flex flex-col gap-sm overflow-y-auto pr-1">
-<!-- Job Card -->
-<div class="bg-surface-container-lowest border border-primary/40 rounded p-sm shadow-sm relative overflow-hidden">
-<div class="absolute bottom-0 left-0 h-1 bg-surface-container-highest w-full">
-<div class="h-full bg-primary w-[45%]"></div>
-</div>
-<div class="flex justify-between items-start mb-2">
-<span class="font-code-sm text-code-sm font-semibold text-on-surface">JOB-101</span>
-<span class="bg-primary-fixed text-on-primary-fixed text-[10px] px-1.5 rounded font-label-md">Worker-2</span>
-</div>
-<div class="font-body-md text-[13px] text-on-surface-variant mb-3 line-clamp-2">Python Env Setup / feature-auth</div>
-<div class="flex items-center justify-between mt-auto border-t border-outline-variant/50 pt-2 pb-1">
-<span class="font-code-sm text-[11px] text-primary flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px] animate-spin">sync</span> 45%
-                                    </span>
-<span class="font-code-sm text-[11px] text-outline">00:02:14</span>
-</div>
-</div>
-<!-- Job Card -->
-<div class="bg-surface-container-lowest border border-primary/40 rounded p-sm shadow-sm relative overflow-hidden">
-<div class="absolute bottom-0 left-0 h-1 bg-surface-container-highest w-full">
-<div class="h-full bg-primary w-[88%]"></div>
-</div>
-<div class="flex justify-between items-start mb-2">
-<span class="font-code-sm text-code-sm font-semibold text-on-surface">JOB-102</span>
-<span class="bg-primary-fixed text-on-primary-fixed text-[10px] px-1.5 rounded font-label-md">Worker-4</span>
-</div>
-<div class="font-body-md text-[13px] text-on-surface-variant mb-3 line-clamp-2">Run E2E Tests / main</div>
-<div class="flex items-center justify-between mt-auto border-t border-outline-variant/50 pt-2 pb-1">
-<span class="font-code-sm text-[11px] text-primary flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px] animate-spin">sync</span> 88%
-                                    </span>
-<span class="font-code-sm text-[11px] text-outline">00:15:30</span>
-</div>
-</div>
 </div>
 </div>
 <!-- Column: COMPLETED -->
 <div class="flex flex-col min-w-[260px] max-w-[260px] bg-surface-container rounded-lg p-sm gap-sm border border-outline-variant/30 h-full opacity-80">
 <div class="flex justify-between items-center px-1 pt-1">
 <span class="font-label-md text-label-md text-on-surface-variant">COMPLETED</span>
+<span data-ui="kanban-completed-count" class="bg-[#d1fae5] text-[#065f46] font-code-sm text-[11px] px-2 py-0.5 rounded-full">0</span>
 </div>
-<div class="flex flex-col gap-sm overflow-y-auto pr-1">
-<!-- Job Card -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm border-l-4 border-l-[#10B981]">
-<div class="flex justify-between items-start mb-2">
-<span class="font-code-sm text-code-sm font-semibold text-on-surface line-through text-outline">JOB-099</span>
-<span class="material-symbols-outlined text-[#10B981] text-[18px]">check_circle</span>
-</div>
-<div class="font-body-md text-[13px] text-on-surface-variant mb-2">Docker Build / v1.0.4</div>
-</div>
+<div data-ui="kanban-completed-list" class="flex flex-col gap-sm overflow-y-auto pr-1">
 </div>
 </div>
 </div>
@@ -400,61 +325,8 @@
 </div>
 </div>
 <div class="flex-1 overflow-y-auto p-0 kanban-scroll bg-surface-bright">
-<ul class="divide-y divide-surface-container">
-<li class="p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start">
-<div class="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
-<div>
-<div class="font-code-sm text-[12px] text-on-surface mb-1">
-<span class="font-semibold text-primary">Job 101</span> assigned to <span class="font-semibold">Worker-2</span> because of <span class="bg-surface-variant px-1 rounded">Python match</span>
-</div>
-<div class="font-code-sm text-[10px] text-outline">14:32:01.005 • Evaluated 4 nodes in 12ms</div>
-</div>
-</li>
-<li class="p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start bg-surface-container-low/50">
-<div class="w-2 h-2 mt-1.5 rounded-full bg-secondary flex-shrink-0"></div>
-<div>
-<div class="font-code-sm text-[12px] text-on-surface mb-1">
-<span class="font-semibold">Job 103</span> moved to SCHEDULED state. Awaiting capacity.
-                                </div>
-<div class="font-code-sm text-[10px] text-outline">14:31:55.210 • Priority: Normal</div>
-</div>
-</li>
-<li class="p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start">
-<div class="w-2 h-2 mt-1.5 rounded-full bg-[#10B981] flex-shrink-0"></div>
-<div>
-<div class="font-code-sm text-[12px] text-on-surface mb-1">
-                                    Worker-4 reports <span class="font-semibold text-[#10B981]">Job 099 COMPLETED</span>. Releasing resources.
-                                </div>
-<div class="font-code-sm text-[10px] text-outline">14:30:12.800 • Duration: 4m 12s</div>
-</div>
-</li>
-<li class="p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start">
-<div class="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
-<div>
-<div class="font-code-sm text-[12px] text-on-surface mb-1">
-<span class="font-semibold text-primary">Job 102</span> assigned to <span class="font-semibold">Worker-4</span> because of <span class="bg-surface-variant px-1 rounded">Lowest Load</span>
-</div>
-<div class="font-code-sm text-[10px] text-outline">14:28:45.102 • Evaluated 4 nodes in 8ms</div>
-</div>
-</li>
-<li class="p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start">
-<div class="w-2 h-2 mt-1.5 rounded-full bg-error flex-shrink-0"></div>
-<div>
-<div class="font-code-sm text-[12px] text-on-surface mb-1">
-<span class="font-semibold text-error">Job 098 FAILED</span> on Worker-1. Retry logic invoked.
-                                </div>
-<div class="font-code-sm text-[10px] text-outline">14:25:00.000 • Exit code: 137</div>
-</div>
-</li>
-<li class="p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start">
-<div class="w-2 h-2 mt-1.5 rounded-full bg-secondary flex-shrink-0"></div>
-<div>
-<div class="font-code-sm text-[12px] text-on-surface mb-1">
-                                    Routing Mode switched to <span class="font-semibold">Priority</span> by Admin.
-                                </div>
-<div class="font-code-sm text-[10px] text-outline">14:00:00.000 • System Event</div>
-</div>
-</li>
+<ul data-ui="decision-log-list" class="divide-y divide-surface-container">
+<li class="p-sm px-md text-on-surface-variant text-[12px]">Loading…</li>
 </ul>
 </div>
 <div class="p-2 border-t border-outline-variant bg-surface-bright rounded-b-xl">

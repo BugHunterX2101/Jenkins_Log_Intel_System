@@ -39,7 +39,17 @@ uv.lock
 
 # Celery
 celerybeat-schedule
+celerybeat-schedule.*
 celerybeat.pid
 
 # Docker
 *.log
+
+# Node
+node_modules/
+frontend/app/node_modules/
+
+# Runtime output / snapshots
+bootstrap.json
+*.db
+jenkins_log_intel.db

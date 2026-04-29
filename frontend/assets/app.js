@@ -272,22 +272,27 @@
       // clear existing rows
       tableBody.innerHTML = '';
       const runs = (data.runs_by_status?.QUEUED || []).concat(data.runs_by_status?.IN_PROGRESS || []);
-      runs.forEach((run) => {
-        const row = document.createElement('tr');
-        const waitSeconds = run.queued_at ? Math.max(0, Math.floor((Date.now() - new Date(run.queued_at).getTime()) / 1000)) : null;
-        const statusBadge = run.status === 'QUEUED' ? { bg: '#fef3c7', color: '#92400e' } : { bg: '#dbeafe', color: '#1e40af' };
-        row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors group';
-        row.innerHTML = `
-          <td class="px-md py-sm"><span class="text-code-sm font-code-sm text-surface-tint">#J-${run.id || ''}</span></td>
-          <td class="px-md py-sm"><span class="bg-surface-container-highest text-on-surface-variant text-label-md px-2 py-0.5 rounded-full">${run.priority || 'Normal'}</span></td>
-          <td class="px-md py-sm"><span class="material-symbols-outlined text-[20px]">code</span></td>
-          <td class="px-md py-sm"><div class="flex flex-col"><span class="font-medium">${run.repo || (run.repo_url ? run.repo_url.replace(/^https?:\/\//, '') : '')}</span><span class="text-label-md text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span> ${run.branch || ''}</span></div></td>
-          <td class="px-md py-sm font-code-sm">${waitSeconds !== null ? waitSeconds + 's' : '-'}</td>
-          <td class="px-md py-sm"><span class="flex items-center gap-1.5 text-secondary"><span class="material-symbols-outlined text-[16px]">sync</span> ${run.status || ''}</span></td>
-          <td class="px-md py-sm text-right opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-outline hover:text-error transition-colors p-1" title="Cancel Job"><span class="material-symbols-outlined text-[18px]">cancel</span></button></td>
-        `;
-        tableBody.appendChild(row);
-      });
+      if (!runs.length) {
+        const empty = document.createElement('tr');
+        empty.innerHTML = '<td colspan="7" class="px-md py-6 text-center text-on-surface-variant text-sm">No active jobs in the queue</td>';
+        tableBody.appendChild(empty);
+      } else {
+        runs.forEach((run) => {
+          const row = document.createElement('tr');
+          const waitSeconds = run.queued_at ? Math.max(0, Math.floor((Date.now() - new Date(run.queued_at).getTime()) / 1000)) : null;
+          row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors group';
+          row.innerHTML = `
+            <td class="px-md py-sm"><span class="text-code-sm font-code-sm text-surface-tint">#J-${run.id || ''}</span></td>
+            <td class="px-md py-sm"><span class="bg-surface-container-highest text-on-surface-variant text-label-md px-2 py-0.5 rounded-full">${run.priority || 'Normal'}</span></td>
+            <td class="px-md py-sm"><span class="material-symbols-outlined text-[20px]">code</span></td>
+            <td class="px-md py-sm"><div class="flex flex-col"><span class="font-medium">${run.repo || ''}</span><span class="text-label-md text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span> ${run.branch || ''}</span></div></td>
+            <td class="px-md py-sm font-code-sm">${waitSeconds !== null ? waitSeconds + 's' : '-'}</td>
+            <td class="px-md py-sm"><span class="flex items-center gap-1.5 text-secondary"><span class="material-symbols-outlined text-[16px]">sync</span> ${run.status || ''}</span></td>
+            <td class="px-md py-sm text-right opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-outline hover:text-error transition-colors p-1" title="Cancel Job"><span class="material-symbols-outlined text-[18px]">cancel</span></button></td>
+          `;
+          tableBody.appendChild(row);
+        });
+      }
     } catch (error) {
       console.error('Failed to populate queue table:', error);
     }
@@ -339,34 +344,99 @@
       const queuedList = document.querySelector('[data-ui="kanban-queued-list"]');
       const scheduledList = document.querySelector('[data-ui="kanban-scheduled-list"]');
       const runningList = document.querySelector('[data-ui="kanban-running-list"]');
+      const completedList = document.querySelector('[data-ui="kanban-completed-list"]');
+      const completedCountEl = document.querySelector('[data-ui="kanban-completed-count"]');
 
-      const renderJobCard = (job) => {
+      const renderJobCard = (job, variant) => {
         const el = document.createElement('div');
-        el.className = 'bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm hover:shadow-[0px_10px_15px_rgba(0,0,0,0.05)] transition-shadow cursor-grab';
+        const isRunning = variant === 'running';
+        const isCompleted = variant === 'completed';
+        el.className = isCompleted
+          ? 'bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm border-l-4 border-l-[#10B981]'
+          : isRunning
+          ? 'bg-surface-container-lowest border border-primary/40 rounded p-sm shadow-sm relative overflow-hidden'
+          : 'bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm hover:shadow-[0px_10px_15px_rgba(0,0,0,0.05)] transition-shadow cursor-grab';
+        const durationLabel = job.duration_s ? `${Math.floor(job.duration_s / 60)}m ${job.duration_s % 60}s` : (job.started ? new Date(job.started).toLocaleTimeString() : '—');
         el.innerHTML = `
           <div class="flex justify-between items-start mb-2">
-            <span class="font-code-sm text-code-sm font-semibold text-on-surface">${job.id || job.job_id || 'JOB'}</span>
-            <span class="material-symbols-outlined text-outline text-[16px]">more_horiz</span>
+            <span class="font-code-sm text-code-sm font-semibold text-on-surface ${isCompleted ? 'line-through text-outline' : ''}">#${job.id || 'JOB'}</span>
+            ${isCompleted
+              ? '<span class="material-symbols-outlined text-[#10B981] text-[18px]">check_circle</span>'
+              : '<span class="material-symbols-outlined text-outline text-[16px]">more_horiz</span>'}
           </div>
-          <div class="font-body-md text-[13px] text-on-surface-variant mb-3 line-clamp-2">${job.summary || job.description || ''}</div>
-          <div class="flex items-center gap-2 mt-auto border-t border-outline-variant/50 pt-2">
-            <span class="font-label-md text-[10px] text-outline">PRIORITY: ${job.priority || 'N/A'}</span>
+          <div class="font-body-md text-[13px] text-on-surface-variant mb-3 line-clamp-2">${job.summary || job.description || `${job.repo || ''}/${job.branch || 'main'}`}</div>
+          <div class="flex items-center justify-between mt-auto border-t border-outline-variant/50 pt-2">
+            <span class="font-label-md text-[10px] text-outline">PRIORITY: ${(job.priority || 'normal').toUpperCase()}</span>
+            ${isRunning || isCompleted ? `<span class="font-code-sm text-[11px] text-outline">${durationLabel}</span>` : ''}
           </div>
         `;
         return el;
       };
 
+      const _emptyCard = (msg) => {
+        const el = document.createElement('div');
+        el.className = 'text-center text-on-surface-variant text-[12px] py-4';
+        el.textContent = msg;
+        return el;
+      };
+
       if (queuedList) {
         queuedList.innerHTML = '';
-        (data.queued || []).forEach((j) => queuedList.appendChild(renderJobCard(j)));
+        const queued = data.queued || [];
+        queued.length ? queued.forEach((j) => queuedList.appendChild(renderJobCard(j, 'queued'))) : queuedList.appendChild(_emptyCard('No jobs queued'));
       }
       if (scheduledList) {
         scheduledList.innerHTML = '';
-        (data.scheduled || []).forEach((j) => scheduledList.appendChild(renderJobCard(j)));
+        const scheduled = (data.scheduled || []).filter((j) => !(data.queued || []).find((q) => q.id === j.id));
+        scheduled.length ? scheduled.forEach((j) => scheduledList.appendChild(renderJobCard(j, 'scheduled'))) : scheduledList.appendChild(_emptyCard('No scheduled jobs'));
       }
       if (runningList) {
         runningList.innerHTML = '';
-        (data.running || []).forEach((j) => runningList.appendChild(renderJobCard(j)));
+        const running = data.running || [];
+        running.length ? running.forEach((j) => runningList.appendChild(renderJobCard(j, 'running'))) : runningList.appendChild(_emptyCard('No running jobs'));
+      }
+      if (completedList) {
+        completedList.innerHTML = '';
+        const completed = data.completed || [];
+        if (completedCountEl) completedCountEl.textContent = String(completed.length);
+        completed.length ? completed.slice(0, 8).forEach((j) => completedList.appendChild(renderJobCard(j, 'completed'))) : completedList.appendChild(_emptyCard('No completed jobs'));
+      }
+
+      // Decision Log
+      const decisionLog = document.querySelector('[data-ui="decision-log-list"]');
+      if (decisionLog) {
+        decisionLog.innerHTML = '';
+        const running = data.running || [];
+        const queued = data.queued || [];
+        const completed = (data.completed || []).slice(0, 3);
+        const entries = [];
+        running.forEach((j) => entries.push({ type: 'assigned', job: j }));
+        queued.slice(0, 4).forEach((j) => entries.push({ type: 'queued', job: j }));
+        completed.forEach((j) => entries.push({ type: 'completed', job: j }));
+
+        if (!entries.length) {
+          decisionLog.innerHTML = '<li class="p-sm px-md text-on-surface-variant text-[12px]">No scheduler activity yet</li>';
+        } else {
+          entries.forEach(({ type, job }) => {
+            const li = document.createElement('li');
+            li.className = 'p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start';
+            const dotColor = type === 'assigned' ? 'bg-primary' : type === 'completed' ? 'bg-[#10B981]' : 'bg-secondary';
+            const ts = job.started ? new Date(job.started).toLocaleTimeString() : (job.completed ? new Date(job.completed).toLocaleTimeString() : '—');
+            const label = type === 'assigned'
+              ? `<span class="font-semibold text-primary">Job #${job.id}</span> running — ${job.repo || ''}/${job.branch || 'main'}`
+              : type === 'completed'
+              ? `<span class="font-semibold text-[#10B981]">Job #${job.id} COMPLETED</span> — ${job.repo || ''}/${job.branch || 'main'}`
+              : `<span class="font-semibold">Job #${job.id}</span> queued, awaiting capacity`;
+            li.innerHTML = `
+              <div class="w-2 h-2 mt-1.5 rounded-full ${dotColor} flex-shrink-0"></div>
+              <div>
+                <div class="font-code-sm text-[12px] text-on-surface mb-1">${label}</div>
+                <div class="font-code-sm text-[10px] text-outline">${ts} • ${job.job_name || 'pipeline'}</div>
+              </div>
+            `;
+            decisionLog.appendChild(li);
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to populate scheduler kanban:', error);
@@ -382,18 +452,24 @@
       if (!tbody) return;
       tbody.innerHTML = '';
       const events = data.events || [];
-      events.slice(0, 50).forEach((ev) => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-surface-variant hover:bg-surface-container-lowest transition-colors group';
-        tr.innerHTML = `
-          <td class="px-md py-sm text-on-surface-variant font-code-sm text-code-sm">${ev.processed_at ? new Date(ev.processed_at).toLocaleTimeString() : '-'}</td>
-          <td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs border border-outline-variant">${ev.event_type || ev.failure_type || 'event'}</span></td>
-          <td class="px-md py-sm">${ev.repo_name || ev.job_name || '-'}</td>
-          <td class="px-md py-sm font-code-sm text-code-sm text-on-surface-variant">${ev.delivery_id || ev.id || '-'}</td>
-          <td class="px-md py-sm text-right"><span class="inline-flex items-center gap-1 bg-[#e6f4ea] text-[#137333] px-2 py-0.5 rounded-full text-xs font-semibold">${ev.delivery_status || 'OK'}</span></td>
-        `;
-        tbody.appendChild(tr);
-      });
+      if (!events.length) {
+        const empty = document.createElement('tr');
+        empty.innerHTML = '<td colspan="5" class="px-md py-6 text-center text-on-surface-variant text-sm">No webhook events recorded yet</td>';
+        tbody.appendChild(empty);
+      } else {
+        events.slice(0, 50).forEach((ev) => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b border-surface-variant hover:bg-surface-container-lowest transition-colors group';
+          tr.innerHTML = `
+            <td class="px-md py-sm text-on-surface-variant font-code-sm text-code-sm">${ev.processed_at ? new Date(ev.processed_at).toLocaleTimeString() : '-'}</td>
+            <td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs border border-outline-variant">${ev.event_type || ev.failure_type || 'event'}</span></td>
+            <td class="px-md py-sm">${ev.repo_name || ev.job_name || '-'}</td>
+            <td class="px-md py-sm font-code-sm text-code-sm text-on-surface-variant">${ev.delivery_id || ev.id || '-'}</td>
+            <td class="px-md py-sm text-right"><span class="inline-flex items-center gap-1 bg-[#e6f4ea] text-[#137333] px-2 py-0.5 rounded-full text-xs font-semibold">${ev.delivery_status || 'OK'}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
     } catch (error) {
       console.error('Failed to populate webhook events:', error);
     }
@@ -785,6 +861,69 @@
     }
   };
 
+  let _activityLastTimestamp = null;
+
+  const _activityBadge = (status) => {
+    const s = (status || '').toUpperCase();
+    if (s === 'COMPLETED') return 'bg-green-100 text-green-800 border-green-200';
+    if (s === 'IN_PROGRESS') return 'bg-amber-100 text-amber-800 border-amber-200';
+    if (s === 'FAILED') return 'bg-red-100 text-red-800 border-red-200';
+    if (s === 'ABORTED') return 'bg-slate-100 text-slate-600 border-slate-200';
+    return 'bg-blue-100 text-blue-800 border-blue-200'; // QUEUED / default
+  };
+
+  const _activityLabel = (status) => {
+    const s = (status || '').toUpperCase();
+    if (s === 'COMPLETED') return 'Success';
+    if (s === 'IN_PROGRESS') return 'Running';
+    if (s === 'FAILED') return 'Failed';
+    if (s === 'ABORTED') return 'Aborted';
+    return 'Queued';
+  };
+
+  const renderActivityStream = (data) => {
+    const tbody = document.querySelector('[data-ui="activity-stream-body"]');
+    if (!tbody) return;
+
+    const items = data.activity_stream || (data.queue?.latest_runs || []).map((run) => ({
+      timestamp: run.queued_at,
+      source: run.author || run.triggered_by || 'system',
+      event: `Push to ${run.branch || 'unknown'} — ${run.repo_url ? run.repo_url.replace(/\.git$/, '').split('/').pop() : 'unknown'}${run.commit_sha ? ' (' + run.commit_sha.slice(0, 7) + ')' : ''}`,
+      status: run.status || 'QUEUED',
+    }));
+
+    if (!items.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-md text-center text-on-surface-variant text-sm">No recent activity</td></tr>';
+      return;
+    }
+
+    const newestTs = items[0]?.timestamp || null;
+    const isNew = newestTs && _activityLastTimestamp && newestTs > _activityLastTimestamp;
+    _activityLastTimestamp = newestTs;
+
+    tbody.innerHTML = '';
+    items.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50 transition-colors';
+      if (isNew && index === 0) {
+        tr.classList.add('bg-green-50');
+        setTimeout(() => tr.classList.remove('bg-green-50'), 1500);
+      }
+      const ts = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '—';
+      const badgeClasses = _activityBadge(item.status);
+      const label = _activityLabel(item.status);
+      tr.innerHTML = `
+        <td class="py-2 px-md text-on-surface-variant">${ts}</td>
+        <td class="py-2 px-md font-medium text-primary truncate max-w-[120px]">${item.source || '—'}</td>
+        <td class="py-2 px-md truncate max-w-xs">${item.event || '—'}</td>
+        <td class="py-2 px-md text-right">
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${badgeClasses}">${label}</span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  };
+
   const populateBootstrapData = async () => {
     try {
       const response = await fetch('/ui/bootstrap');
@@ -818,12 +957,14 @@
       // Worker utilization
       const workerUtil = document.querySelector('[data-ui="worker-utilization"]');
       const workerBar = document.getElementById('worker-utilization-bar');
+      const workerNodeCount = document.querySelector('[data-ui="worker-node-count"]');
       if (workerUtil && data.workers && typeof data.workers.total !== 'undefined') {
         const total = data.workers.total || 0;
         const busy = data.workers.busy || 0;
         const pct = total > 0 ? Math.round((busy / total) * 100) : 0;
         workerUtil.textContent = `${pct}%`;
         if (workerBar) workerBar.style.width = `${pct}%`;
+        if (workerNodeCount) workerNodeCount.textContent = `${busy} of ${total} nodes active`;
       }
       // initialize page-specific panels if present
       try { bindSimulationControls(data); } catch (err) { console.warn('bindSimulationControls failed', err); }
@@ -831,6 +972,7 @@
       try { renderBackendPanel(data); } catch (err) { console.warn('renderBackendPanel failed', err); }
       try { renderWorkersPanels(data); } catch (err) { console.warn('renderWorkersPanels failed', err); }
       try { renderSimulationPanel(data); } catch (err) { console.warn('renderSimulationPanel failed', err); }
+      try { renderActivityStream(data); } catch (err) { console.warn('renderActivityStream failed', err); }
     } catch (error) {
       console.error('Failed to populate bootstrap data:', error);
     }
@@ -1070,6 +1212,15 @@
       }, 10000);
     } catch (e) {
       // ignore
+    }
+
+    // Re-poll bootstrap on the simulation page (live log needs it)
+    if (currentPath().startsWith('/simulation')) {
+      setInterval(() => {
+        if (document.querySelector('[data-ui="simulation-live-log"]')) {
+          populateBootstrapData();
+        }
+      }, 10000);
     }
 
     // Start polling live metrics every 5 seconds
