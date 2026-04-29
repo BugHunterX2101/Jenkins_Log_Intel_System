@@ -682,7 +682,7 @@
     try {
       const [bootstrapRes, workersRes] = await Promise.all([
         fetch('/ui/bootstrap'),
-        fetch('/workers'),
+        fetch('/api/workers'),
       ]);
       if (!bootstrapRes.ok) throw new Error('Failed to fetch bootstrap data');
       const data = await bootstrapRes.json();
@@ -691,6 +691,17 @@
       if (workersRes.ok) {
         const wd = await workersRes.json();
         (wd.workers || []).forEach((w) => { liveById[w.id] = w; });
+
+        // Populate summary stats bar
+        const summary = wd.summary || {};
+        const statTotal = document.querySelector('[data-ui="worker-stat-total"]');
+        const statIdle = document.querySelector('[data-ui="worker-stat-idle"]');
+        const statBusy = document.querySelector('[data-ui="worker-stat-busy"]');
+        const statOffline = document.querySelector('[data-ui="worker-stat-offline"]');
+        if (statTotal) statTotal.textContent = String(summary.total ?? 0);
+        if (statIdle) statIdle.textContent = String(summary.idle ?? 0);
+        if (statBusy) statBusy.textContent = String(summary.busy ?? 0);
+        if (statOffline) statOffline.textContent = String(summary.offline ?? 0);
       }
 
       const container = document.querySelector('[data-ui="workers-list"]');
@@ -699,25 +710,31 @@
       const items = (data.workers && data.workers.items) || [];
       items.forEach((w) => {
         const live = liveById[w.id] || {};
+        const merged = { ...w, ...live };
         const card = document.createElement('div');
         card.className = 'bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_4px_6px_rgba(0,0,0,0.02)] p-md flex flex-col gap-sm hover:shadow-[0px_10px_15px_rgba(0,0,0,0.05)] transition-shadow';
-        const status = (w.status || '').toLowerCase();
+        const status = (merged.status || '').toLowerCase();
         const isBusy = status === 'busy';
         const isOffline = status === 'offline';
-        const pct = Math.round((w.load || 0) * 100);
-        const jobsRun = live.jobs_run != null ? live.jobs_run : (w.jobs_run != null ? w.jobs_run : '—');
+        const pct = Math.round((merged.load || 0) * 100);
+        const jobsRun = merged.jobs_run != null ? merged.jobs_run : '—';
+        const currentJob = merged.current_job || null;
         const statusBadge = isBusy
           ? `<span class="bg-primary-container text-on-primary-container px-2 py-1 rounded text-[10px] font-label-md flex items-center gap-1"><span class="material-symbols-outlined text-[12px] animate-pulse">sync</span> BUSY</span>`
           : isOffline
           ? `<span class="bg-error-container text-on-error-container px-2 py-1 rounded text-[10px] font-label-md flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">power_off</span> OFFLINE</span>`
           : `<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded text-[10px] font-label-md flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">pause</span> IDLE</span>`;
+        const currentJobRow = currentJob
+          ? `<div class="mt-xs"><span class="font-label-md text-[10px] text-on-surface-variant">JOB: </span><span class="font-code-sm text-code-sm text-primary truncate">${currentJob}</span></div>`
+          : '';
         card.innerHTML = `
           <div class="flex justify-between items-start">
             <div>
-              <h3 class="font-headline-sm text-headline-sm text-on-surface">${w.name || 'worker'}</h3>
+              <h3 class="font-headline-sm text-headline-sm text-on-surface">${merged.name || 'worker'}</h3>
               <div class="flex gap-xs mt-xs">
-                <span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md text-on-surface-variant">${w.language || ''}</span>
+                <span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md text-on-surface-variant">${merged.language || ''}</span>
               </div>
+              ${currentJobRow}
             </div>
             ${statusBadge}
           </div>
@@ -735,6 +752,33 @@
         `;
         container.appendChild(card);
       });
+
+      // Rebuild assignment table with all workers
+      const assignmentBody = document.querySelector('[data-ui="worker-assignment-body"]');
+      if (assignmentBody) {
+        assignmentBody.innerHTML = '';
+        items.forEach((w) => {
+          const live = liveById[w.id] || {};
+          const merged = { ...w, ...live };
+          let caps = [];
+          try { caps = JSON.parse(merged.capabilities || '[]'); } catch (e) { caps = []; }
+          const tag = merged.language ? merged.language.charAt(0).toUpperCase() + merged.language.slice(1) : 'General';
+          const statusDot = (merged.status || '').toLowerCase() === 'busy'
+            ? '<span class="inline-block w-2 h-2 rounded-full bg-primary mr-1"></span>'
+            : (merged.status || '').toLowerCase() === 'offline'
+            ? '<span class="inline-block w-2 h-2 rounded-full bg-error mr-1"></span>'
+            : '<span class="inline-block w-2 h-2 rounded-full bg-outline mr-1"></span>';
+          const row = document.createElement('tr');
+          row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
+          row.innerHTML = `
+            <td class="py-2 px-md font-code-sm text-code-sm">${statusDot}${merged.name || 'worker'}</td>
+            <td class="py-2 px-md"><span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md">${tag}</span>${caps.slice(0,2).map(c => ` <span class="text-[10px] text-on-surface-variant">${c}</span>`).join('')}</td>
+            <td class="py-2 px-md text-on-surface-variant font-code-sm">${merged.jobs_run ?? 0}</td>
+          `;
+          assignmentBody.appendChild(row);
+        });
+      }
+
       renderWorkersPanels(data);
     } catch (error) {
       console.error('Failed to populate workers:', error);

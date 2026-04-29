@@ -1,0 +1,342 @@
+
+JENKINS LOG INTEL SYSTEM
+Frontend Design Specification
+
+
+Complete UI Reference for Webhook Triggers · Backend Master · Job Queue
+Pipeline Scheduler · Multi-Worker Simulation · Real-World Randomness
+
+Version 1.0  |  Jenkins Log Intel System  |  2025
+ 
+SECTION 1 — SYSTEM OVERVIEW & LAYOUT PHILOSOPHY
+
+1. Overview
+This document defines every frontend component required to visualize, control, and monitor the Jenkins Log Intel System — a simulated CI/CD orchestration platform with webhook ingestion, job queueing, pipeline scheduling, multi-worker execution, and intelligent log analysis. Every feature listed in the six project requirements has a dedicated, always-visible UI section.
+
+1.1  Design Principles
+•	Everything is visible at once — no hidden modals for operational data.
+•	Live data — all panels auto-refresh every 2–5 seconds with real-time indicators.
+•	Color-coded status — green (success), amber (running/queued), red (failed), gray (idle).
+•	No interaction required to see system state — the dashboard is self-narrating.
+•	Controls are grouped near the data they affect — trigger near webhook, manage near queue.
+
+1.2  Overall Page Layout
+The frontend is a single-page application divided into a persistent top navigation bar, a left sidebar for system controls, and a main content area composed of six primary sections arranged vertically in logical pipeline order:
+
+Layout Zone	Content	Width
+Top Nav Bar	Logo, system status badge, global refresh toggle, ngrok URL input	Full width
+Left Sidebar	Quick actions, system health summary, worker status pills	260px fixed
+Main – Section 1	Webhook Trigger Panel	Remaining width
+Main – Section 2	Backend Master Control Panel	Remaining width
+Main – Section 3	Job Queue & Database Viewer	Remaining width
+Main – Section 4	Pipeline Manager & Scheduler	Remaining width
+Main – Section 5	Worker Fleet Monitor	Remaining width
+Main – Section 6	Randomness & Simulation Controls	Remaining width
+
+ 
+SECTION 2 — WEBHOOK TRIGGER PANEL
+
+2. Webhook Trigger Panel
+This panel addresses Requirement 1: implementing webhook triggers similar to GitHub triggering Jenkins on code push. It must support both real ngrok-forwarded webhooks and simulated POST API calls from within the UI itself.
+
+2.1  Webhook Configuration Bar
+Pinned at the very top of this section, always visible:
+•	ngrok Public URL input field — user pastes their ngrok HTTPS URL; the system immediately updates its internal webhook endpoint.
+•	Connection status badge — shows CONNECTED (green) or DISCONNECTED (red) with a live ping indicator that pulses every 3 seconds.
+•	Webhook secret field — masked input for HMAC signature verification; toggle to reveal.
+•	Copy Endpoint button — copies the full webhook URL to clipboard for pasting into GitHub repository settings.
+•	Test Connection button — fires a health-check GET to the ngrok tunnel and reports latency in ms.
+
+2.2  Simulated Webhook Trigger Form
+When ngrok is not available, the user can simulate webhook payloads directly from the UI:
+•	Repository Name — text input (e.g., my-org/my-repo).
+•	Branch — dropdown with options: main, develop, feature/*, hotfix/*, or custom text.
+•	Commit SHA — auto-generated 7-character hex string, editable.
+•	Author — text field.
+•	Language / Project Type — dropdown: Python, Node.js, Java, Go, Shell. This value is forwarded to the backend and used for worker assignment.
+•	Event Type — dropdown: push, pull_request, release, manual.
+•	Trigger Webhook button (prominent, blue) — fires a POST to the backend's /webhook/receive endpoint and shows the raw JSON payload in the adjacent panel.
+•	Simulate Burst Mode toggle — when on, fires 3–6 random webhook payloads in quick succession to stress-test the queue.
+
+2.3  Live Webhook Event Log
+A scrollable, auto-updating log table that sits directly below the trigger form:
+
+UI Component / Panel	What It Displays	Key Controls & Actions
+Event Log Table	Timestamp, event type, repo, branch, commit SHA, payload size, HTTP status code returned	Expand row to see full JSON payload, Replay button to re-fire the same payload, Filter bar by event type or repo name
+Raw Payload Viewer	Syntax-highlighted JSON of the most recent or selected webhook payload	Copy to clipboard, Beautify toggle, Send to Queue button to manually enqueue from a received payload
+Webhook Stats Bar	Total received today, success rate %, average payload size, last received timestamp	Reset counter button
+
+ 
+SECTION 3 — BACKEND MASTER CONTROL PANEL
+
+3. Backend Master Control Panel
+This panel addresses Requirement 2: the Node.js/Python backend server acting as the Jenkins Master — receiving and managing job requests. The frontend gives full visibility into what the master is doing at every moment.
+
+3.1  Master Server Status Card
+A prominent status card always visible at the top of this section:
+•	Master Status indicator — large badge: RUNNING (green pulse), PAUSED (amber), STOPPED (red).
+•	Server runtime — elapsed time since last start (HH:MM:SS).
+•	Technology badge — shows whether it is a Node.js or Python server, with version number.
+•	Port & bind address — e.g., localhost:5000.
+•	Total requests received — live counter with per-minute rate.
+•	Active connections — current open connections to the master.
+•	Start / Pause / Stop buttons — for simulation control during demos.
+
+3.2  Request Processing Feed
+A live-updating table that shows every incoming HTTP request the master receives:
+
+UI Component / Panel	What It Displays	Key Controls & Actions
+Incoming Request Log	Request ID, timestamp, method (POST/GET), endpoint hit, source IP, response time ms, HTTP response code	Filter by endpoint, clear log, auto-scroll toggle
+Endpoint Health Monitor	List of all registered endpoints (/webhook/receive, /jobs/submit, /queue/status, /workers/list) with request count, avg response time, error rate	Click endpoint to see all recent calls
+Error Spike Alert Bar	Banner that appears when error rate > 5% in last 60 seconds; shows which endpoint is failing	Dismiss or investigate (scrolls to error entries)
+
+3.3  Job Intake Tracker
+Shows the master's role in receiving a job request and converting it into a queue entry:
+•	Validation Status column — shows whether each incoming job passed schema validation (green tick) or was rejected (red cross with reason).
+•	Job ID Assignment log — shows auto-generated job IDs as they are minted.
+•	Enqueue Confirmation — shows the moment a job transitions from received to queued, with a micro-animation (job tile slides from the intake area toward the queue panel).
+Visual tip: A thin animated arrow or particle flow between the Webhook Panel and the Master Panel reinforces the pipeline narrative without requiring the user to understand the code.
+
+ 
+SECTION 4 — JOB QUEUE & DATABASE VIEWER
+
+4. Job Queue & Database Viewer
+This panel addresses Requirement 3: maintaining a database/queue to store incoming jobs. The entire queue state is always visible — not hidden behind a search.
+
+4.1  Queue Summary Header
+Four large metric tiles sitting side by side across the top of this section:
+
+Metric Tile	What It Shows
+Total Jobs in Queue	Count of jobs currently waiting for assignment (updates live)
+Avg Wait Time	Rolling average time jobs spend in queue before pickup
+Longest Waiting Job	Job ID + how long it has been waiting (turns red if > 2 minutes)
+Queue Throughput	Jobs processed per minute over the last 5 minutes (mini sparkline chart)
+
+4.2  Live Queue Table
+The main queue table — each row is one job currently waiting or recently processed:
+
+Column	Description
+Job ID	Unique identifier, clickable to expand full job details
+Priority	HIGH / MEDIUM / LOW badge, color-coded; draggable to reorder (simulation only)
+Language / Type	Python, Node.js, Java, Go, Shell — shown with a small language icon
+Repository & Branch	Source repo name and branch that triggered the job
+Submitted At	Exact timestamp + relative time (e.g., '42 seconds ago')
+Wait Time	Live-ticking timer from submission to now
+Status	QUEUED (amber), ASSIGNED (blue), RUNNING (green pulse), FAILED (red), DONE (gray)
+Assigned Worker	Empty until assigned; then shows worker name
+Actions	Cancel Job button (removes from queue), Reprioritize dropdown, View Payload
+
+4.3  Database State Panel
+Shows the raw persistence layer in a readable form:
+•	Storage type badge — In-Memory, SQLite, Redis, or PostgreSQL.
+•	Total records stored — cumulative count since server start.
+•	Database table viewer — a simplified grid of the jobs table showing all columns and rows, with pagination for large datasets.
+•	Filter toolbar — filter by status, language, date range, worker ID.
+•	Export button — downloads current queue state as JSON or CSV for offline review.
+•	Flush Queue button (red, confirmation required) — clears all pending jobs; useful during demos to reset state.
+
+4.4  Queue Depth Chart
+A live line chart showing queue depth (number of waiting jobs) over the last 10 minutes. This makes queue buildup and drain visually obvious without reading the table. Key elements:
+•	X-axis: time in 30-second intervals.
+•	Y-axis: job count.
+•	A second overlay line shows throughput rate (jobs completed per interval).
+•	Red shaded zone appears when queue depth exceeds a configurable threshold (default: 8 jobs).
+
+ 
+SECTION 5 — PIPELINE MANAGER & SCHEDULER
+
+5. Pipeline Manager & Scheduler
+This panel addresses Requirement 4: the pipeline manager and scheduler that picks jobs from the queue and assigns them to workers. The scheduler's decision logic is made fully transparent.
+
+5.1  Scheduler Status & Configuration
+•	Scheduler Mode selector — three options shown as radio button cards:
+◦	FIFO (First In First Out) — jobs assigned strictly in arrival order.
+◦	Priority-Based — HIGH jobs always picked before MEDIUM and LOW.
+◦	Load-Balanced — scheduler checks worker load before assigning.
+•	Polling Interval — slider from 1s to 30s; shows how often the scheduler checks the queue.
+•	Scheduler State — RUNNING / PAUSED toggle; pausing the scheduler lets jobs accumulate in the queue for demo purposes.
+•	Next Scheduled Run — countdown timer to the next scheduler tick.
+
+5.2  Assignment Decision Log
+The most important visibility feature of the scheduler panel — every scheduling decision is logged in plain language:
+
+UI Component / Panel	What It Displays	Key Controls & Actions
+Decision Log Feed	Timestamp, job ID, reason for assignment, worker chosen, criteria evaluated (language match, load score, idle time)	Pause/resume log, filter by worker or job ID, export log as text
+Rejection / Delay Log	Jobs that were evaluated but not yet assigned, with reason (all workers busy, language mismatch, worker cooling down)	Shows retry count and next retry time
+Assignment Heatmap	Grid showing which worker has been assigned the most jobs over time — helps identify imbalances	Hover cell to see job IDs assigned in that interval
+
+5.3  Pipeline Stage Visualizer
+A Kanban-style board with five columns representing pipeline stages. Each job card moves left to right as it progresses:
+
+Stage Column	What Appears Here	Visual Indicator
+QUEUED	Jobs waiting for scheduler pickup	Amber card with wait timer
+SCHEDULED	Jobs selected by scheduler, pending worker pickup	Blue card with worker name
+RUNNING	Jobs actively executing on a worker	Green card with progress bar & ETA
+COMPLETED	Successfully finished jobs (last 10 shown)	Gray card with duration
+FAILED	Jobs that errored out (last 10 shown)	Red card with error badge
+
+Each card shows: Job ID, language icon, repo/branch, assigned worker, time in current stage. Cards animate when transitioning between columns (slide effect).
+
+ 
+SECTION 6 — WORKER FLEET MONITOR
+
+6. Worker Fleet Monitor
+This panel addresses Requirement 5: simulating 3–4 workers with language-based assignment criteria. Every worker is individually visible and their state is always displayed.
+
+6.1  Worker Cards (One Per Worker)
+Four side-by-side cards — each representing one simulated worker agent. All information below is always displayed on the card face without clicking:
+
+Card Element	Description
+Worker Name & ID	e.g., Worker-1 / PY-Agent or Worker-3 / NODE-Agent
+Status Badge	IDLE (gray), RUNNING (green pulse), WARMING UP (blue), OVERLOADED (red)
+Specialization Tags	Language tags the worker accepts: e.g., Python, Shell
+Current Job	Job ID, repo, branch, language — shown when running; empty pill when idle
+Progress Bar	0–100% completion of current job; ETA countdown
+CPU Load (simulated)	Gauge bar from 0–100%; turns amber at 70%, red at 90%
+Memory Usage (simulated)	Same gauge; complements CPU for realism
+Jobs Completed Today	Counter with a mini bar chart showing activity by hour
+Success Rate	Percentage of jobs completed without error
+Last Seen Idle	How long ago the worker was last free
+Queue (backlog)	Number of jobs assigned to this worker but not yet started
+
+6.2  Worker Assignment Logic Panel
+Displayed below the worker cards — explains the live assignment rules in effect:
+•	Language Routing Rules table — shows which worker handles which language. E.g., Python jobs → Worker-1, Worker-3; Node.js jobs → Worker-2, Worker-4.
+•	Fallback Policy selector — what happens when the preferred worker is busy: Queue & Wait, Assign to Any Idle Worker, or Reject Job.
+•	Worker Capacity Config — set max concurrent jobs per worker (default: 1 for simulation realism).
+•	Override Assignment toggle — manually drag a job tile to a specific worker to override the scheduler; useful for demos.
+
+6.3  Worker Timeline View
+A horizontal Gantt-style timeline per worker showing the last 30 minutes:
+•	Each colored bar segment represents one job execution (colored by language: blue=Python, green=Node.js, orange=Java, purple=Go).
+•	Gaps represent idle time.
+•	Red segments represent failed jobs.
+•	Hover a bar to see job ID, duration, repo, and exit status.
+
+ 
+SECTION 7 — RANDOMNESS & SIMULATION CONTROL PANEL
+
+7. Randomness & Simulation Controls
+This panel addresses Requirement 6: introducing randomness in job arrivals, queue handling, and worker assignment depending on load. It lets the user tune and observe real-world unpredictability.
+
+7.1  Job Arrival Randomizer
+•	Auto-Arrive toggle — when enabled, the system automatically generates and submits webhook events at random intervals.
+•	Arrival Rate slider — sets the average number of jobs per minute (1–20), displayed as 'Poisson λ = N jobs/min'.
+•	Burst Probability slider — likelihood (0–50%) of a sudden burst of 5–10 jobs arriving simultaneously.
+•	Language Distribution sliders — set the percentage split of incoming job languages (e.g., 40% Python, 30% Node.js, 20% Java, 10% Go); must total 100%.
+•	Priority Distribution sliders — set the percentage of HIGH / MEDIUM / LOW priority jobs arriving.
+
+7.2  Worker Behavior Randomizer
+•	Job Duration Range sliders — min and max simulated execution time (e.g., 5s–60s); each job randomly gets a duration in this range.
+•	Failure Rate slider — percentage of jobs that will randomly fail (0–30%).
+•	Worker Slowdown toggle — randomly makes one worker slow (2× execution time) every few minutes to simulate degraded hardware.
+•	Worker Crash Simulation — button that temporarily takes a random worker offline for 15–30 seconds; lets you observe how the scheduler and queue react.
+•	Worker Recovery — crashed worker automatically comes back; a recovery event is logged in the assignment decision log.
+
+7.3  Queue Chaos Controls
+•	Priority Inversion toggle — randomly elevates a LOW priority job to HIGH to simulate emergency hotfixes.
+•	Duplicate Job Injection — randomly submits the same job twice to test deduplication logic.
+•	Stale Job Timeout slider — automatically fails jobs that have been in queue longer than N seconds.
+
+7.4  Live Randomness Event Log
+A dedicated log panel that records every random event the simulation generates:
+
+UI Component / Panel	What It Displays	Key Controls & Actions
+Event Feed	Timestamp, event type (burst arrival, worker crash, job failure, priority inversion, duplicate detected), affected job/worker IDs	Filter by event type, export log
+Probability Scoreboard	Shows actual vs configured rates in real time — e.g., 'Configured failure rate: 10%, Actual so far: 12.4%'	Reset stats
+Chaos Intensity Meter	A 0–100% dial summarizing how much randomness is currently active across all sliders	One-click Calm Mode (sets all randomness to 0) or Chaos Mode (sets all to maximum)
+
+ 
+SECTION 8 — GLOBAL UI ELEMENTS & CROSS-CUTTING CONCERNS
+
+8. Global UI Elements
+
+8.1  Top Navigation Bar
+•	System title and version on the left.
+•	Global system health badge — HEALTHY (all workers running, queue normal), DEGRADED (worker down or queue high), CRITICAL (multiple workers down).
+•	ngrok URL quick-input — always accessible without scrolling to the Webhook Panel.
+•	Global Refresh Rate toggle — AUTO (2s), SLOW (10s), or MANUAL (click to refresh).
+•	Simulation Speed multiplier — 1× (real-time), 2×, 5× to fast-forward demos.
+•	Reset All Simulation button (red, in top-right) — clears queue, resets workers, zeroes counters.
+
+8.2  Left Sidebar — Always Visible
+•	Mini worker status pills — 4 colored dots, one per worker, showing IDLE / RUNNING / CRASHED at a glance.
+•	Queue depth counter — large number showing current jobs waiting.
+•	Last webhook received — timestamp of most recent webhook event.
+•	Quick Trigger button — fires a default simulated webhook without opening the full form.
+•	Section navigation links — jump to any of the 6 main sections.
+
+8.3  System-Wide Notification Toast Area
+•	Non-blocking toasts appear in bottom-right corner for key events: job failed, worker crashed, queue threshold breached, webhook received, job completed.
+•	Each toast shows event type icon, short message, job/worker ID, and a View button linking to the relevant panel.
+•	Toasts auto-dismiss after 6 seconds; red (error) toasts stay until acknowledged.
+
+8.4  Pipeline Flow Diagram (Persistent)
+A compact horizontal flow diagram pinned between the navigation bar and the main sections, always visible. It shows the live count at each pipeline stage:
+
+Stage	Count Display	Arrow
+GitHub / Webhook Source	Total triggers today	→
+Backend Master	Requests received (per min)	→
+Job Queue	Current depth (live)	→
+Scheduler	Decisions per min	→
+Workers (3–4)	Active / Idle ratio	→
+Completed / Failed	Cumulative totals	—
+This diagram gives a one-glance health summary of the entire system without reading any panel in detail. Numbers in red indicate an anomaly.
+
+8.5  Color Code Reference (Always Visible Footer)
+A small legend row at the page footer defines all status colors used across every panel:
+
+Color	Meaning	Used In
+Green	Healthy / Success / Running	Worker status, job completion, webhook success
+Amber / Yellow	Waiting / Pending / Warning	Queued jobs, scheduler paused, high queue depth
+Red	Error / Failed / Critical	Failed jobs, worker crash, queue overflow, error rate spike
+Blue	Assigned / In Progress / Info	Scheduled jobs, worker assignment, informational toasts
+Gray	Idle / Completed / Inactive	Idle workers, completed jobs, disabled controls
+Purple	Random / Chaos Events	Simulation randomness events, burst arrivals
+
+ 
+SECTION 9 — REQUIREMENT-TO-UI MAPPING SUMMARY
+
+9. Requirement-to-UI Mapping
+The table below confirms that every project requirement is addressed by at least one specific, always-visible frontend component.
+
+Project Requirement	Primary Frontend Panel	Supporting Panels
+1. Webhook Triggers (ngrok / POST API)	Section 2 — Webhook Trigger Panel	Top Nav (ngrok URL), Sidebar (last webhook)
+2. Backend Master Server	Section 3 — Backend Master Control Panel	Pipeline Flow Diagram (master count)
+3. Database / Job Queue	Section 4 — Job Queue & Database Viewer	Sidebar (queue depth), Queue Depth Chart
+4. Pipeline Manager & Scheduler	Section 5 — Pipeline Manager & Scheduler	Pipeline Flow Diagram (scheduler count)
+5. Multi-Worker Execution (language-based)	Section 6 — Worker Fleet Monitor	Section 5 (assignment decision log)
+6. Randomness & Real-World Simulation	Section 7 — Randomness & Simulation Controls	Worker Timeline, Chaos Event Log
+
+ 
+SECTION 10 — FINAL NOTES & IMPLEMENTATION GUIDANCE
+
+10. Implementation Notes
+
+10.1  Technology Recommendations
+•	React (with Vite or Next.js) — for component-based layout and state management.
+•	Recharts or Chart.js — for queue depth chart, worker timeline, and sparklines.
+•	Socket.IO or Server-Sent Events — for real-time push updates from the backend without polling.
+•	TailwindCSS — for rapid layout and color-coded status styling.
+•	React Query or SWR — for polling endpoints that do not support WebSockets.
+
+10.2  API Endpoints the Frontend Consumes
+Endpoint	Method	Used By Panel
+POST /webhook/receive	POST	Webhook Trigger Panel (Simulate button)
+GET /queue/status	GET	Job Queue Panel (live table + metrics)
+GET /workers/list	GET	Worker Fleet Monitor (all 4 cards)
+GET /jobs/:id	GET	Pipeline Stage Visualizer (card detail)
+POST /scheduler/pause	POST	Pipeline Manager (pause scheduler)
+GET /metrics/live	GET	Pipeline Flow Diagram + top nav health badge
+POST /simulation/randomize	POST	Randomness Control Panel
+DELETE /queue/flush	DELETE	Queue Viewer (flush button)
+
+10.3  Key UX Principles to Maintain
+•	Never require page reload — all data updates in place.
+•	Failure is visible immediately — no silent errors.
+•	Every automated action (scheduler pick, worker assignment, random event) generates a log entry the user can see.
+•	Demo-friendly — a first-time viewer should understand the system's state within 30 seconds of looking at the dashboard.
+•	All panels should remain legible with 20+ jobs in the queue and all 4 workers active simultaneously.
+
+End of Document — Jenkins Log Intel System Frontend Specification
+Version 1.0  |  All requirements covered across 7 dedicated panels

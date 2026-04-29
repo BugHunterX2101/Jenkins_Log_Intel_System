@@ -6,7 +6,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import time
 
+import psutil
 from celery import Celery
 
 from app.config import settings
@@ -34,6 +36,10 @@ celery_app.conf.update(
         "worker-load-drift": {
             "task": "app.scheduler.worker_load_drift",
             "schedule": 15.0,
+        },
+        "collect-system-metrics": {
+            "task": "app.scheduler.collect_system_metrics",
+            "schedule": 5.0,
         },
     },
 )
@@ -229,3 +235,80 @@ async def _drift_async() -> dict:
 
     await engine.dispose()
     return {"drifted": len(workers)}
+
+
+@celery_app.task(name="app.scheduler.collect_system_metrics")
+def collect_system_metrics() -> dict:
+    """Periodically collect and store system metrics for real-time dashboard."""
+    return asyncio.run(_collect_metrics_async())
+
+
+async def _collect_metrics_async() -> dict:
+    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import select, func
+    from app.models import SystemMetrics
+    from app.pipeline_models import PipelineRun, RunStatus
+    from app.worker_models import Worker, WorkerStatus
+    from app.services.job_scheduler import get_dashboard_snapshot
+
+    engine  = create_async_engine(settings.DATABASE_URL, echo=False)
+    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    virtual_memory = psutil.virtual_memory()
+    uptime_seconds = int(time.time() - process.create_time())
+    cpu_percent = process.cpu_percent(interval=None)
+
+    async with Session() as session:
+        snapshot = await get_dashboard_snapshot(session)
+
+        # Get worker status
+        worker_result = await session.execute(select(Worker))
+        workers = worker_result.scalars().all()
+        busy_workers = sum(1 for w in workers if w.status == WorkerStatus.BUSY)
+        worker_total = len(workers)
+
+        # Calculate metrics
+        queue_total = sum(len(items) for items in snapshot.values())
+        queue_pressure = queue_total + busy_workers * 2 + len(snapshot.get("FAILED", [])) * 3
+        chaos_intensity = max(0, min(100, int(queue_pressure * 4)))
+
+        if chaos_intensity >= 75:
+            chaos_level = "Critical"
+        elif chaos_intensity >= 45:
+            chaos_level = "High Volatility"
+        elif chaos_intensity >= 20:
+            chaos_level = "Elevated"
+        else:
+            chaos_level = "Normal"
+
+        # Store metric
+        metric = SystemMetrics(
+            uptime_seconds=uptime_seconds,
+            memory_used_bytes=memory_info.rss,
+            memory_total_bytes=virtual_memory.total,
+            cpu_percent=cpu_percent,
+            queue_total=queue_total,
+            busy_workers=busy_workers,
+            worker_total=worker_total,
+            chaos_intensity=chaos_intensity,
+            chaos_level=chaos_level,
+        )
+        session.add(metric)
+        
+        # Clean up old metrics (keep only last 1000)
+        count_result = await session.execute(select(func.count(SystemMetrics.id)))
+        metric_count = count_result.scalar() or 0
+        if metric_count > 1000:
+            delete_result = await session.execute(
+                select(SystemMetrics).order_by(SystemMetrics.timestamp.asc()).limit(metric_count - 1000)
+            )
+            for old_metric in delete_result.scalars().all():
+                await session.delete(old_metric)
+
+        await session.commit()
+
+    await engine.dispose()
+    return {"collected": True, "chaos_intensity": chaos_intensity}

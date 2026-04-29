@@ -1,0 +1,11 @@
+{
+  "name": "jenkins-log-intel-smoke",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test:smoke": "npx playwright test frontend/smoke/smoke.spec.js --project=chromium --reporter=list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

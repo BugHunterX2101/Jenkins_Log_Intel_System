@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Jenkins Log Intel - Webhooks</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#311400",
+                    "inverse-on-surface": "#eff0fa",
+                    "surface-dim": "#d8d9e3",
+                    "tertiary-fixed": "#ffdcc6",
+                    "outline-variant": "#c2c6d6",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#2e3038",
+                    "surface-container-highest": "#e1e2ec",
+                    "surface-tint": "#005ac2",
+                    "background": "#f9f9ff",
+                    "primary-fixed-dim": "#adc6ff",
+                    "outline": "#727785",
+                    "primary-container": "#2170e4",
+                    "on-primary-container": "#fefcff",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-container": "#ecedf7",
+                    "primary": "#0058be",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e6e7f2",
+                    "secondary": "#505f76",
+                    "on-tertiary": "#ffffff",
+                    "surface-variant": "#e1e2ec",
+                    "on-surface-variant": "#424754",
+                    "tertiary": "#924700",
+                    "secondary-container": "#d0e1fb",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-tertiary-container": "#fffbff",
+                    "surface-bright": "#f9f9ff",
+                    "on-secondary-fixed": "#0b1c30",
+                    "on-secondary-container": "#54647a",
+                    "primary-fixed": "#d8e2ff",
+                    "tertiary-container": "#b75b00",
+                    "on-primary-fixed": "#001a42",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-background": "#191b23",
+                    "inverse-primary": "#adc6ff",
+                    "on-surface": "#191b23",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "surface-container-low": "#f2f3fd",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "surface": "#f9f9ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "gutter": "20px",
+                    "md": "16px",
+                    "sm": "8px",
+                    "xl": "40px",
+                    "unit": "4px",
+                    "lg": "24px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "code-sm": ["monospace"]
+            },
+            "fontSize": {
+                    "headline-sm": ["18px", {"lineHeight": "26px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "code-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Ambient shadows and utilities */
+        .ambient-shadow { box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.02); }
+        .hover-lift:hover { box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.05); transform: translateY(-1px); transition: all 0.2s ease; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopNavBar -->
+<nav class="bg-white dark:bg-slate-900 font-sans text-sm font-medium tracking-tight docked full-width top-0 border-b border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16">
+<div class="flex items-center gap-6">
+<span class="text-lg font-bold tracking-tighter text-slate-900 dark:text-white">Jenkins Log Intel</span>
+<div class="hidden md:flex items-center gap-6 pt-4">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors cursor-pointer active:opacity-80" href="#">Dashboard</a>
+<a class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 pb-4 mt-4 cursor-pointer active:opacity-80" href="#">Webhooks</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors cursor-pointer active:opacity-80" href="#">Console</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors cursor-pointer active:opacity-80" href="#">Explorer</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors cursor-pointer active:opacity-80" href="#">Scheduler</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Refresh System</button>
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all p-2 rounded-full cursor-pointer active:opacity-80"><span class="material-symbols-outlined">health_and_safety</span></button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all p-2 rounded-full cursor-pointer active:opacity-80"><span class="material-symbols-outlined">cloud_sync</span></button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all p-2 rounded-full cursor-pointer active:opacity-80"><span class="material-symbols-outlined">settings</span></button>
+<img alt="User profile" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="Professional headshot of a person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlG8Pim3wbLASXLqp-CimY8vDZVM-ldh0tT8sTHh7IfK3mPGCaBHbKDO7NJIZTfgHw0PocOXA73_sKjaSTWhCi_ngSGaz8uGN8hdELyT7k2v767Whg0QuZt4r7sC57AKUklcMpfrVfy9gwWEQFPuqRY0BIOlzUlc_k5oVuUfwsm9QOzW42VTYz1zfj-CccbEuoazNl_xEkte09a1bSygQN5Cuy2VIQeInE1kCDOsEjhdR9wje7UMhpMKncoiQJtE5mMy7oWZ06BeU"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="bg-slate-50 dark:bg-slate-950 font-sans text-xs uppercase tracking-widest font-semibold docked left-0 h-full w-64 border-r border-r border-slate-200 dark:border-slate-800 flat no shadows fixed left-0 top-16 h-[calc(100vh-64px)] w-64 z-40 flex flex-col pt-4 hidden md:flex">
+<div class="px-6 pb-6 border-b border-surface-variant mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary-container text-on-primary-container flex items-center justify-center font-bold">SYS</div>
+<div>
+<div class="font-label-md text-label-md text-on-surface">System Health</div>
+<div class="text-[10px] text-primary mt-1 lowercase tracking-normal">ngrok: running</div>
+</div>
+</div>
+<button class="w-full mt-4 bg-white border border-outline-variant text-on-surface hover:bg-slate-200 dark:hover:bg-slate-800 py-2 rounded transition-all duration-150 ease-in-out font-label-md text-label-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">bolt</span> Quick Actions
+            </button>
+</div>
+<nav class="flex-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">dashboard</span> Overview</a>
+<a class="flex items-center gap-3 px-4 py-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-r-4 border-blue-600 transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">settings_ethernet</span> Webhooks</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">terminal</span> Backend</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">database</span> Queue</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">calendar_today</span> Scheduler</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">engineering</span> Workers</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">precision_manufacturing</span> Simulation</a>
+</nav>
+<div class="mt-auto border-t border-surface-variant pt-2 pb-4">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">settings</span> Settings</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors transition-all duration-150 ease-in-out" href="#"><span class="material-symbols-outlined">list_alt</span> Logs</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-16 p-lg min-h-screen">
+<!-- Header -->
+<header class="mb-lg flex justify-between items-end">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Webhook Control Panel</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-sm">Configure routing endpoints and simulate payload bursts for ingestion testing.</p>
+</div>
+</header>
+<!-- Configuration Bar -->
+<section class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md mb-lg ambient-shadow flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+<div class="flex-1 flex flex-col gap-sm w-full">
+<label class="font-label-md text-label-md text-on-surface-variant flex justify-between">
+                    Endpoint URL (ngrok)
+                    <span class="text-primary-container flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-container"></span> CONNECTED</span>
+</label>
+<div class="flex flex-col sm:flex-row gap-sm w-full">
+<div class="relative flex-1">
+<span class="absolute left-3 top-2.5 material-symbols-outlined text-outline" style="font-size: 20px;">link</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="https://a1b2-3c4d.ngrok.io/github-webhook/"/>
+</div>
+<button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded font-label-md text-label-md text-on-surface flex items-center justify-center gap-2 transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span> Copy URL
+                    </button>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-sm w-full">
+<label class="font-label-md text-label-md text-on-surface-variant">Webhook Secret</label>
+<div class="flex gap-sm w-full">
+<div class="relative flex-1">
+<span class="absolute left-3 top-2.5 material-symbols-outlined text-outline" style="font-size: 20px;">key</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="password" value="super_secret_token_99"/>
+</div>
+<button class="px-3 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded text-on-surface transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Bento Grid: Form & Payload -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg mb-lg">
+<!-- Left: Simulated Trigger Form (8 cols) -->
+<section class="lg:col-span-8 bg-surface-container-lowest border border-surface-variant rounded-xl p-lg ambient-shadow flex flex-col h-full">
+<div class="flex justify-between items-center mb-md pb-sm border-b border-surface-variant">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">rocket_launch</span> Simulated Payload Generator
+                    </h2>
+<div class="flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant">
+<span class="font-label-md text-label-md text-on-surface-variant">Burst Mode</span>
+<div class="w-8 h-4 bg-outline-variant rounded-full relative cursor-pointer">
+<div class="w-3 h-3 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-lg">
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Repository</label>
+<select class="w-full px-3 py-2 bg-surface border border-outline-variant rounded font-body-md text-body-md text-on-surface focus:border-primary outline-none appearance-none">
+<option>jenkins-core/pipeline-engine</option>
+<option>frontend/ui-components</option>
+<option>backend/auth-service</option>
+</select>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Event Type</label>
+<select class="w-full px-3 py-2 bg-surface border border-outline-variant rounded font-body-md text-body-md text-on-surface focus:border-primary outline-none appearance-none">
+<option>push</option>
+<option>pull_request</option>
+<option>release</option>
+<option>workflow_dispatch</option>
+</select>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Branch</label>
+<input class="w-full px-3 py-2 bg-surface border border-outline-variant rounded font-body-md text-body-md text-on-surface focus:border-primary outline-none" type="text" value="feature/log-streaming"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Commit SHA (Short)</label>
+<input class="w-full px-3 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary outline-none" type="text" value="a1b2c3d"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Author / Committer</label>
+<input class="w-full px-3 py-2 bg-surface border border-outline-variant rounded font-body-md text-body-md text-on-surface focus:border-primary outline-none" type="text" value="devops-bot"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Primary Language</label>
+<select class="w-full px-3 py-2 bg-surface border border-outline-variant rounded font-body-md text-body-md text-on-surface focus:border-primary outline-none appearance-none">
+<option>Python</option>
+<option>Node.js</option>
+<option>Go</option>
+<option>Java</option>
+</select>
+</div>
+</div>
+<div class="mt-auto pt-md border-t border-surface-variant flex justify-end gap-sm">
+<button class="px-6 py-2 bg-surface text-on-surface border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container transition-colors">Reset Defaults</button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-surface-tint shadow-sm transition-all flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 18px;">send</span> Trigger Webhook
+                    </button>
+</div>
+</section>
+<!-- Right: Raw Payload Viewer (4 cols) -->
+<section class="lg:col-span-4 bg-inverse-surface rounded-xl overflow-hidden flex flex-col h-full ambient-shadow">
+<div class="px-md py-sm bg-[#1e2026] border-b border-[#3f424e] flex justify-between items-center">
+<span class="font-label-md text-label-md text-inverse-on-surface tracking-wider">RAW PAYLOAD (JSON)</span>
+<button class="text-[#a1a3b1] hover:text-white transition-colors"><span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span></button>
+</div>
+<div class="p-md flex-1 overflow-y-auto">
+<pre class="font-code-sm text-code-sm text-[#d4d6e0] leading-relaxed">{
+  "ref": "refs/heads/feature/log-streaming",
+  "before": "9049f1265b7d61be4a",
+  "after": "a1b2c3d4e5f6g7h8i9",
+  "repository": {
+    "name": "pipeline-engine",
+    "full_name": "jenkins-core/pipeline-engine",
+    "private": true,
+    "owner": {
+      "login": "jenkins-core"
+    }
+  },
+  "pusher": {
+    "name": "devops-bot",
+    "email": "bot@jenkins.io"
+  },
+  "commits": [
+    {
+      "id": "a1b2c3d4e5f6g7h8i9",
+      "message": "feat: async log ingestion",
+      "timestamp": "2023-10-27T10:00:00Z"
+    }
+  ]
+}
+</pre>
+</div>
+</section>
+</div>
+<!-- Live Webhook Event Log -->
+<section class="bg-surface-container-lowest border border-surface-variant rounded-xl ambient-shadow overflow-hidden">
+<div class="px-md py-sm border-b border-surface-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Live Event Stream</h3>
+<div class="flex items-center gap-2">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Listening</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-surface-variant">
+<th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Timestamp</th>
+<th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Event</th>
+<th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Repository</th>
+<th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Delivery ID</th>
+<th class="px-md py-sm font-label-md text-label-md text-on-surface-variant text-right">Status</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="border-b border-surface-variant hover:bg-surface-container-lowest transition-colors group">
+<td class="px-md py-sm text-on-surface-variant font-code-sm text-code-sm">10:42:05.112</td>
+<td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs border border-outline-variant">push</span></td>
+<td class="px-md py-sm">jenkins-core/pipeline-engine</td>
+<td class="px-md py-sm font-code-sm text-code-sm text-on-surface-variant">del_1a2b3c</td>
+<td class="px-md py-sm text-right">
+<span class="inline-flex items-center gap-1 bg-[#e6f4ea] text-[#137333] px-2 py-0.5 rounded-full text-xs font-semibold">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> 200 OK
+                                </span>
+</td>
+</tr>
+<tr class="border-b border-surface-variant hover:bg-surface-container-lowest transition-colors group">
+<td class="px-md py-sm text-on-surface-variant font-code-sm text-code-sm">10:38:22.004</td>
+<td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs border border-outline-variant">pull_request</span></td>
+<td class="px-md py-sm">frontend/ui-components</td>
+<td class="px-md py-sm font-code-sm text-code-sm text-on-surface-variant">del_9x8y7z</td>
+<td class="px-md py-sm text-right">
+<span class="inline-flex items-center gap-1 bg-[#e6f4ea] text-[#137333] px-2 py-0.5 rounded-full text-xs font-semibold">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> 200 OK
+                                </span>
+</td>
+</tr>
+<tr class="border-b border-surface-variant hover:bg-surface-container-lowest transition-colors group">
+<td class="px-md py-sm text-on-surface-variant font-code-sm text-code-sm">10:15:01.991</td>
+<td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs border border-outline-variant">push</span></td>
+<td class="px-md py-sm">backend/auth-service</td>
+<td class="px-md py-sm font-code-sm text-code-sm text-on-surface-variant">del_4m5n6o</td>
+<td class="px-md py-sm text-right">
+<span class="inline-flex items-center gap-1 bg-error-container text-on-error-container px-2 py-0.5 rounded-full text-xs font-semibold">
+<span class="material-symbols-outlined" style="font-size: 14px;">error</span> 502 Bad Gateway
+                                </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-md py-sm text-on-surface-variant font-code-sm text-code-sm">09:55:12.443</td>
+<td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs border border-outline-variant">workflow_dispatch</span></td>
+<td class="px-md py-sm">jenkins-core/pipeline-engine</td>
+<td class="px-md py-sm font-code-sm text-code-sm text-on-surface-variant">del_7p8q9r</td>
+<td class="px-md py-sm text-right">
+<span class="inline-flex items-center gap-1 bg-[#e6f4ea] text-[#137333] px-2 py-0.5 rounded-full text-xs font-semibold">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> 202 Accepted
+                                </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</body></html>

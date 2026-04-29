@@ -37,14 +37,24 @@ async def lifespan(app: FastAPI):
 
         engine  = create_async_engine(settings.DATABASE_URL, echo=False)
         Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        from sqlalchemy import text
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             # Add current_job column if it doesn't exist yet (existing DBs)
-            await conn.execute(
-                __import__("sqlalchemy", fromlist=["text"]).text(
-                    "ALTER TABLE workers ADD COLUMN IF NOT EXISTS current_job VARCHAR(256)"
-                )
-            )
+            await conn.execute(text(
+                "ALTER TABLE workers ADD COLUMN IF NOT EXISTS current_job VARCHAR(256)"
+            ))
+            # Backfill current_job for workers that were BUSY before the column existed
+            await conn.execute(text("""
+                UPDATE workers w
+                SET current_job = pr.jenkins_job_name
+                FROM worker_assignments wa
+                JOIN pipeline_runs pr ON pr.id = wa.run_id
+                WHERE wa.worker_id = w.id
+                  AND w.status = 'BUSY'
+                  AND w.current_job IS NULL
+                  AND wa.completed_at IS NULL
+            """))
         async with Session() as session:
             await seed_workers(session)
         await engine.dispose()
@@ -68,6 +78,8 @@ app = FastAPI(
 
 app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="frontend-assets")
 
+
+# ── HTML page routes (must be registered BEFORE API routers to avoid conflicts) ──
 
 @app.get("/", include_in_schema=False)
 async def frontend_index() -> FileResponse:
@@ -104,17 +116,19 @@ async def frontend_webhooks() -> FileResponse:
     return _serve_page("webhooks.html")
 
 
+@app.get("/workers", include_in_schema=False)
+@app.get("/workers.html", include_in_schema=False)
+async def frontend_workers() -> FileResponse:
+    return _serve_page("workers.html")
+
+
+# ── API routers ──
+
 app.include_router(webhook.router)
 app.include_router(github_webhook.router)
 app.include_router(jobs.router)
 app.include_router(workers.router)
 app.include_router(ui.router)
-
-
-@app.get("/workers", include_in_schema=False)
-@app.get("/workers.html", include_in_schema=False)
-async def frontend_workers() -> FileResponse:
-    return _serve_page("workers.html")
 
 
 @app.get("/health")

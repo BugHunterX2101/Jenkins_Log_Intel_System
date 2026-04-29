@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Jenkins Log Intel - Simulation Control Panel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#311400",
+                        "inverse-on-surface": "#eff0fa",
+                        "surface-dim": "#d8d9e3",
+                        "tertiary-fixed": "#ffdcc6",
+                        "outline-variant": "#c2c6d6",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#2e3038",
+                        "surface-container-highest": "#e1e2ec",
+                        "surface-tint": "#005ac2",
+                        "background": "#f9f9ff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "outline": "#727785",
+                        "primary-container": "#2170e4",
+                        "on-primary-container": "#fefcff",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#d3e4fe",
+                        "surface-container": "#ecedf7",
+                        "primary": "#0058be",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e6e7f2",
+                        "secondary": "#505f76",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e1e2ec",
+                        "on-surface-variant": "#424754",
+                        "tertiary": "#924700",
+                        "secondary-container": "#d0e1fb",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-bright": "#f9f9ff",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-secondary-container": "#54647a",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-container": "#b75b00",
+                        "on-primary-fixed": "#001a42",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-background": "#191b23",
+                        "inverse-primary": "#adc6ff",
+                        "on-surface": "#191b23",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "surface-container-low": "#f2f3fd",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "surface": "#f9f9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "gutter": "20px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "xl": "40px",
+                        "unit": "4px",
+                        "lg": "24px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "code-sm": ["monospace"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "code-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .fill-icon { font-variation-settings: 'FILL' 1; }
+        /* Custom range slider styling */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #0058be; cursor: pointer; margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #c2c6d6; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none">
+<div class="flex items-center gap-4">
+<span class="text-lg font-bold tracking-tighter text-slate-900 dark:text-white">Jenkins Log Intel</span>
+</div>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors font-sans text-sm font-medium tracking-tight" href="/">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors font-sans text-sm font-medium tracking-tight" href="/webhooks">Webhooks</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors font-sans text-sm font-medium tracking-tight" href="/backend">Console</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors font-sans text-sm font-medium tracking-tight" href="/explorer">Explorer</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors font-sans text-sm font-medium tracking-tight" href="/scheduler">Scheduler</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-4 py-2 bg-slate-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-sans text-sm font-medium tracking-tight rounded-DEFAULT hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer active:opacity-80">Refresh System</button>
+<div class="flex gap-2">
+<button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80 text-blue-600 dark:text-blue-400"><span class="material-symbols-outlined">health_and_safety</span></button>
+<button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80 text-blue-600 dark:text-blue-400"><span class="material-symbols-outlined">cloud_sync</span></button>
+<button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80 text-blue-600 dark:text-blue-400"><span class="material-symbols-outlined">settings</span></button>
+</div>
+<img alt="User profile" class="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800" data-alt="Corporate headshot of a user in a professional setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtdZlMFzmydo_uQh1YyaQzUaVJHRThOgE9xP_orru_k8GSdCTT9NfsiMANBGPATXwcCcTie14po9qLuva6FscYbqNGo55hc4dNwgIO56aMJuGJHAXyNbjbR9muripRmArejGFDjW-6tgnfQ_-TsbB-3FZxDLqa-cIHHhN3vM_vqgsu3a7M-4IWXhjPDss9YabHNSGRhEC8Uai4CDc4WAmSNSLS3eDwd9B7nGbbhC_YsZWn6121c_9hRnZkD4MMHr3cn2OiwWO1j5g"/>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 z-40 flex flex-col pt-4 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800">
+<div class="px-4 pb-6 border-b border-slate-200 dark:border-slate-800 mb-4">
+<div class="flex items-center gap-3">
+<img alt="System Status Avatar" class="w-10 h-10 rounded-full" data-alt="Abstract generic avatar representing an AI or system entity in blue tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtjHQrVgJ7HP3flmPihWH_ff9SfidPUweBaripj0qJ7eIw_5azgO1ef7gvatgPMzDQ0WEzZXgVAor20sVUlA9zsbiNQgd091DS4T4ctEw5TLvE0OxRZtaWpegajh8br7kAo599eWz0jknkeHqEckKxy4g5ycyQ0d-lUpIFZJM909FVEQdCrrmXOSJP8WuyBsIK-DUhwBdpQ4u5MaAc4IQjU3RjwmFdxHzrU-j_K780Ex0QijIqXlG6Vp6nI1z0qn-4Q7ynYgPn740"/>
+<div>
+<div class="font-sans text-sm font-semibold text-slate-900 dark:text-white">System Health</div>
+<div class="font-sans text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> ngrok: running</div>
+</div>
+</div>
+<button class="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-sans text-xs uppercase tracking-widest font-semibold rounded-DEFAULT transition-all duration-150 ease-in-out">Quick Actions</button>
+</div>
+<nav class="flex-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors font-sans text-xs uppercase tracking-widest font-semibold" href="/">
+<span class="material-symbols-outlined">dashboard</span> Overview
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors font-sans text-xs uppercase tracking-widest font-semibold" href="/webhooks">
+<span class="material-symbols-outlined">settings_ethernet</span> Webhooks
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors font-sans text-xs uppercase tracking-widest font-semibold" href="/backend">
+<span class="material-symbols-outlined">terminal</span> Backend
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors font-sans text-xs uppercase tracking-widest font-semibold" href="/queue">
+<span class="material-symbols-outlined">database</span> Queue
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors font-sans text-xs uppercase tracking-widest font-semibold" href="/scheduler">
+<span class="material-symbols-outlined">calendar_today</span> Scheduler
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors font-sans text-xs uppercase tracking-widest font-semibold" href="/workers">
+<span class="material-symbols-outlined">engineering</span> Workers
+            </a>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-4 py-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-r-4 border-blue-600 font-sans text-xs uppercase tracking-widest font-semibold" href="/simulation">
+<span class="material-symbols-outlined fill-icon">precision_manufacturing</span> Simulation
+            </a>
+</nav>
+<div class="border-t border-slate-200 dark:border-slate-800 mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors font-sans text-xs uppercase tracking-widest font-semibold" href="/settings">
+<span class="material-symbols-outlined">settings</span> Settings
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors font-sans text-xs uppercase tracking-widest font-semibold" href="/logs">
+<span class="material-symbols-outlined">list_alt</span> Logs
+            </a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-64 pt-16 min-h-screen p-lg">
+<header class="mb-lg">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Simulation Control Panel</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Manage system randomness, induce chaos, and test resilience.</p>
+</header>
+<div class="grid grid-cols-12 gap-lg">
+<!-- Chaos Intensity Meter (4 cols) -->
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-5 bg-gradient-to-tr from-error to-transparent"></div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface self-start w-full mb-md flex justify-between">
+                    Chaos Intensity Meter
+                    <span class="material-symbols-outlined text-error">warning</span>
+</h2>
+<div class="relative w-48 h-48 flex items-center justify-center mt-md">
+<!-- Faux Dial -->
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="45" stroke="#e1e2ec" stroke-dasharray="283" stroke-dashoffset="0" stroke-width="8"></circle>
+<circle class="transition-all duration-1000" cx="50" cy="50" fill="none" r="45" stroke="#ba1a1a" stroke-dasharray="283" stroke-dashoffset="100" stroke-width="8"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span data-ui="chaos-intensity" class="font-headline-lg text-headline-lg text-error">65%</span>
+<span data-ui="chaos-level" class="font-label-md text-label-md text-on-surface-variant uppercase mt-1">High Volatility</span>
+</div>
+</div>
+</div>
+<!-- Job Arrival Randomizer (4 cols) -->
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm flex flex-col">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-md">
+<span class="material-symbols-outlined text-primary">dynamic_feed</span> Job Arrival Randomizer
+                </h2>
+<div class="flex items-center justify-between mb-lg p-sm bg-surface-container rounded-lg">
+<span class="font-body-md text-body-md text-on-surface font-semibold">Auto-Arrive</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="mb-lg">
+<div class="flex justify-between mb-sm">
+<label class="font-label-md text-label-md text-on-surface-variant">Arrival Rate (Poisson λ)</label>
+<span data-ui="arrival-rate" class="font-code-sm text-code-sm text-primary">42 req/s</span>
+ </div>
+<input data-ui="arrival-rate-input" class="w-full" max="100" min="1" type="range" value="42"/>
+ </div>
+<div class="mb-md">
+<div class="flex justify-between mb-sm">
+<label class="font-label-md text-label-md text-on-surface-variant">Burst Probability</label>
+<span data-ui="burst-prob" class="font-code-sm text-code-sm text-primary">15%</span>
+ </div>
+<input data-ui="burst-prob-input" class="w-full" max="100" min="0" type="range" value="15"/>
+ </div>
+</div>
+<!-- Autonomous Pipeline Triggers (4 cols) -->
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm flex flex-col">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-md">
+<span class="material-symbols-outlined text-primary">smart_toy</span> Trigger Pipeline
+                </h2>
+<div class="space-y-sm flex flex-col">
+<button onclick="triggerJenkinsFailure()" class="w-full bg-error text-on-error font-body-md text-body-md font-semibold py-sm rounded-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-sm cursor-pointer">
+<span class="material-symbols-outlined">error</span> Jenkins Failure
+                    </button>
+<button onclick="triggerGitHubPush()" class="w-full bg-secondary-container text-on-secondary-container font-body-md text-body-md font-semibold py-sm rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-sm cursor-pointer">
+<span class="material-symbols-outlined">cloud_download</span> GitHub Push
+                    </button>
+<div class="mt-md pt-md border-t border-surface-variant">
+<div class="text-xs text-on-surface-variant mb-md">Pipeline Status:</div>
+<div id="pipeline-status" data-ui="pipeline-status" class="text-sm font-semibold text-primary bg-primary-fixed rounded p-sm">Ready</div>
+<div id="pipeline-log" data-ui="pipeline-log" class="mt-md text-xs text-on-surface-variant max-h-32 overflow-y-auto space-y-1 bg-surface-container-low p-sm rounded border border-outline-variant"></div>
+</div>
+</div>
+</div>
+<!-- Worker Behavior Randomizer (4 cols) -->
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm flex flex-col">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-md">
+<span class="material-symbols-outlined text-primary">psychology</span> Worker Behavior
+                </h2>
+<div class="mb-lg grid grid-cols-2 gap-sm">
+<div>
+<label class="font-label-md text-label-md text-on-surface-variant block mb-1">Min Duration (ms)</label>
+<input data-ui="simulation-min-duration" class="w-full border border-outline-variant rounded-DEFAULT px-2 py-1 font-code-sm text-code-sm text-on-surface focus:outline-none focus:border-primary" type="number" value="100"/>
+</div>
+<div>
+<label class="font-label-md text-label-md text-on-surface-variant block mb-1">Max Duration (ms)</label>
+<input data-ui="simulation-max-duration" class="w-full border border-outline-variant rounded-DEFAULT px-2 py-1 font-code-sm text-code-sm text-on-surface focus:outline-none focus:border-primary" type="number" value="5000"/>
+</div>
+</div>
+<div class="mb-lg">
+<div class="flex justify-between mb-sm">
+<label class="font-label-md text-label-md text-on-surface-variant">Inherent Failure Rate</label>
+<span data-ui="simulation-failure-rate" class="font-code-sm text-code-sm text-error">5%</span>
+</div>
+<input data-ui="simulation-failure-rate-input" class="w-full" max="100" min="0" type="range" value="5"/>
+</div>
+<div class="mt-auto pt-md border-t border-surface-variant">
+<button class="w-full bg-error text-on-error font-body-md text-body-md font-semibold py-sm rounded-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-sm">
+<span class="material-symbols-outlined">explosion</span> Simulate Global Crash
+                    </button>
+</div>
+</div>
+<!-- Queue Chaos Controls (4 cols) -->
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-md">
+<span class="material-symbols-outlined text-primary">shuffle</span> Queue Chaos
+                </h2>
+<div class="space-y-sm">
+<label class="flex items-center justify-between p-sm hover:bg-surface-container rounded-DEFAULT cursor-pointer transition-colors border border-transparent hover:border-outline-variant">
+<div>
+<div class="font-body-md text-body-md text-on-surface font-semibold">Priority Inversion</div>
+<div class="font-label-md text-label-md text-on-surface-variant font-normal">Randomly swap high/low priority jobs</div>
+</div>
+<input class="w-5 h-5 text-primary border-outline-variant rounded focus:ring-primary focus:ring-2" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-sm hover:bg-surface-container rounded-DEFAULT cursor-pointer transition-colors border border-transparent hover:border-outline-variant">
+<div>
+<div class="font-body-md text-body-md text-on-surface font-semibold">Duplicate Injection</div>
+<div class="font-label-md text-label-md text-on-surface-variant font-normal">Spawn shadow copies of active jobs</div>
+</div>
+<input checked="" class="w-5 h-5 text-primary border-outline-variant rounded focus:ring-primary focus:ring-2" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Live Randomness Event Log (8 cols) -->
+<div class="col-span-12 md:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-0 shadow-sm overflow-hidden flex flex-col">
+<div class="p-md border-b border-surface-variant flex justify-between items-center bg-surface-bright">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">receipt_long</span> Live Event Log
+                    </h2>
+<span class="px-2 py-1 bg-surface-container-high rounded font-label-md text-label-md text-on-surface-variant animate-pulse flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Live
+                    </span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-surface-variant">
+<th class="p-sm font-label-md text-label-md text-on-surface-variant uppercase">Timestamp</th>
+<th class="p-sm font-label-md text-label-md text-on-surface-variant uppercase">Event Type</th>
+<th class="p-sm font-label-md text-label-md text-on-surface-variant uppercase">Target ID</th>
+<th class="p-sm font-label-md text-label-md text-on-surface-variant uppercase">Details</th>
+</tr>
+</thead>
+<tbody data-ui="simulation-live-log" class="font-code-sm text-code-sm text-on-surface divide-y divide-surface-variant">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-sm text-on-surface-variant whitespace-nowrap">14:02:11.450</td>
+<td class="p-sm"><span class="px-2 py-0.5 bg-error-container text-on-error-container rounded-sm font-semibold">Worker Failure</span></td>
+<td class="p-sm text-primary">wrk-992a</td>
+<td class="p-sm">Simulated timeout exceeded (5012ms)</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-sm text-on-surface-variant whitespace-nowrap">14:02:10.120</td>
+<td class="p-sm"><span class="px-2 py-0.5 bg-tertiary-container text-on-tertiary-container rounded-sm font-semibold">Duplication</span></td>
+<td class="p-sm text-primary">job-441f</td>
+<td class="p-sm">Shadow copy spawned in queue queue-b</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-sm text-on-surface-variant whitespace-nowrap">14:02:08.800</td>
+<td class="p-sm"><span class="px-2 py-0.5 bg-surface-container-high text-on-surface rounded-sm font-semibold">Arrival Burst</span></td>
+<td class="p-sm text-primary">system</td>
+<td class="p-sm">+45 jobs injected across all queues in 100ms</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-sm text-on-surface-variant whitespace-nowrap">14:02:05.330</td>
+<td class="p-sm"><span class="px-2 py-0.5 bg-error-container text-on-error-container rounded-sm font-semibold">Priority Inv</span></td>
+<td class="p-sm text-primary">job-11x, job-99y</td>
+<td class="p-sm">Swapped priority weights (P1 -&gt; P5, P5 -&gt; P1)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- LLM Analysis Panel -->
+<div class="col-span-12 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm mt-md">
+    <div class="flex items-center justify-between mb-md">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">smart_toy</span> LLM Root-Cause Analysis
+        </h2>
+        <button onclick="refreshBuildEvents()" class="px-3 py-1 bg-primary text-on-primary rounded">Refresh</button>
+    </div>
+    <div id="llm-analysis" class="text-sm font-code-sm text-on-surface space-y-3 max-h-56 overflow-y-auto bg-surface-container p-sm rounded border border-outline-variant">
+        <div class="text-on-surface-variant">No analysis yet. Trigger a Jenkins failure to populate.</div>
+    </div>
+</div>
+</div>
+</main>
+<script defer src="assets/app.js"></script>
+</body></html>

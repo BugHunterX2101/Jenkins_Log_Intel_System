@@ -4,7 +4,7 @@ A FastAPI service that intercepts Jenkins build failures, analyses logs with an 
 
 ---
 
-## Architecture
+## Architectur e
 
 ```mermaid
 flowchart TD
@@ -108,13 +108,13 @@ Rules are defined in `rules/classifier_rules.yaml` and evaluated against every l
 pip install -e ".[dev]"
 
 # 2. Configure
-cp .env.example .env   # set JENKINS_URL, DATABASE_URL, REDIS_URL, SLACK_BOT_TOKEN, etc.
+# Edit .env with your Jenkins, database, Redis, Slack, and webhook values.
 
 # 3. Run API
-uvicorn main:app --reload
+uvicorn main:app --reload --port 8001
 
 # 4. Run Celery worker + beat
-celery -A app.scheduler worker --loglevel=info &
+celery -A app.scheduler worker --loglevel=info --pool=solo &
 celery -A app.scheduler beat   --loglevel=info
 
 # 5. Test
@@ -180,7 +180,7 @@ ngrok start --config ngrok.yml --all
 ngrok will display URLs like:
 
 ```
-api -> http://localhost:8000                https://...ngrok-free.app
+api -> http://localhost:8001                https://...ngrok-free.app
 jenkins -> http://localhost:8080            https://...ngrok-free.app
 ```
 
@@ -191,6 +191,10 @@ Use the ngrok URLs in:
 - **External tests**: Call the dashboard at `https://...ngrok-free.app/jobs`
 
 The tunnels stay active as long as the ngrok process runs. Each time you restart ngrok, you get new URLs.
+
+### Slack alert verification
+
+The Slack notifier is wired to `#build-alerts` by default. You can verify it by triggering a Jenkins failure webhook or by calling the notifier directly from the project code.
 
 **Endpoints:**
 

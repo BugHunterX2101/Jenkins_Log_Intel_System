@@ -12,7 +12,7 @@ from app.config import settings
 from app.worker_models import Worker, WorkerAssignment, WorkerStatus
 from app.services.worker_pool import seed_workers, serialise_worker
 
-router = APIRouter(prefix="/workers", tags=["workers"])
+router = APIRouter(prefix="/api/workers", tags=["workers"])
 
 
 def _make_session():

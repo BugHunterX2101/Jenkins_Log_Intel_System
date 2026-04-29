@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Backend Master Control Panel</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#311400",
+                    "inverse-on-surface": "#eff0fa",
+                    "surface-dim": "#d8d9e3",
+                    "tertiary-fixed": "#ffdcc6",
+                    "outline-variant": "#c2c6d6",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#2e3038",
+                    "surface-container-highest": "#e1e2ec",
+                    "surface-tint": "#005ac2",
+                    "background": "#f9f9ff",
+                    "primary-fixed-dim": "#adc6ff",
+                    "outline": "#727785",
+                    "primary-container": "#2170e4",
+                    "on-primary-container": "#fefcff",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-container": "#ecedf7",
+                    "primary": "#0058be",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e6e7f2",
+                    "secondary": "#505f76",
+                    "on-tertiary": "#ffffff",
+                    "surface-variant": "#e1e2ec",
+                    "on-surface-variant": "#424754",
+                    "tertiary": "#924700",
+                    "secondary-container": "#d0e1fb",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-tertiary-container": "#fffbff",
+                    "surface-bright": "#f9f9ff",
+                    "on-secondary-fixed": "#0b1c30",
+                    "on-secondary-container": "#54647a",
+                    "primary-fixed": "#d8e2ff",
+                    "tertiary-container": "#b75b00",
+                    "on-primary-fixed": "#001a42",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-background": "#191b23",
+                    "inverse-primary": "#adc6ff",
+                    "on-surface": "#191b23",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "surface-container-low": "#f2f3fd",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "surface": "#f9f9ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "gutter": "20px",
+                    "md": "16px",
+                    "sm": "8px",
+                    "xl": "40px",
+                    "unit": "4px",
+                    "lg": "24px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Inter", "sans-serif"],
+                    "label-md": ["Inter", "sans-serif"],
+                    "headline-md": ["Inter", "sans-serif"],
+                    "headline-lg": ["Inter", "sans-serif"],
+                    "body-lg": ["Inter", "sans-serif"],
+                    "body-md": ["Inter", "sans-serif"],
+                    "code-sm": ["Roboto Mono", "monospace"]
+            },
+            "fontSize": {
+                    "headline-sm": ["18px", {"lineHeight": "26px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "code-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Roboto+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { background-color: #F8FAFC; }
+        .ambient-shadow { box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.02); }
+        .ambient-shadow-hover:hover { box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.05); }
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md text-on-surface antialiased bg-surface">
+<!-- TopNavBar -->
+<nav class="bg-white dark:bg-slate-900 shadow-sm dark:shadow-none border-b border-slate-200 dark:border-slate-800 fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 font-sans text-sm font-medium tracking-tight">
+<div class="flex items-center gap-8 h-full">
+<div class="text-lg font-bold tracking-tighter text-slate-900 dark:text-white">Jenkins Log Intel</div>
+<div class="flex items-center gap-6 h-full">
+<!-- Dashboard -->
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/">Dashboard</a>
+<!-- Webhooks -->
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/webhooks">Webhooks</a>
+<!-- Console (Active) -->
+<a class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 pb-4 mt-4 cursor-pointer active:opacity-80 flex h-full items-end" href="/backend" aria-current="page">Console</a>
+<!-- Explorer -->
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/queue">Explorer</a>
+<!-- Scheduler -->
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/scheduler">Scheduler</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-blue-600 dark:text-blue-400 font-sans text-sm font-medium tracking-tight hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80 px-3 py-1 rounded-DEFAULT">Refresh System</button>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 hover:text-slate-900 transition-colors cursor-pointer active:opacity-80" data-icon="health_and_safety">health_and_safety</span>
+<span class="material-symbols-outlined text-slate-500 hover:text-slate-900 transition-colors cursor-pointer active:opacity-80" data-icon="cloud_sync">cloud_sync</span>
+<span class="material-symbols-outlined text-slate-500 hover:text-slate-900 transition-colors cursor-pointer active:opacity-80" data-icon="settings">settings</span>
+</div>
+<img alt="User profile" class="w-8 h-8 rounded-full ml-2 cursor-pointer active:opacity-80" data-alt="Default user avatar profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLAX3iTj3stcULNnKrH37lySHjXPSYifulHs52zOPRYQB19l6g5sSahM6kyxmoL8Q3k9_pBxBMX7rGAVAYe24qK3lybZanr3lJBI696fQY0pg7zEsn2dNCE_5WLw-XE5lYse7Gv4mun6fk9rWliv20AFrkwnb-aW-JAM7anWjIKYBG1-zcRMkmHG3CjSA5W1lmhuZp5oEGXPJ-BMvYycJ7WAs0d_Ce2jEMaKpHzumD2ANOrLrpd4eubjPjrGph--T-T13iKJ1hIgg"/>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 fixed left-0 top-16 h-[calc(100vh-64px)] w-64 z-40 flex flex-col pt-4 font-sans text-xs uppercase tracking-widest font-semibold">
+<div class="px-6 pb-6 border-b border-slate-200 dark:border-slate-800 mb-2">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600">dns</span>
+</div>
+<div>
+<div class="text-slate-900 dark:text-white font-bold normal-case text-sm">System Health</div>
+<div class="text-slate-500 normal-case flex items-center gap-1 mt-0.5">
+<div class="w-2 h-2 rounded-full bg-green-500"></div> ngrok: running
+                    </div>
+</div>
+</div>
+<button class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors duration-150 ease-in-out cursor-pointer active:opacity-80 normal-case font-medium text-sm">Quick Actions</button>
+</div>
+<div class="flex-1 overflow-y-auto py-2 flex flex-col gap-1">
+<!-- Overview -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/">
+<span class="material-symbols-outlined">dashboard</span> Overview
+            </a>
+<!-- Webhooks -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/webhooks">
+<span class="material-symbols-outlined">settings_ethernet</span> Webhooks
+            </a>
+<!-- Backend (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-r-4 border-blue-600 transition-all duration-150 ease-in-out cursor-pointer" href="/backend" aria-current="page">
+<span class="material-symbols-outlined">terminal</span> Backend
+            </a>
+<!-- Queue -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/queue">
+<span class="material-symbols-outlined">database</span> Queue
+            </a>
+<!-- Scheduler -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/scheduler">
+<span class="material-symbols-outlined">calendar_today</span> Scheduler
+            </a>
+<!-- Workers -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/workers">
+<span class="material-symbols-outlined">engineering</span> Workers
+            </a>
+<!-- Simulation -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/simulation">
+<span class="material-symbols-outlined">precision_manufacturing</span> Simulation
+            </a>
+</div>
+<div class="border-t border-slate-200 dark:border-slate-800 py-2">
+<!-- Settings -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/backend#settings">
+<span class="material-symbols-outlined">settings</span> Settings
+            </a>
+<!-- Logs -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/queue#logs">
+<span class="material-symbols-outlined">list_alt</span> Logs
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 p-lg min-h-[calc(100vh-64px)]">
+<!-- Error Spike Alert Bar -->
+<div class="bg-error-container text-on-error-container p-md rounded-xl flex items-center gap-sm mb-lg shadow-sm">
+<span class="material-symbols-outlined text-error font-bold" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div class="flex-1">
+<h3 data-ui="backend-alert-title" class="font-label-md text-label-md">CRITICAL ALERT: ERROR SPIKE DETECTED</h3>
+<p data-ui="backend-alert-copy" class="font-body-md text-body-md opacity-90 mt-1">Live backend status will appear here.</p>
+</div>
+<button class="px-4 py-2 bg-on-error-container text-error-container font-label-md text-label-md rounded-lg hover:opacity-90 transition-opacity">View Logs</button>
+</div>
+<!-- Top Bento Grid -->
+<div class="grid grid-cols-12 gap-lg mb-lg">
+<!-- Master Server Status Card -->
+<div class="col-span-12 lg:col-span-5 bg-surface-container-lowest border border-outline-variant rounded-xl p-md ambient-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-lg">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Master Server Status</h2>
+<div data-ui="backend-status" class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-on-primary-container pulse-dot"></div>
+                            RUNNING
+                        </div>
+</div>
+<div class="grid grid-cols-2 gap-md mb-lg">
+<div>
+<p class="font-body-md text-body-md text-outline mb-1">Uptime</p>
+<p data-ui="backend-uptime" class="font-headline-sm text-headline-sm text-on-surface">14d 08h 22m</p>
+</div>
+<div>
+<p class="font-body-md text-body-md text-outline mb-1">Technology</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">javascript</span>
+<p data-ui="backend-technology" class="font-headline-sm text-headline-sm text-on-surface">FastAPI / Python</p>
+</div>
+</div>
+<div>
+<p class="font-body-md text-body-md text-outline mb-1">Active Port</p>
+<p data-ui="backend-port" class="font-headline-sm text-headline-sm text-on-surface font-code-sm text-code-sm">5000</p>
+</div>
+<div>
+<p class="font-body-md text-body-md text-outline mb-1">Memory Usage</p>
+<p data-ui="backend-memory" class="font-headline-sm text-headline-sm text-on-surface">1.2 GB <span class="text-outline font-body-md text-body-md">/ 4 GB</span></p>
+<div class="w-full bg-surface-container h-2 rounded-full mt-2 overflow-hidden">
+<div id="backend-memory-bar" class="bg-primary h-full w-[30%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-sm pt-md border-t border-surface-container-highest">
+<button class="flex-1 flex items-center justify-center gap-2 py-2 bg-surface-container border border-outline-variant text-outline rounded-lg font-label-md text-label-md hover:bg-surface-variant transition-colors cursor-not-allowed opacity-50">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span> Start
+                    </button>
+<button class="flex-1 flex items-center justify-center gap-2 py-2 bg-surface-container border border-outline-variant text-on-surface-variant rounded-lg font-label-md text-label-md hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pause</span> Pause
+                    </button>
+<button class="flex-1 flex items-center justify-center gap-2 py-2 bg-error-container text-on-error-container rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stop</span> Stop
+                    </button>
+</div>
+</div>
+<!-- Endpoint Health Monitor -->
+<div class="col-span-12 lg:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-xl p-md ambient-shadow flex flex-col">
+<div class="flex items-center justify-between mb-md pb-md border-b border-surface-container-highest">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Endpoint Health Monitor</h2>
+<button class="text-primary font-label-md text-label-md hover:underline flex items-center gap-1">
+                        View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="flex-1 overflow-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr>
+<th class="font-label-md text-label-md text-outline pb-sm font-normal">Route</th>
+<th class="font-label-md text-label-md text-outline pb-sm font-normal">Status</th>
+<th class="font-label-md text-label-md text-outline pb-sm font-normal text-right">Avg Latency</th>
+<th class="font-label-md text-label-md text-outline pb-sm font-normal text-right">Error Rate</th>
+</tr>
+</thead>
+<tbody data-ui="backend-endpoint-body" class="divide-y divide-surface-container-highest">
+<tr class="hover:bg-surface-container-low transition-colors ambient-shadow-hover">
+<td class="py-sm font-code-sm text-code-sm text-on-surface">/webhook/receive</td>
+<td class="py-sm">
+<span class="inline-flex items-center gap-1 text-error bg-error-container px-2 py-0.5 rounded font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">warning</span> Degraded
+                                    </span>
+</td>
+<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">452ms</td>
+<td class="py-sm font-code-sm text-code-sm text-error text-right font-bold">14.2%</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors ambient-shadow-hover">
+<td class="py-sm font-code-sm text-code-sm text-on-surface">/api/v1/jobs/sync</td>
+<td class="py-sm">
+<span class="inline-flex items-center gap-1 text-primary bg-primary-container px-2 py-0.5 rounded font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Healthy
+                                    </span>
+</td>
+<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">45ms</td>
+<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">0.1%</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors ambient-shadow-hover">
+<td class="py-sm font-code-sm text-code-sm text-on-surface">/health</td>
+<td class="py-sm">
+<span class="inline-flex items-center gap-1 text-primary bg-primary-container px-2 py-0.5 rounded font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Healthy
+                                    </span>
+</td>
+<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">12ms</td>
+<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">0.0%</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors ambient-shadow-hover">
+<td class="py-sm font-code-sm text-code-sm text-on-surface">/ws/logs/stream</td>
+<td class="py-sm">
+<span class="inline-flex items-center gap-1 text-primary bg-primary-container px-2 py-0.5 rounded font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Healthy
+                                    </span>
+</td>
+<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">28ms</td>
+<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">0.5%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Request Processing Feed -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl ambient-shadow overflow-hidden">
+<div class="p-md border-b border-surface-container-highest flex items-center justify-between bg-surface-container-low/50">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">list_alt</span>
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Live Request Feed</h2>
+</div>
+<div class="flex items-center gap-sm font-code-sm text-code-sm text-outline">
+<div class="w-2 h-2 rounded-full bg-primary pulse-dot"></div>
+                    Streaming
+                </div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-lowest border-b border-surface-container-highest">
+<tr>
+<th class="py-sm px-md font-label-md text-label-md text-outline font-normal w-24">Req ID</th>
+<th class="py-sm px-md font-label-md text-label-md text-outline font-normal w-40">Timestamp</th>
+<th class="py-sm px-md font-label-md text-label-md text-outline font-normal w-24">Method</th>
+<th class="py-sm px-md font-label-md text-label-md text-outline font-normal">Endpoint</th>
+<th class="py-sm px-md font-label-md text-label-md text-outline font-normal w-24 text-right">Status</th>
+</tr>
+</thead>
+<tbody data-ui="backend-request-body" class="divide-y divide-surface-container-highest font-code-sm text-code-sm">
+<tr class="hover:bg-surface-container-low transition-colors bg-error-container/10">
+<td class="py-2 px-md text-outline">#req_89f2</td>
+<td class="py-2 px-md text-on-surface-variant">10:42:15.820 AM</td>
+<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">POST</span></td>
+<td class="py-2 px-md text-on-surface">/webhook/receive</td>
+<td class="py-2 px-md text-right"><span class="text-error font-bold">502</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-md text-outline">#req_89f1</td>
+<td class="py-2 px-md text-on-surface-variant">10:42:14.102 AM</td>
+<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">GET</span></td>
+<td class="py-2 px-md text-on-surface">/api/v1/jobs/sync</td>
+<td class="py-2 px-md text-right"><span class="text-primary">200</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors bg-error-container/10">
+<td class="py-2 px-md text-outline">#req_89f0</td>
+<td class="py-2 px-md text-on-surface-variant">10:42:13.445 AM</td>
+<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">POST</span></td>
+<td class="py-2 px-md text-on-surface">/webhook/receive</td>
+<td class="py-2 px-md text-right"><span class="text-error font-bold">502</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-md text-outline">#req_89ef</td>
+<td class="py-2 px-md text-on-surface-variant">10:42:11.990 AM</td>
+<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">GET</span></td>
+<td class="py-2 px-md text-on-surface">/health</td>
+<td class="py-2 px-md text-right"><span class="text-primary">200</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-md text-outline">#req_89ee</td>
+<td class="py-2 px-md text-on-surface-variant">10:42:10.051 AM</td>
+<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">PUT</span></td>
+<td class="py-2 px-md text-on-surface">/api/v1/config/update</td>
+<td class="py-2 px-md text-right"><span class="text-secondary">204</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-md text-outline">#req_89ed</td>
+<td class="py-2 px-md text-on-surface-variant">10:42:08.772 AM</td>
+<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">GET</span></td>
+<td class="py-2 px-md text-on-surface">/api/v1/jobs/sync</td>
+<td class="py-2 px-md text-right"><span class="text-primary">200</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-sm bg-surface-container-lowest border-t border-surface-container-highest flex justify-center">
+<button class="font-label-md text-label-md text-primary hover:underline py-1">Load More History</button>
+</div>
+</div>
+</main>
+<script defer src="assets/app.js"></script>
+</body></html>

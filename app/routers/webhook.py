@@ -44,3 +44,42 @@ async def jenkins_webhook(
         bg.add_task(process_build_failure, payload)
 
     return {"received": True}
+
+
+@router.post("/jenkins/simulate", summary="Simulate Jenkins build failure for testing")
+async def simulate_jenkins_failure(bg: BackgroundTasks) -> dict:
+    """Simulate a Jenkins build failure to test the autonomous failure analysis pipeline."""
+    from app.tasks import process_build_failure
+    
+    # Create a realistic failure payload
+    payload = {
+        "build": {
+            "number": 12847,
+            "phase": "FINALIZED",
+            "status": "FAILURE",
+            "url": "http://localhost:8080/job/backend-tests/12847/",
+            "log": "Error in test_authentication.py:45: AssertionError - auth token validation failed",
+            "fullLog": """
+            [INFO] Starting tests...
+            [INFO] Running test_authentication.py:45
+            [ERROR] AssertionError: Expected 'VALID' but got 'INVALID'
+            [ERROR] Test suite failed - 1 failure, 1 skipped
+            [ERROR] Build FAILURE
+            """,
+            "timestamp": 1719669735000,
+            "result": "FAILURE",
+        },
+        "jobName": "backend-tests",
+        "buildNumber": 12847,
+        "repositoryUrl": "https://github.com/jenkins/jenkins-blue-ocean",
+    }
+    
+    bg.add_task(process_build_failure, payload)
+    
+    return {
+        "simulated": True,
+        "job_name": "backend-tests",
+        "build_number": 12847,
+        "message": "Simulated Jenkins build failure has been injected into the pipeline",
+        "status": "Processing - check /ui/queue for status updates"
+    }

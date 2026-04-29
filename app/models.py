@@ -4,7 +4,7 @@ SQLAlchemy ORM models — core tables.
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Integer, String, Text, Float
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -49,3 +49,21 @@ class PatternRecord(Base):
     last_seen:        Mapped[datetime]      = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
     )
+
+
+class SystemMetrics(Base):
+    """Real-time system metrics — stored every 5 seconds for historical tracking."""
+
+    __tablename__ = "system_metrics"
+
+    id:                 Mapped[int]      = mapped_column(Integer, primary_key=True, autoincrement=True)
+    timestamp:          Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    uptime_seconds:     Mapped[int]      = mapped_column(Integer, nullable=False)
+    memory_used_bytes:  Mapped[int]      = mapped_column(Integer, nullable=False)
+    memory_total_bytes: Mapped[int]      = mapped_column(Integer, nullable=False)
+    cpu_percent:        Mapped[float]    = mapped_column(Float, nullable=False)
+    queue_total:        Mapped[int]      = mapped_column(Integer, nullable=False)
+    busy_workers:       Mapped[int]      = mapped_column(Integer, nullable=False)
+    worker_total:       Mapped[int]      = mapped_column(Integer, nullable=False)
+    chaos_intensity:    Mapped[int]      = mapped_column(Integer, nullable=False)
+    chaos_level:        Mapped[str]      = mapped_column(String(32), nullable=False)
