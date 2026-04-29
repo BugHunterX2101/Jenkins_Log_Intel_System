@@ -125,6 +125,11 @@ async def assign_worker(
     chosen.load   = min(1.0, chosen.load + random.uniform(0.4, 0.7))
     chosen.last_heartbeat = datetime.now(timezone.utc)
 
+    # Fetch the run's job name to surface in the worker card
+    run_result = await session.execute(select(PipelineRun).where(PipelineRun.id == run_id))
+    run_obj = run_result.scalar_one_or_none()
+    chosen.current_job = run_obj.jenkins_job_name if run_obj else None
+
     assignment = WorkerAssignment(
         run_id=run_id,
         worker_id=chosen.id,
@@ -152,6 +157,7 @@ async def release_worker(
     worker.status = WorkerStatus.IDLE
     worker.load   = max(0.0, worker.load - random.uniform(0.3, 0.6))
     worker.jobs_run += 1
+    worker.current_job = None
     worker.last_heartbeat = datetime.now(timezone.utc)
 
     aresult = await session.execute(
@@ -293,6 +299,7 @@ def serialise_worker(w: Worker) -> dict:
         "status":   w.status.value,
         "load":     round(w.load, 2),
         "jobs_run": w.jobs_run,
+        "current_job": w.current_job,
         "last_heartbeat": w.last_heartbeat.isoformat() if w.last_heartbeat else None,
     }
 

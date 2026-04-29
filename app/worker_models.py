@@ -53,6 +53,7 @@ class Worker(Base):
     )
     load:        Mapped[float]  = mapped_column(Float, default=0.0)
     jobs_run:    Mapped[int]    = mapped_column(Integer, default=0)
+    current_job: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
     capabilities: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     last_heartbeat: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at:  Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

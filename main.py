@@ -3,14 +3,25 @@ Jenkins Log Intelligence Engine — FastAPI application factory v1.2
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.routers import webhook
 from app.routers import jobs
 from app.routers import workers
 from app.routers import github_webhook
+from app.routers import ui
 from app.models import Base
+
+
+FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
+
+
+def _serve_page(filename: str) -> FileResponse:
+    return FileResponse(FRONTEND_DIR / filename)
 
 
 @asynccontextmanager
@@ -28,6 +39,12 @@ async def lifespan(app: FastAPI):
         Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            # Add current_job column if it doesn't exist yet (existing DBs)
+            await conn.execute(
+                __import__("sqlalchemy", fromlist=["text"]).text(
+                    "ALTER TABLE workers ADD COLUMN IF NOT EXISTS current_job VARCHAR(256)"
+                )
+            )
         async with Session() as session:
             await seed_workers(session)
         await engine.dispose()
@@ -49,10 +66,55 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="frontend-assets")
+
+
+@app.get("/", include_in_schema=False)
+async def frontend_index() -> FileResponse:
+    return _serve_page("index.html")
+
+
+@app.get("/backend", include_in_schema=False)
+@app.get("/backend.html", include_in_schema=False)
+async def frontend_backend() -> FileResponse:
+    return _serve_page("backend.html")
+
+
+@app.get("/queue", include_in_schema=False)
+@app.get("/queue.html", include_in_schema=False)
+async def frontend_queue() -> FileResponse:
+    return _serve_page("queue.html")
+
+
+@app.get("/scheduler", include_in_schema=False)
+@app.get("/scheduler.html", include_in_schema=False)
+async def frontend_scheduler() -> FileResponse:
+    return _serve_page("scheduler.html")
+
+
+@app.get("/simulation", include_in_schema=False)
+@app.get("/simulation.html", include_in_schema=False)
+async def frontend_simulation() -> FileResponse:
+    return _serve_page("simulation.html")
+
+
+@app.get("/webhooks", include_in_schema=False)
+@app.get("/webhooks.html", include_in_schema=False)
+async def frontend_webhooks() -> FileResponse:
+    return _serve_page("webhooks.html")
+
+
 app.include_router(webhook.router)
 app.include_router(github_webhook.router)
 app.include_router(jobs.router)
 app.include_router(workers.router)
+app.include_router(ui.router)
+
+
+@app.get("/workers", include_in_schema=False)
+@app.get("/workers.html", include_in_schema=False)
+async def frontend_workers() -> FileResponse:
+    return _serve_page("workers.html")
 
 
 @app.get("/health")
