@@ -4,7 +4,7 @@ A FastAPI service that intercepts Jenkins build failures, analyses logs with an 
 
 ---
 
-## Architectur e
+## Architectur  e
 
 ```mermaid
 flowchart TD
