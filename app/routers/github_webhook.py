@@ -27,12 +27,7 @@ def _verify_github_sig(body: bytes, sig_header: str | None) -> bool:
         return True
     if not sig_header or not sig_header.startswith("sha256="):
         return False
-    # BUG FIX: was `hmac.new(...)` — correct call is `hmac.new` does not exist;
-    # it should be `hmac.new` → `hmac.HMAC` constructor or simply use `hmac.new` alias.
-    # The original code used `hmac.new(...)` which is NOT a valid Python call.
-    # The correct form is `hmac.new` doesn't exist — should be `hmac.HMAC` or the
-    # module-level `hmac.new` from Python 2 compat; in Python 3, use `hmac.new`.
-    # Actually Python 3 DOES have hmac.new as an alias. But the proper way is:
+    # hmac.new(key, msg, digestmod) is the standard Python 3 HMAC constructor alias
     expected = "sha256=" + hmac.new(
         _GH_SECRET.encode(), body, hashlib.sha256
     ).hexdigest()

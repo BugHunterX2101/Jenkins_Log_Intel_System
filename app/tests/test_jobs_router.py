@@ -79,7 +79,7 @@ def test_run_detail_returns_run(client):
     mock_run.stages = []
 
     with patch("app.routers.jobs.get_run", new_callable=AsyncMock, return_value=mock_run), \
-         patch("app.routers.jobs._serialise_run", return_value={"id": 42, "status": "IN_PROGRESS", "stages": []}):
+         patch("app.routers.jobs.serialise_run", return_value={"id": 42, "status": "IN_PROGRESS", "stages": []}):
         resp = client.get("/jobs/42")
 
     assert resp.status_code == 200

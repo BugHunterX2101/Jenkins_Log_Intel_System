@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
 
-from app.services.job_scheduler import _derive_job_name, _serialise_run, _serialise_stage
+from app.services.job_scheduler import _derive_job_name, serialise_run, _serialise_stage
 from app.pipeline_models import PipelineRun, StageExecution, RunStatus, StageStatus
 
 
@@ -83,24 +83,24 @@ def _make_run(**kwargs):
     return run
 
 
-def test_serialise_run_fields():
+def testserialise_run_fields():
     run = _make_run()
-    d = _serialise_run(run)
+    d = serialise_run(run)
     assert d["id"] == 1
     assert d["branch"] == "main"
     assert d["status"] == "IN_PROGRESS"
     assert d["stages"] == []
 
 
-def test_serialise_run_with_stages():
+def testserialise_run_with_stages():
     stage = _make_stage(name="Build", status=StageStatus.SUCCESS, duration_s=10)
     run = _make_run(stages=[stage])
-    d = _serialise_run(run)
+    d = serialise_run(run)
     assert len(d["stages"]) == 1
     assert d["stages"][0]["name"] == "Build"
 
 
-def test_serialise_run_queued_at_iso():
+def testserialise_run_queued_at_iso():
     run = _make_run()
-    d = _serialise_run(run)
+    d = serialise_run(run)
     assert "T" in d["queued_at"]

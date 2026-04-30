@@ -14,34 +14,34 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 class Settings(BaseSettings):
     # Jenkins integration
-    JENKINS_URL:   str = "http://localhost:8080"  # e.g. https://ci.example.com
+    JENKINS_URL:   str = "http://localhost:8080"
     JENKINS_USER:  str = "admin"
-    JENKINS_TOKEN: str = "11e05dca6a9ae3da0331585dfe76b934a4"  # read-only API token
+    JENKINS_TOKEN: str = ""
 
-    # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/jenkins_log_intel"   # postgresql+asyncpg://...
+    # Database — set via DATABASE_URL env var in production
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/jenkins_log_intel"
 
     # Celery broker
     REDIS_URL: str = "redis://localhost:6379"
 
     # Slack
-    SLACK_BOT_TOKEN:       str = "xoxb-11003189151795-11009624004946-8RefDnE2wqm7kEnXXQlq9148"
+    SLACK_BOT_TOKEN:       str = ""
     SLACK_DEFAULT_CHANNEL: str = "#build-alerts"
 
     # LLM — Anthropic Claude (fallback / alternative)
     ANTHROPIC_API_KEY: Optional[str] = None
 
     # LLM — Groq (primary, used by root_cause.py)
-    GROQ_API_KEY: str = "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"
+    GROQ_API_KEY: str = ""
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
-    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     # Git token — used to fetch Jenkinsfiles from private repositories
-    GITHUB_TOKEN: str = "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"   # also accepted as a generic Git token
+    GITHUB_TOKEN: str = ""
 
-    # Webhook HMAC secret (optional — development builds can omit this)
-    JENKINS_WEBHOOK_SECRET: str = "x8Kf29LmPq7Rz41NsD2wYt98Ab"
-    GITHUB_WEBHOOK_SECRET: str = "K8r2vP9xLm4Qz7Nf1Tg6Hs3YwA0bCdE"
+    # Webhook HMAC secrets — omit or leave blank to disable signature verification
+    JENKINS_WEBHOOK_SECRET: str = ""
+    GITHUB_WEBHOOK_SECRET: str = ""
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",

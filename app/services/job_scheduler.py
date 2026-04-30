@@ -98,7 +98,7 @@ async def get_dashboard_snapshot(session: AsyncSession) -> dict:
 
     for run in runs:
         bucket = run.status.value if run.status.value in snapshot else "COMPLETED"
-        snapshot[bucket].append(_serialise_run(run))
+        snapshot[bucket].append(serialise_run(run))
 
     return snapshot
 
@@ -220,7 +220,7 @@ def _derive_job_name(repo_url: str, branch: str) -> str:
     return f"{parts[-1]}/{branch}" if parts else f"unknown/{branch}"
 
 
-def _serialise_run(run: PipelineRun) -> dict:
+def serialise_run(run: PipelineRun) -> dict:
     return {
         "id": run.id,
         "repo_url": run.repo_url,

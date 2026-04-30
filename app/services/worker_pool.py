@@ -134,6 +134,7 @@ async def assign_worker(
         run_id=run_id,
         worker_id=chosen.id,
         status=AssignmentStatus.ASSIGNED,
+        started_at=datetime.now(timezone.utc),  # B3: ensures duration_s is set on release
     )
     session.add(assignment)
     await session.commit()
@@ -212,12 +213,13 @@ async def simulate_execution(
         get_run as _get_run,
     )
 
-    # Use module-level aliases if they've been patched by tests
+    # Use module-level aliases if they've been patched by tests.
+    # Use `or` so that a module-level None falls back to the imported function.
     import app.services.worker_pool as _wpm
-    _on_ss  = getattr(_wpm, "on_stage_started",  _on_stage_started)
-    _on_sc  = getattr(_wpm, "on_stage_completed", _on_stage_completed)
-    _on_bc  = getattr(_wpm, "on_build_completed", _on_build_completed)
-    _gr     = getattr(_wpm, "get_run",            _get_run)
+    _on_ss  = getattr(_wpm, "on_stage_started",  None) or _on_stage_started
+    _on_sc  = getattr(_wpm, "on_stage_completed", None) or _on_stage_completed
+    _on_bc  = getattr(_wpm, "on_build_completed", None) or _on_build_completed
+    _gr     = getattr(_wpm, "get_run",            None) or _get_run
 
     engine  = create_async_engine(db_url, echo=False)
     Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

@@ -79,8 +79,10 @@
   };
 
   const attachViewLogsButtons = () => {
+    // F2: "View All Logs" should open the Pipeline Explorer (full history),
+    // not the Queue page (only shows active QUEUED/IN_PROGRESS runs)
     buttonsWithLabel("view logs").forEach((button) => {
-      bindOnce(button, () => goTo("/queue"));
+      bindOnce(button, () => goTo("/explorer"));
     });
   };
 
@@ -196,7 +198,8 @@
       const active = [...queued, ...inProg];
 
       const totalEl = document.querySelector('[data-ui="queue-total"]');
-      if (totalEl) totalEl.textContent = String(data.total || 0);
+      // F6: show active queue depth only (not historical completed/failed count)
+      if (totalEl) totalEl.textContent = String(active.length);
 
       const now = Date.now();
       const waitTimes = active
@@ -245,9 +248,14 @@
           const row = document.createElement('tr');
           const waitSeconds = run.queued_at ? Math.max(0, Math.floor((Date.now() - new Date(run.queued_at).getTime()) / 1000)) : null;
           row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors group';
+          // F5: derive priority from branch — 'priority' field not in API response
+          const priority = run.branch === 'main' ? 'High' : 'Normal';
+          const priorityClass = priority === 'High'
+            ? 'bg-primary-fixed text-on-primary-fixed'
+            : 'bg-surface-container-highest text-on-surface-variant';
           row.innerHTML = `
             <td class="px-md py-sm"><span class="text-code-sm font-code-sm text-surface-tint">#J-${run.id || ''}</span></td>
-            <td class="px-md py-sm"><span class="bg-surface-container-highest text-on-surface-variant text-label-md px-2 py-0.5 rounded-full">${run.priority || 'Normal'}</span></td>
+            <td class="px-md py-sm"><span class="${priorityClass} text-label-md px-2 py-0.5 rounded-full">${priority}</span></td>
             <td class="px-md py-sm"><span class="material-symbols-outlined text-[20px]">code</span></td>
             <td class="px-md py-sm"><div class="flex flex-col"><span class="font-medium">${run.repo || ''}</span><span class="text-label-md text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span> ${run.branch || ''}</span></div></td>
             <td class="px-md py-sm font-code-sm">${waitSeconds !== null ? waitSeconds + 's' : '-'}</td>
@@ -978,33 +986,33 @@
       const uptimeEl = document.querySelector('[data-ui="backend-uptime"]');
       if (uptimeEl) uptimeEl.textContent = data.uptime_formatted || `${data.uptime_seconds}s`;
 
-      const memUsedEl = document.querySelector('[data-ui="backend-memory-used"]');
+      // F1: correct selector — element is [data-ui="backend-memory"], not "backend-memory-used"
+      const memUsedEl = document.querySelector('[data-ui="backend-memory"]');
       if (memUsedEl) {
         const memMB = Math.round(data.memory_used_bytes / (1024 * 1024));
         const totalGB = (data.memory_total_bytes / (1024 * 1024 * 1024)).toFixed(1);
-        memUsedEl.textContent = `${memMB} MB / ${totalGB} GB`;
+        memUsedEl.innerHTML = `${memMB} MB <span class="text-outline font-body-md text-body-md">/ ${totalGB} GB</span>`;
+        const memBar = document.getElementById('backend-memory-bar');
+        if (memBar) {
+          const pct = Math.round((data.memory_used_bytes / data.memory_total_bytes) * 100);
+          memBar.style.width = `${pct}%`;
+        }
       }
 
+      // F3: update CPU element now that it exists in backend.html
       const cpuEl = document.querySelector('[data-ui="backend-cpu"]');
-      if (cpuEl) cpuEl.textContent = `${data.cpu_percent.toFixed(1)}%`;
+      if (cpuEl) cpuEl.textContent = `${(data.cpu_percent || 0).toFixed(1)}%`;
 
-      // Update chaos intensity/level
+      // Update simulation page chaos dial
       const chaosIntensityEl = document.querySelector('[data-ui="chaos-intensity"]');
-      if (chaosIntensityEl) chaosIntensityEl.textContent = `${data.chaos_intensity}%`;
+      if (chaosIntensityEl) {
+        chaosIntensityEl.textContent = `${data.chaos_intensity}%`;
+        const dialCircle = chaosIntensityEl.closest('div')?.previousElementSibling?.querySelector('circle:last-child');
+        if (dialCircle) dialCircle.setAttribute('stroke-dashoffset', String(Math.round(283 * (1 - data.chaos_intensity / 100))));
+      }
 
       const chaosLevelEl = document.querySelector('[data-ui="chaos-level"]');
       if (chaosLevelEl) chaosLevelEl.textContent = data.chaos_level || '';
-
-      // Update queue info
-      const queueTotalEl = document.querySelector('[data-ui="queue-total-live"]');
-      if (queueTotalEl) queueTotalEl.textContent = String(data.queue_total);
-
-      const workerBusyEl = document.querySelector('[data-ui="worker-busy-live"]');
-      if (workerBusyEl) workerBusyEl.textContent = `${data.busy_workers}/${data.worker_total}`;
-
-      // Update last poll time
-      const lastPollEl = document.querySelector('[data-ui="last-metric-poll"]');
-      if (lastPollEl) lastPollEl.textContent = `Last poll: ${new Date(timestamp).toLocaleTimeString()}`;
 
     } catch (error) {
       console.warn('Live metrics polling failed', error);
@@ -1425,8 +1433,11 @@
           _autoArriveInterval = setInterval(() => {
             fetch('/webhook/github/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ count: 1 }) }).catch(() => {});
           }, 30000);
+          // F4: register so the central Stop button can clear it
+          _allPollingIntervals.push(_autoArriveInterval);
         } else {
           clearInterval(_autoArriveInterval);
+          _allPollingIntervals = _allPollingIntervals.filter(id => id !== _autoArriveInterval);
           _autoArriveInterval = null;
         }
       });

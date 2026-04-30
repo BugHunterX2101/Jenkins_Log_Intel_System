@@ -42,13 +42,26 @@ async def _process_async(payload: dict) -> dict:
     from app.services import classifier, log_fetcher, log_parser, notifier, pattern_store, root_cause
 
     build        = payload.get("build", {})
-    job_name: str = payload.get("name", build.get("full_display_name", "unknown"))
+    # B1: Simulated payloads use "jobName"; real Jenkins webhooks use "name"
+    job_name: str = (
+        payload.get("name")
+        or payload.get("jobName")
+        or build.get("full_display_name")
+        or "unknown"
+    )
     build_number: int = int(build.get("number", 0))
     log_url: str  = build.get("full_url", f"{settings.JENKINS_URL}/job/{job_name}/{build_number}/")
 
     logger.info("Processing failure: %s #%d", job_name, build_number)
 
-    raw_log      = await log_fetcher.fetch_console_log(job_name, build_number)
+    # B2: Use embedded log content when present (simulate endpoint includes it)
+    # avoids a slow Jenkins API roundtrip that fails when Jenkins isn't reachable
+    embedded_log: str | None = build.get("fullLog") or build.get("log") or None
+    if embedded_log:
+        raw_log = embedded_log
+        logger.info("Using embedded log for %s #%d (%d chars)", job_name, build_number, len(raw_log))
+    else:
+        raw_log = await log_fetcher.fetch_console_log(job_name, build_number)
     blocks       = log_parser.parse(raw_log)
     error_excerpt = "\n\n".join(b.full_text for b in blocks[:5]) if blocks else raw_log[-2000:]
     tags         = classifier.classify(error_excerpt or raw_log)

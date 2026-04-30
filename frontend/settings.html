@@ -349,13 +349,19 @@
 </div>
 <script defer src="assets/app.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  // F7: use 'load' (fires after all deferred scripts including app.js) so
+  // window._populateSettings is guaranteed to exist when the button is clicked
+  window.addEventListener('load', () => {
     const routingEl = document.getElementById('st-routing-mode');
     const fallbackEl = document.getElementById('st-fallback-policy');
     const refreshBtn = document.getElementById('settings-refresh-btn');
-    if (routingEl) routingEl.textContent = localStorage.getItem('schedulerMode') || 'Priority';
-    if (fallbackEl) fallbackEl.textContent = localStorage.getItem('workerFallbackPolicy') || 'Queue if no match';
-    if (refreshBtn) refreshBtn.addEventListener('click', () => { if (window._populateSettings) window._populateSettings(); });
+    if (routingEl && !routingEl.textContent.trim().replace('—', ''))
+      routingEl.textContent = localStorage.getItem('schedulerMode') || 'Priority';
+    if (fallbackEl && !fallbackEl.textContent.trim().replace('—', ''))
+      fallbackEl.textContent = localStorage.getItem('workerFallbackPolicy') || 'Queue if no match';
+    if (refreshBtn) refreshBtn.addEventListener('click', () => {
+      if (window._populateSettings) window._populateSettings();
+    });
   });
 </script>
 </body></html>

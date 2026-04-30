@@ -19,7 +19,7 @@ from app.services.job_scheduler import (
     on_stage_completed,
     on_stage_started,
     schedule_pipeline,
-    _serialise_run,
+    serialise_run,
 )
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -89,7 +89,7 @@ async def run_detail(
     run = await get_run(session, run_id)
     if run is None:
         raise HTTPException(status_code=404, detail=f"PipelineRun {run_id} not found")
-    return _serialise_run(run)
+    return serialise_run(run)
 
 
 @router.post("/{run_id}/stage-event", summary="Receive stage progress event")
