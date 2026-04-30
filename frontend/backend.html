@@ -131,7 +131,7 @@
 <!-- Console (Active) -->
 <a class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 pb-4 mt-4 cursor-pointer active:opacity-80 flex h-full items-end" href="/backend" aria-current="page">Console</a>
 <!-- Explorer -->
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/queue">Explorer</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/explorer">Explorer</a>
 <!-- Scheduler -->
 <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/scheduler">Scheduler</a>
 </div>
@@ -194,22 +194,22 @@
 </div>
 <div class="border-t border-slate-200 dark:border-slate-800 py-2">
 <!-- Settings -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/backend#settings">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/settings">
 <span class="material-symbols-outlined">settings</span> Settings
             </a>
 <!-- Logs -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/queue#logs">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/explorer">
 <span class="material-symbols-outlined">list_alt</span> Logs
             </a>
 </div>
 </aside>
 <!-- Main Content Canvas -->
 <main class="ml-64 mt-16 p-lg min-h-[calc(100vh-64px)]">
-<!-- Error Spike Alert Bar -->
-<div class="bg-error-container text-on-error-container p-md rounded-xl flex items-center gap-sm mb-lg shadow-sm">
+<!-- Error Spike Alert Bar (hidden until a real BuildEvent arrives) -->
+<div data-ui="backend-alert-bar" class="hidden bg-error-container text-on-error-container p-md rounded-xl items-center gap-sm mb-lg shadow-sm">
 <span class="material-symbols-outlined text-error font-bold" style="font-variation-settings: 'FILL' 1;">warning</span>
 <div class="flex-1">
-<h3 data-ui="backend-alert-title" class="font-label-md text-label-md">CRITICAL ALERT: ERROR SPIKE DETECTED</h3>
+<h3 data-ui="backend-alert-title" class="font-label-md text-label-md">ALERT DETECTED</h3>
 <p data-ui="backend-alert-copy" class="font-body-md text-body-md opacity-90 mt-1">Live backend status will appear here.</p>
 </div>
 <button class="px-4 py-2 bg-on-error-container text-error-container font-label-md text-label-md rounded-lg hover:opacity-90 transition-opacity">View Logs</button>
@@ -229,7 +229,7 @@
 <div class="grid grid-cols-2 gap-md mb-lg">
 <div>
 <p class="font-body-md text-body-md text-outline mb-1">Uptime</p>
-<p data-ui="backend-uptime" class="font-headline-sm text-headline-sm text-on-surface">14d 08h 22m</p>
+<p data-ui="backend-uptime" class="font-headline-sm text-headline-sm text-on-surface">—</p>
 </div>
 <div>
 <p class="font-body-md text-body-md text-outline mb-1">Technology</p>
@@ -240,13 +240,13 @@
 </div>
 <div>
 <p class="font-body-md text-body-md text-outline mb-1">Active Port</p>
-<p data-ui="backend-port" class="font-headline-sm text-headline-sm text-on-surface font-code-sm text-code-sm">5000</p>
+<p data-ui="backend-port" class="font-headline-sm text-headline-sm text-on-surface font-code-sm text-code-sm">—</p>
 </div>
 <div>
 <p class="font-body-md text-body-md text-outline mb-1">Memory Usage</p>
-<p data-ui="backend-memory" class="font-headline-sm text-headline-sm text-on-surface">1.2 GB <span class="text-outline font-body-md text-body-md">/ 4 GB</span></p>
+<p data-ui="backend-memory" class="font-headline-sm text-headline-sm text-on-surface">—</p>
 <div class="w-full bg-surface-container h-2 rounded-full mt-2 overflow-hidden">
-<div id="backend-memory-bar" class="bg-primary h-full w-[30%]"></div>
+<div id="backend-memory-bar" class="bg-primary h-full w-0"></div>
 </div>
 </div>
 </div>
@@ -282,46 +282,6 @@
 </tr>
 </thead>
 <tbody data-ui="backend-endpoint-body" class="divide-y divide-surface-container-highest">
-<tr class="hover:bg-surface-container-low transition-colors ambient-shadow-hover">
-<td class="py-sm font-code-sm text-code-sm text-on-surface">/webhook/receive</td>
-<td class="py-sm">
-<span class="inline-flex items-center gap-1 text-error bg-error-container px-2 py-0.5 rounded font-label-md text-label-md">
-<span class="material-symbols-outlined text-[14px]">warning</span> Degraded
-                                    </span>
-</td>
-<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">452ms</td>
-<td class="py-sm font-code-sm text-code-sm text-error text-right font-bold">14.2%</td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors ambient-shadow-hover">
-<td class="py-sm font-code-sm text-code-sm text-on-surface">/api/v1/jobs/sync</td>
-<td class="py-sm">
-<span class="inline-flex items-center gap-1 text-primary bg-primary-container px-2 py-0.5 rounded font-label-md text-label-md">
-<span class="material-symbols-outlined text-[14px]">check_circle</span> Healthy
-                                    </span>
-</td>
-<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">45ms</td>
-<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">0.1%</td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors ambient-shadow-hover">
-<td class="py-sm font-code-sm text-code-sm text-on-surface">/health</td>
-<td class="py-sm">
-<span class="inline-flex items-center gap-1 text-primary bg-primary-container px-2 py-0.5 rounded font-label-md text-label-md">
-<span class="material-symbols-outlined text-[14px]">check_circle</span> Healthy
-                                    </span>
-</td>
-<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">12ms</td>
-<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">0.0%</td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors ambient-shadow-hover">
-<td class="py-sm font-code-sm text-code-sm text-on-surface">/ws/logs/stream</td>
-<td class="py-sm">
-<span class="inline-flex items-center gap-1 text-primary bg-primary-container px-2 py-0.5 rounded font-label-md text-label-md">
-<span class="material-symbols-outlined text-[14px]">check_circle</span> Healthy
-                                    </span>
-</td>
-<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">28ms</td>
-<td class="py-sm font-code-sm text-code-sm text-on-surface text-right">0.5%</td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -351,48 +311,6 @@
 </tr>
 </thead>
 <tbody data-ui="backend-request-body" class="divide-y divide-surface-container-highest font-code-sm text-code-sm">
-<tr class="hover:bg-surface-container-low transition-colors bg-error-container/10">
-<td class="py-2 px-md text-outline">#req_89f2</td>
-<td class="py-2 px-md text-on-surface-variant">10:42:15.820 AM</td>
-<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">POST</span></td>
-<td class="py-2 px-md text-on-surface">/webhook/receive</td>
-<td class="py-2 px-md text-right"><span class="text-error font-bold">502</span></td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors">
-<td class="py-2 px-md text-outline">#req_89f1</td>
-<td class="py-2 px-md text-on-surface-variant">10:42:14.102 AM</td>
-<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">GET</span></td>
-<td class="py-2 px-md text-on-surface">/api/v1/jobs/sync</td>
-<td class="py-2 px-md text-right"><span class="text-primary">200</span></td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors bg-error-container/10">
-<td class="py-2 px-md text-outline">#req_89f0</td>
-<td class="py-2 px-md text-on-surface-variant">10:42:13.445 AM</td>
-<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">POST</span></td>
-<td class="py-2 px-md text-on-surface">/webhook/receive</td>
-<td class="py-2 px-md text-right"><span class="text-error font-bold">502</span></td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors">
-<td class="py-2 px-md text-outline">#req_89ef</td>
-<td class="py-2 px-md text-on-surface-variant">10:42:11.990 AM</td>
-<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">GET</span></td>
-<td class="py-2 px-md text-on-surface">/health</td>
-<td class="py-2 px-md text-right"><span class="text-primary">200</span></td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors">
-<td class="py-2 px-md text-outline">#req_89ee</td>
-<td class="py-2 px-md text-on-surface-variant">10:42:10.051 AM</td>
-<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">PUT</span></td>
-<td class="py-2 px-md text-on-surface">/api/v1/config/update</td>
-<td class="py-2 px-md text-right"><span class="text-secondary">204</span></td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors">
-<td class="py-2 px-md text-outline">#req_89ed</td>
-<td class="py-2 px-md text-on-surface-variant">10:42:08.772 AM</td>
-<td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">GET</span></td>
-<td class="py-2 px-md text-on-surface">/api/v1/jobs/sync</td>
-<td class="py-2 px-md text-right"><span class="text-primary">200</span></td>
-</tr>
 </tbody>
 </table>
 </div>

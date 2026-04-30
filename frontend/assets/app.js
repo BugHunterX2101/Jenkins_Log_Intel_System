@@ -11,7 +11,8 @@
     if (label.includes("dashboard") || label.includes("overview")) return "/";
     if (label.includes("webhooks")) return "/webhooks";
     if (label.includes("console") || label.includes("backend")) return "/backend";
-    if (label.includes("explorer") || label.includes("queue") || label.includes("logs")) return "/queue";
+    if (label.includes("explorer") || label.includes("logs")) return "/explorer";
+    if (label.includes("queue")) return "/queue";
     if (label.includes("scheduler")) return "/scheduler";
     if (label.includes("workers")) return "/workers";
     if (label.includes("simulation")) return "/simulation";
@@ -184,43 +185,6 @@
     });
   };
 
-  const populateQueueData = async () => {
-    try {
-      const response = await fetch("/ui/queue");
-      if (!response.ok) throw new Error("Failed to fetch queue data");
-
-      const data = await response.json();
-      const tableBody = document.querySelector("table tbody");
-      if (!tableBody) return;
-
-      const existingRows = tableBody.querySelectorAll("tr");
-      for (let index = existingRows.length - 1; index > 0; index -= 1) {
-        existingRows[index].remove();
-      }
-
-      const runs = (data.runs_by_status?.QUEUED || []).concat(data.runs_by_status?.IN_PROGRESS || []);
-      runs.forEach((run) => {
-        const row = document.createElement("tr");
-        const waitSeconds = run.queued_at ? Math.max(0, Math.floor((Date.now() - new Date(run.queued_at).getTime()) / 1000)) : null;
-        const statusBadge = run.status === "QUEUED" ? { bg: "#fef3c7", color: "#92400e" } : { bg: "#dbeafe", color: "#1e40af" };
-        row.innerHTML = `
-          <td>${run.id || "-"}</td>
-          <td>${run.priority || "Normal"}</td>
-          <td>${run.language || ""}</td>
-          <td>
-            <div class="flex flex-col"><span class="font-medium">${run.repo || (run.repo_url ? run.repo_url.replace(/^https?:\/\//, '') : '')}</span>
-            <span class="text-label-md text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span> ${run.branch || ""}</span></div>
-          </td>
-          <td class="font-code-sm">${waitSeconds !== null ? waitSeconds + 's' : '-'}</td>
-          <td><span style="padding: 4px 12px; border-radius: 4px; background: ${statusBadge.bg}; color: ${statusBadge.color}">${run.status || ""}</span></td>
-          <td class="text-right"><button class="text-outline hover:text-error transition-colors p-1" data-cancel-id="${run.id || ''}" title="Cancel Job"><span class="material-symbols-outlined text-[18px]">cancel</span></button></td>
-        `;
-        tableBody.appendChild(row);
-      });
-    } catch (error) {
-      console.error("Failed to populate queue data:", error);
-    }
-  };
 
   const populateQueueMetrics = async () => {
     try {
@@ -267,7 +231,7 @@
       const response = await fetch('/ui/queue');
       if (!response.ok) throw new Error('Failed to fetch queue data');
       const data = await response.json();
-      const tableBody = document.querySelector('table tbody');
+      const tableBody = document.querySelector('[data-ui="queue-table-body"]');
       if (!tableBody) return;
       // clear existing rows
       tableBody.innerHTML = '';
@@ -298,35 +262,6 @@
     }
   };
 
-  const populateSchedulerData = async () => {
-    try {
-      const response = await fetch("/ui/scheduler");
-      if (!response.ok) throw new Error("Failed to fetch scheduler data");
-
-      const data = await response.json();
-      const tableBody = document.querySelector("table tbody");
-      if (!tableBody) return;
-
-      const existingRows = tableBody.querySelectorAll("tr");
-      for (let index = existingRows.length - 1; index > 0; index -= 1) {
-        existingRows[index].remove();
-      }
-
-      (data.scheduled || []).forEach((job) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${job.repo || ""}</td>
-          <td>${job.branch || ""}</td>
-          <td>${job.job_name || ""}</td>
-          <td><span style="padding: 4px 12px; border-radius: 4px; background: #dbeafe; color: #1e40af">${job.priority || ""}</span></td>
-          <td>${job.estimated_wait || ""}</td>
-        `;
-        tableBody.appendChild(row);
-      });
-    } catch (error) {
-      console.error("Failed to populate scheduler data:", error);
-    }
-  };
 
   const populateSchedulerKanban = async () => {
     try {
@@ -387,7 +322,8 @@
       }
       if (scheduledList) {
         scheduledList.innerHTML = '';
-        const scheduled = (data.scheduled || []).filter((j) => !(data.queued || []).find((q) => q.id === j.id));
+        // "scheduled" is FIFO-ordered (oldest first = next to run) — no dedup needed
+        const scheduled = data.scheduled || [];
         scheduled.length ? scheduled.forEach((j) => scheduledList.appendChild(renderJobCard(j, 'scheduled'))) : scheduledList.appendChild(_emptyCard('No scheduled jobs'));
       }
       if (runningList) {
@@ -421,7 +357,13 @@
             const li = document.createElement('li');
             li.className = 'p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start';
             const dotColor = type === 'assigned' ? 'bg-primary' : type === 'completed' ? 'bg-[#10B981]' : 'bg-secondary';
-            const ts = job.started ? new Date(job.started).toLocaleTimeString() : (job.completed ? new Date(job.completed).toLocaleTimeString() : '—');
+            const ts = job.started
+              ? new Date(job.started).toLocaleTimeString()
+              : job.completed
+              ? new Date(job.completed).toLocaleTimeString()
+              : job.queued_at
+              ? new Date(job.queued_at).toLocaleTimeString()
+              : '—';
             const label = type === 'assigned'
               ? `<span class="font-semibold text-primary">Job #${job.id}</span> running — ${job.repo || ''}/${job.branch || 'main'}`
               : type === 'completed'
@@ -537,8 +479,20 @@
 
     const buildEvents = data.build_events || [];
     const latest = buildEvents[0];
-    if (alertTitle && latest) {
-      alertTitle.textContent = `${String(latest.severity || 'Warning').toUpperCase()} ALERT: ${String(latest.failure_type || 'issue').replace(/_/g, ' ').toUpperCase()}`;
+    const alertBar = document.querySelector('[data-ui="backend-alert-bar"]');
+    if (alertBar) {
+      if (latest) {
+        alertBar.classList.remove('hidden');
+        alertBar.style.display = 'flex';
+      } else {
+        alertBar.classList.add('hidden');
+        alertBar.style.display = '';
+      }
+    }
+    if (alertTitle) {
+      alertTitle.textContent = latest
+        ? `${String(latest.severity || 'Warning').toUpperCase()} ALERT: ${String(latest.failure_type || 'issue').replace(/_/g, ' ').toUpperCase()}`
+        : 'System Status: All Clear';
     }
     if (alertCopy) {
       alertCopy.textContent = latest?.summary_text || 'Backend is healthy and serving live data.';
@@ -579,6 +533,9 @@
   };
 
   const renderWorkersPanels = (data) => {
+    // Skip on workers page — populateWorkers() owns these elements there
+    if (currentPath().startsWith('/workers')) return;
+
     const assignmentBody = document.querySelector('[data-ui="worker-assignment-body"]');
     if (assignmentBody) {
       assignmentBody.innerHTML = '';
@@ -636,7 +593,12 @@
     const pipelineLog = document.querySelector('[data-ui="pipeline-log"]');
     const eventBody = document.querySelector('[data-ui="simulation-live-log"]');
 
-    if (intensity) intensity.textContent = `${simulation.chaos_intensity || 0}%`;
+    if (intensity) {
+      const pct = simulation.chaos_intensity || 0;
+      intensity.textContent = `${pct}%`;
+      const dialCircle = intensity.closest('div')?.previousElementSibling?.querySelector('circle:last-child');
+      if (dialCircle) dialCircle.setAttribute('stroke-dashoffset', String(Math.round(283 * (1 - pct / 100))));
+    }
     if (level) level.textContent = simulation.chaos_level || 'Normal';
     if (arrivalSpan && arrivalInput) {
       arrivalSpan.textContent = `${simulation.arrival_rate || 0} req/s`;
@@ -722,7 +684,10 @@
       const maxDuration = document.querySelector('[data-ui="simulation-max-duration"]');
 
       if (intensity && bootstrap.health) {
-        intensity.textContent = Math.round((bootstrap.health.chaos_intensity || 0) * 100) + '%';
+        const pct = Math.round((bootstrap.health.chaos_intensity || 0) * 100);
+        intensity.textContent = pct + '%';
+        const dialCircle = intensity.closest('div')?.previousElementSibling?.querySelector('circle:last-child');
+        if (dialCircle) dialCircle.setAttribute('stroke-dashoffset', String(Math.round(283 * (1 - pct / 100))));
       }
       if (level && bootstrap.health) {
         level.textContent = (bootstrap.health.chaos_level || 'Normal');
@@ -731,62 +696,59 @@
         const v = bootstrap.simulation?.arrival_rate || 42;
         arrivalSpan.textContent = v + ' req/s';
         arrivalInput.value = v;
-        arrivalInput.addEventListener('input', (e) => {
-          arrivalSpan.textContent = e.target.value + ' req/s';
-        });
+        if (!arrivalInput.dataset.bound) {
+          arrivalInput.dataset.bound = 'true';
+          arrivalInput.addEventListener('input', (e) => { arrivalSpan.textContent = e.target.value + ' req/s'; });
+        }
       }
       if (burstSpan && burstInput) {
         const b = bootstrap.simulation?.burst_prob || 15;
         burstSpan.textContent = b + '%';
         burstInput.value = b;
-        burstInput.addEventListener('input', (e) => {
-          burstSpan.textContent = e.target.value + '%';
-        });
+        if (!burstInput.dataset.bound) {
+          burstInput.dataset.bound = 'true';
+          burstInput.addEventListener('input', (e) => { burstSpan.textContent = e.target.value + '%'; });
+        }
       }
       if (failureSpan && failureInput) {
         const failureRate = bootstrap.simulation?.failure_rate || 5;
         failureSpan.textContent = failureRate + '%';
         failureInput.value = failureRate;
-        failureInput.addEventListener('input', (e) => {
-          failureSpan.textContent = e.target.value + '%';
-        });
+        if (!failureInput.dataset.bound) {
+          failureInput.dataset.bound = 'true';
+          failureInput.addEventListener('input', (e) => { failureSpan.textContent = e.target.value + '%'; });
+        }
       }
       if (minDuration) minDuration.value = bootstrap.simulation?.min_duration_ms || 100;
       if (maxDuration) maxDuration.value = bootstrap.simulation?.max_duration_ms || 5000;
     }
   const populateWorkers = async () => {
     try {
-      const [bootstrapRes, workersRes] = await Promise.all([
-        fetch('/ui/bootstrap'),
-        fetch('/api/workers'),
-      ]);
-      if (!bootstrapRes.ok) throw new Error('Failed to fetch bootstrap data');
-      const data = await bootstrapRes.json();
+      const workersRes = await fetch('/api/workers');
+      if (!workersRes.ok) throw new Error('Failed to fetch workers');
+      const wd = await workersRes.json();
+      const items = wd.workers || [];
+      const summary = wd.summary || {};
 
-      let liveById = {};
-      if (workersRes.ok) {
-        const wd = await workersRes.json();
-        (wd.workers || []).forEach((w) => { liveById[w.id] = w; });
-
-        // Populate summary stats bar
-        const summary = wd.summary || {};
-        const statTotal = document.querySelector('[data-ui="worker-stat-total"]');
-        const statIdle = document.querySelector('[data-ui="worker-stat-idle"]');
-        const statBusy = document.querySelector('[data-ui="worker-stat-busy"]');
-        const statOffline = document.querySelector('[data-ui="worker-stat-offline"]');
-        if (statTotal) statTotal.textContent = String(summary.total ?? 0);
-        if (statIdle) statIdle.textContent = String(summary.idle ?? 0);
-        if (statBusy) statBusy.textContent = String(summary.busy ?? 0);
-        if (statOffline) statOffline.textContent = String(summary.offline ?? 0);
-      }
+      // Stat cards
+      const statTotal = document.querySelector('[data-ui="worker-stat-total"]');
+      const statIdle = document.querySelector('[data-ui="worker-stat-idle"]');
+      const statBusy = document.querySelector('[data-ui="worker-stat-busy"]');
+      const statOffline = document.querySelector('[data-ui="worker-stat-offline"]');
+      if (statTotal) statTotal.textContent = String(summary.total ?? items.length);
+      if (statIdle) statIdle.textContent = String(summary.idle ?? items.filter(w => w.status === 'IDLE').length);
+      if (statBusy) statBusy.textContent = String(summary.busy ?? items.filter(w => w.status === 'BUSY').length);
+      if (statOffline) statOffline.textContent = String(summary.offline ?? items.filter(w => w.status === 'OFFLINE').length);
 
       const container = document.querySelector('[data-ui="workers-list"]');
       if (!container) return;
       container.innerHTML = '';
-      const items = (data.workers && data.workers.items) || [];
+      if (!items.length) {
+        container.innerHTML = '<div class="col-span-full py-8 text-center text-on-surface-variant">No workers available</div>';
+        return;
+      }
       items.forEach((w) => {
-        const live = liveById[w.id] || {};
-        const merged = { ...w, ...live };
+        const merged = { ...w };
         const card = document.createElement('div');
         card.className = 'bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_4px_6px_rgba(0,0,0,0.02)] p-md flex flex-col gap-sm hover:shadow-[0px_10px_15px_rgba(0,0,0,0.05)] transition-shadow';
         const status = (merged.status || '').toLowerCase();
@@ -829,38 +791,61 @@
         container.appendChild(card);
       });
 
-      // Rebuild assignment table with all workers
+      // Assignment logic table
       const assignmentBody = document.querySelector('[data-ui="worker-assignment-body"]');
       if (assignmentBody) {
         assignmentBody.innerHTML = '';
-        items.forEach((w) => {
-          const live = liveById[w.id] || {};
-          const merged = { ...w, ...live };
-          let caps = [];
-          try { caps = JSON.parse(merged.capabilities || '[]'); } catch (e) { caps = []; }
-          const tag = merged.language ? merged.language.charAt(0).toUpperCase() + merged.language.slice(1) : 'General';
-          const statusDot = (merged.status || '').toLowerCase() === 'busy'
-            ? '<span class="inline-block w-2 h-2 rounded-full bg-primary mr-1"></span>'
-            : (merged.status || '').toLowerCase() === 'offline'
-            ? '<span class="inline-block w-2 h-2 rounded-full bg-error mr-1"></span>'
-            : '<span class="inline-block w-2 h-2 rounded-full bg-outline mr-1"></span>';
-          const row = document.createElement('tr');
-          row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
-          row.innerHTML = `
-            <td class="py-2 px-md font-code-sm text-code-sm">${statusDot}${merged.name || 'worker'}</td>
-            <td class="py-2 px-md"><span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md">${tag}</span>${caps.slice(0,2).map(c => ` <span class="text-[10px] text-on-surface-variant">${c}</span>`).join('')}</td>
-            <td class="py-2 px-md text-on-surface-variant font-code-sm">${merged.jobs_run ?? 0}</td>
-          `;
-          assignmentBody.appendChild(row);
-        });
+        if (!items.length) {
+          assignmentBody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-on-surface-variant">No workers</td></tr>';
+        } else {
+          items.forEach((w) => {
+            const tag = w.language ? w.language.charAt(0).toUpperCase() + w.language.slice(1) : 'General';
+            const statusDot = w.status === 'BUSY'
+              ? '<span class="inline-block w-2 h-2 rounded-full bg-primary mr-1"></span>'
+              : w.status === 'OFFLINE'
+              ? '<span class="inline-block w-2 h-2 rounded-full bg-error mr-1"></span>'
+              : '<span class="inline-block w-2 h-2 rounded-full bg-outline mr-1"></span>';
+            const row = document.createElement('tr');
+            row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
+            row.innerHTML = `
+              <td class="py-2 px-md font-code-sm text-code-sm">${statusDot}lang=${w.language || 'any'}</td>
+              <td class="py-2 px-md"><span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md">${tag}</span></td>
+              <td class="py-2 px-md text-on-surface-variant font-code-sm">${w.jobs_run ?? 0}</td>
+            `;
+            assignmentBody.appendChild(row);
+          });
+        }
       }
 
-      renderWorkersPanels(data);
+      // Timeline rows
+      const timelineRows = document.querySelector('[data-ui="worker-timeline-rows"]');
+      if (timelineRows) {
+        timelineRows.innerHTML = '';
+        items.forEach((w) => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center h-8 relative';
+          const load = Math.max(0, Math.min(100, Math.round((w.load || 0) * 100)));
+          const isBusy = w.status === 'BUSY';
+          row.innerHTML = `
+            <div class="w-32 flex-shrink-0 font-code-sm text-code-sm text-on-surface-variant truncate">${w.name || 'worker'}</div>
+            <div class="flex-1 relative h-full bg-surface-container-low rounded overflow-hidden">
+              <div class="absolute left-0 top-0 h-full bg-secondary-fixed-dim rounded opacity-80" style="width:${Math.max(5, 100 - load)}%" title="Idle"></div>
+              ${isBusy ? `<div class="absolute right-0 top-0 h-full bg-primary rounded" style="width:${load}%" title="${w.current_job || 'running'}"></div>` : ''}
+            </div>
+            <div class="ml-2 w-10 text-right font-code-sm text-[11px] text-on-surface-variant">${load}%</div>
+          `;
+          timelineRows.appendChild(row);
+        });
+      }
     } catch (error) {
       console.error('Failed to populate workers:', error);
     }
   };
 
+  let _metricsPaused = false;
+  let _allPollingIntervals = [];
+  let _autoArriveInterval = null;
+  let _schedulerKanbanInterval = null;
   let _activityLastTimestamp = null;
 
   const _activityBadge = (status) => {
@@ -1137,102 +1122,632 @@
     }
   };
 
+  // ─── Header icon buttons (all pages) ───
+  const attachHeaderIconButtons = () => {
+    document.querySelectorAll('button').forEach((btn) => {
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (!icon) return;
+      const name = (icon.dataset.icon || icon.textContent || '').trim();
+      if (name === 'health_and_safety') bindOnce(btn, () => window.open('/health', '_blank'));
+      if (name === 'cloud_sync') bindOnce(btn, () => { populateBootstrapData(); pollLiveMetrics(); });
+      if (name === 'settings') bindOnce(btn, () => goTo('/settings'));
+    });
+  };
+
+  // ─── Queue page: live search filter ───
+  const attachQueueSearch = () => {
+    const searchInput = document.querySelector('input[placeholder="Filter jobs..."]');
+    const filterBtn = document.querySelector('button .material-symbols-outlined');
+    if (!searchInput || searchInput.dataset.bound) return;
+    searchInput.dataset.bound = 'true';
+    let statusFilter = false;
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase();
+      document.querySelectorAll('[data-ui="queue-table-body"] tr').forEach((row) => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = !q || text.includes(q) ? '' : 'none';
+      });
+    });
+    const filterButton = Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.material-symbols-outlined')?.textContent?.trim() === 'filter_list');
+    if (filterButton) {
+      bindOnce(filterButton, () => {
+        statusFilter = !statusFilter;
+        filterButton.classList.toggle('text-primary', statusFilter);
+        document.querySelectorAll('[data-ui="queue-table-body"] tr').forEach((row) => {
+          if (!statusFilter) { row.style.display = ''; return; }
+          const isQueued = row.textContent.includes('QUEUED');
+          row.style.display = isQueued ? '' : 'none';
+        });
+      });
+    }
+  };
+
+  // ─── Scheduler controls ───
+  const _setActiveModeButton = (modeButtons, mode) => {
+    modeButtons.forEach(b => b.classList.remove('bg-surface-container-lowest', 'shadow-sm', 'border', 'border-outline-variant/30', 'text-on-surface'));
+    const active = modeButtons.find(b => b.textContent.trim() === mode);
+    if (active) active.classList.add('bg-surface-container-lowest', 'shadow-sm', 'border', 'border-outline-variant/30', 'text-on-surface');
+  };
+
+  const attachSchedulerControls = () => {
+    const modeButtons = Array.from(document.querySelectorAll('button')).filter(b =>
+      ['FIFO', 'Priority', 'Load-Balanced'].includes(b.textContent.trim())
+    );
+
+    // Load active mode from backend on page load
+    fetch('/ui/scheduler/mode')
+      .then(r => r.json())
+      .then(d => {
+        localStorage.setItem('schedulerMode', d.mode);
+        _setActiveModeButton(modeButtons, d.mode);
+      })
+      .catch(() => {
+        const saved = localStorage.getItem('schedulerMode') || 'Priority';
+        _setActiveModeButton(modeButtons, saved);
+      });
+
+    modeButtons.forEach((btn) => {
+      bindOnce(btn, async () => {
+        const mode = btn.textContent.trim();
+        _setActiveModeButton(modeButtons, mode);
+        localStorage.setItem('schedulerMode', mode);
+        try {
+          await fetch('/ui/scheduler/mode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode }),
+          });
+        } catch (e) {
+          console.warn('Failed to set scheduler mode:', e);
+        }
+      });
+    });
+
+    const slider = document.querySelector('input[type="range"][min="100"][max="5000"]');
+    const sliderLabel = slider?.closest('div')?.querySelector('span');
+    if (slider) {
+      const saved = localStorage.getItem('schedulerPollMs');
+      if (saved) { slider.value = saved; if (sliderLabel) sliderLabel.textContent = saved + 'ms'; }
+      slider.addEventListener('input', () => {
+        if (sliderLabel) sliderLabel.textContent = slider.value + 'ms';
+        localStorage.setItem('schedulerPollMs', slider.value);
+        if (_schedulerKanbanInterval) {
+          clearInterval(_schedulerKanbanInterval);
+          _schedulerKanbanInterval = setInterval(() => {
+            if (document.querySelector('[data-ui="kanban-queued-list"]')) populateSchedulerKanban();
+            else clearInterval(_schedulerKanbanInterval);
+          }, Number(slider.value));
+          _allPollingIntervals.push(_schedulerKanbanInterval);
+        }
+      });
+    }
+
+    const masterSwitch = document.querySelector('input[type="checkbox"].sr-only');
+    const kanbanSection = document.querySelector('[data-ui="kanban-queued-list"]')?.closest('.col-span-12');
+    if (masterSwitch) {
+      masterSwitch.addEventListener('change', () => {
+        if (!masterSwitch.checked) {
+          if (_schedulerKanbanInterval) clearInterval(_schedulerKanbanInterval);
+          if (kanbanSection) kanbanSection.style.opacity = '0.4';
+        } else {
+          const ms = Number(localStorage.getItem('schedulerPollMs') || 5000);
+          _schedulerKanbanInterval = setInterval(() => {
+            if (document.querySelector('[data-ui="kanban-queued-list"]')) populateSchedulerKanban();
+            else clearInterval(_schedulerKanbanInterval);
+          }, ms);
+          _allPollingIntervals.push(_schedulerKanbanInterval);
+          if (kanbanSection) kanbanSection.style.opacity = '';
+          populateSchedulerKanban();
+        }
+      });
+    }
+
+    const filterBtn = document.querySelector('[data-ui="kanban-queued-list"]')?.closest('.col-span-12')
+      ?.querySelector('button');
+    if (filterBtn) {
+      let runningOnly = false;
+      bindOnce(filterBtn, () => {
+        runningOnly = !runningOnly;
+        filterBtn.classList.toggle('text-primary', runningOnly);
+        ['[data-ui="kanban-queued-list"]', '[data-ui="kanban-scheduled-list"]'].forEach((sel) => {
+          const el = document.querySelector(sel);
+          if (el) el.closest('.flex-col')?.style && (el.closest('.flex-col').style.display = runningOnly ? 'none' : '');
+        });
+      });
+    }
+  };
+
+  // ─── Workers page controls ───
+  const attachWorkerControls = () => {
+    const editBtn = document.querySelector('button .material-symbols-outlined[data-icon="edit"]')?.closest('button')
+      || Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.material-symbols-outlined')?.textContent?.trim() === 'edit');
+    if (editBtn) bindOnce(editBtn, () => goTo('/explorer'));
+
+    const fallback = document.querySelector('select');
+    if (fallback) {
+      const saved = localStorage.getItem('workerFallbackPolicy');
+      if (saved) {
+        Array.from(fallback.options).forEach((opt, i) => { if (opt.text === saved) fallback.selectedIndex = i; });
+      }
+      fallback.addEventListener('change', () => {
+        localStorage.setItem('workerFallbackPolicy', fallback.options[fallback.selectedIndex].text);
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50';
+        toast.textContent = 'Policy saved';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+      });
+    }
+  };
+
+  // ─── Webhooks page: copy URL, visibility toggle, reset, burst mode ───
+  const attachWebhookPageActions = () => {
+    const ngrokInput = document.querySelector('[data-ui="ngrok-url"]');
+    const copyBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('copy url'));
+    if (copyBtn && ngrokInput) {
+      bindOnce(copyBtn, () => {
+        navigator.clipboard.writeText(ngrokInput.value).catch(() => {});
+        const orig = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">check</span> Copied!';
+        setTimeout(() => { copyBtn.innerHTML = orig; }, 1500);
+      });
+    }
+
+    const secretInput = document.querySelector('input[type="password"]');
+    const visBtn = secretInput?.closest('div')?.querySelector('button');
+    if (visBtn && secretInput) {
+      bindOnce(visBtn, () => {
+        const isHidden = secretInput.type === 'password';
+        secretInput.type = isHidden ? 'text' : 'password';
+        const icon = visBtn.querySelector('.material-symbols-outlined');
+        if (icon) icon.textContent = isHidden ? 'visibility_off' : 'visibility';
+      });
+    }
+
+    const resetBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('reset defaults'));
+    if (resetBtn) {
+      bindOnce(resetBtn, () => {
+        const branch = document.querySelector('[data-ui="wh-branch"]');
+        const sha = document.querySelector('[data-ui="wh-sha"]');
+        const author = document.querySelector('[data-ui="wh-author"]');
+        const repo = document.querySelector('[data-ui="wh-repo"]');
+        const eventType = document.querySelector('[data-ui="wh-event-type"]');
+        if (branch) branch.value = 'main';
+        if (sha) sha.value = '';
+        if (author) author.value = 'devops-bot';
+        if (repo) repo.selectedIndex = 0;
+        if (eventType) eventType.selectedIndex = 0;
+      });
+    }
+
+    const burstToggle = document.querySelector('[data-ui="burst-mode-toggle"]');
+    if (burstToggle) {
+      bindOnce(burstToggle, () => {
+        const active = burstToggle.dataset.burst === '1';
+        burstToggle.dataset.burst = active ? '5' : '1';
+        burstToggle.classList.toggle('bg-primary', !active);
+        burstToggle.classList.toggle('bg-outline-variant', active);
+        const dot = burstToggle.querySelector('div');
+        if (dot) dot.style.left = !active ? '18px' : '2px';
+      });
+    }
+  };
+
+  // ─── Patched Trigger Webhook — reads live form values ───
+  const attachWebhookActionsFixed = () => {
+    const triggerWebhook = buttonsWithLabel("trigger webhook")[0];
+    if (!triggerWebhook) return;
+    bindOnce(triggerWebhook, async () => {
+      const repoSelect = document.querySelector('[data-ui="wh-repo"]');
+      const branchInput = document.querySelector('[data-ui="wh-branch"]');
+      const authorInput = document.querySelector('[data-ui="wh-author"]');
+      const burstToggle = document.querySelector('[data-ui="burst-mode-toggle"]');
+      const repo = repoSelect ? repoSelect.value : 'acme/service';
+      const branch = branchInput ? branchInput.value : 'main';
+      const author = authorInput ? authorInput.value : 'bot';
+      const count = burstToggle ? Number(burstToggle.dataset.burst || 1) : 1;
+      try {
+        const response = await fetch('/webhook/github/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ repo_url: `https://github.com/${repo}`, branch, author, count }),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        window.location.reload();
+      } catch (error) {
+        console.error('Webhook simulation failed', error);
+        alert('Unable to trigger a simulated webhook.');
+      }
+    });
+  };
+
+  // ─── Backend console: Start / Pause / Stop ───
+  const attachBackendButtons = () => {
+    const startBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('start'));
+    const pauseBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('pause'));
+    const stopBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('stop') && !normalize(b.textContent).includes('start'));
+
+    if (startBtn) {
+      startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      bindOnce(startBtn, () => {
+        _metricsPaused = false;
+        populateBootstrapData();
+        pollLiveMetrics();
+        const orig = startBtn.innerHTML;
+        startBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:\'FILL\' 1">sync</span> Syncing…';
+        setTimeout(() => { startBtn.innerHTML = orig; }, 1500);
+        if (pauseBtn) { pauseBtn.textContent = ''; pauseBtn.innerHTML = '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">pause</span> Pause'; }
+      });
+    }
+
+    if (pauseBtn) {
+      bindOnce(pauseBtn, () => {
+        _metricsPaused = !_metricsPaused;
+        pauseBtn.innerHTML = _metricsPaused
+          ? '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">play_arrow</span> Resume'
+          : '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">pause</span> Pause';
+      });
+    }
+
+    if (stopBtn) {
+      bindOnce(stopBtn, () => {
+        if (!confirm('Stop all dashboard polling?')) return;
+        _metricsPaused = true;
+        _allPollingIntervals.forEach(id => clearInterval(id));
+        _allPollingIntervals = [];
+        const banner = document.createElement('div');
+        banner.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-error text-on-error px-6 py-3 rounded shadow-lg z-50 text-sm';
+        banner.textContent = 'Polling stopped — click Start to resume';
+        document.body.appendChild(banner);
+        setTimeout(() => banner.remove(), 5000);
+      });
+    }
+  };
+
+  // ─── Simulation page toggles ───
+  const attachSimulationToggles = () => {
+    const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+    let autoArriveCheckbox = null;
+    let priorityCheckbox = null;
+    let duplicateCheckbox = null;
+
+    allCheckboxes.forEach((cb) => {
+      const label = cb.closest('label') || cb.closest('div');
+      const text = (label?.textContent || '').toLowerCase();
+      if (text.includes('auto-arrive') || cb.classList.contains('sr-only')) autoArriveCheckbox = cb;
+      else if (text.includes('priority')) priorityCheckbox = cb;
+      else if (text.includes('duplicate')) duplicateCheckbox = cb;
+    });
+
+    if (autoArriveCheckbox) {
+      autoArriveCheckbox.addEventListener('change', () => {
+        if (autoArriveCheckbox.checked) {
+          _autoArriveInterval = setInterval(() => {
+            fetch('/webhook/github/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ count: 1 }) }).catch(() => {});
+          }, 30000);
+        } else {
+          clearInterval(_autoArriveInterval);
+          _autoArriveInterval = null;
+        }
+      });
+    }
+
+    if (priorityCheckbox) {
+      const saved = localStorage.getItem('chaosInversion') === 'true';
+      priorityCheckbox.checked = saved;
+      priorityCheckbox.addEventListener('change', () => localStorage.setItem('chaosInversion', String(priorityCheckbox.checked)));
+    }
+
+    if (duplicateCheckbox) {
+      const saved = localStorage.getItem('chaosDuplicate') === 'true';
+      duplicateCheckbox.checked = saved;
+      duplicateCheckbox.addEventListener('change', () => localStorage.setItem('chaosDuplicate', String(duplicateCheckbox.checked)));
+    }
+  };
+
+  // ─── Explorer page ───
+  let _explorerFilter = { text: '', status: '' };
+
+  const populateExplorer = async () => {
+    const tbody = document.querySelector('[data-ui="explorer-table-body"]');
+    if (!tbody) return;
+    try {
+      const res = await fetch('/ui/queue');
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      const byStatus = data.runs_by_status || {};
+      const all = Object.values(byStatus).flat().sort((a, b) => (b.queued_at || '').localeCompare(a.queued_at || ''));
+
+      // Update stat cards
+      const total = all.length;
+      const completed = (byStatus.COMPLETED || []).length;
+      const failed = (byStatus.FAILED || []).length + (byStatus.ABORTED || []).length;
+      const inProgress = (byStatus.IN_PROGRESS || []).length;
+      const setEl = (sel, v) => { const el = document.querySelector(sel); if (el) el.textContent = String(v); };
+      setEl('[data-ui="exp-total"]', total);
+      setEl('[data-ui="exp-completed"]', completed);
+      setEl('[data-ui="exp-failed"]', failed);
+      setEl('[data-ui="exp-inprogress"]', inProgress);
+
+      // Apply filters
+      const { text, status } = _explorerFilter;
+      const filtered = all.filter((r) => {
+        const matchText = !text || [r.repo, r.branch, r.author, String(r.id)].join(' ').toLowerCase().includes(text);
+        const matchStatus = !status || r.status === status;
+        return matchText && matchStatus;
+      });
+
+      // Badge colours
+      const badge = (s) => {
+        const map = { COMPLETED: 'bg-green-100 text-green-800', IN_PROGRESS: 'bg-amber-100 text-amber-800', FAILED: 'bg-red-100 text-red-800', ABORTED: 'bg-slate-100 text-slate-600', QUEUED: 'bg-blue-100 text-blue-800' };
+        return map[s] || 'bg-surface-container text-on-surface';
+      };
+
+      tbody.innerHTML = '';
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-on-surface-variant">No pipeline runs match the current filter</td></tr>';
+        return;
+      }
+      filtered.forEach((run) => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
+        const queuedAt = run.queued_at ? new Date(run.queued_at).toLocaleString() : '—';
+        const duration = run.duration_s != null ? `${Math.floor(run.duration_s / 60)}m ${run.duration_s % 60}s` : '—';
+        const trigger = (run.triggered_by || 'api').replace('github-push-simulated', 'simulated').replace('github-push', 'github').replace('random-arrival', 'scheduler');
+        tr.innerHTML = `
+          <td class="px-md py-sm font-code-sm text-code-sm text-primary">#${run.id}</td>
+          <td class="px-md py-sm"><div class="font-medium">${run.repo || '—'}</div><div class="text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span>${run.branch || ''}</div></td>
+          <td class="px-md py-sm text-on-surface-variant">${run.author || '—'}</td>
+          <td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs">${trigger}</span></td>
+          <td class="px-md py-sm"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badge(run.status)}">${run.status}</span></td>
+          <td class="px-md py-sm text-on-surface-variant text-xs">${queuedAt}</td>
+          <td class="px-md py-sm font-code-sm text-xs">${duration}</td>
+          <td class="px-md py-sm text-right"><span class="font-code-sm text-xs text-outline">${(run.commit_sha || '').slice(0, 7) || '—'}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      console.error('populateExplorer failed', e);
+    }
+  };
+
+  const attachExplorerFilters = () => {
+    const searchInput = document.querySelector('[data-ui="exp-search"]');
+    const statusSelect = document.querySelector('[data-ui="exp-status-filter"]');
+    const clearBtn = document.querySelector('[data-ui="exp-clear"]');
+    if (searchInput && !searchInput.dataset.bound) {
+      searchInput.dataset.bound = 'true';
+      searchInput.addEventListener('input', () => { _explorerFilter.text = searchInput.value.toLowerCase(); populateExplorer(); });
+    }
+    if (statusSelect && !statusSelect.dataset.bound) {
+      statusSelect.dataset.bound = 'true';
+      statusSelect.addEventListener('change', () => { _explorerFilter.status = statusSelect.value; populateExplorer(); });
+    }
+    if (clearBtn) {
+      bindOnce(clearBtn, () => {
+        _explorerFilter = { text: '', status: '' };
+        if (searchInput) searchInput.value = '';
+        if (statusSelect) statusSelect.value = '';
+        populateExplorer();
+      });
+    }
+  };
+
+  // ─── Settings page ───
+  const populateSettings = async () => {
+    try {
+      const [healthRes, bootstrapRes, workersRes] = await Promise.all([
+        fetch('/health'), fetch('/ui/bootstrap'), fetch('/api/workers'),
+      ]);
+      const health = healthRes.ok ? await healthRes.json() : {};
+      const bootstrap = bootstrapRes.ok ? await bootstrapRes.json() : {};
+      const workersData = workersRes.ok ? await workersRes.json() : {};
+
+      const set = (sel, v) => { const el = document.querySelector(sel); if (el) el.textContent = String(v ?? '—'); };
+      set('[data-ui="st-version"]', health.version);
+      set('[data-ui="st-status"]', health.status);
+      // Apply status color
+      const statusEl = document.querySelector('[data-ui="st-status"]');
+      if (statusEl) {
+        statusEl.className = `font-code-sm text-code-sm font-semibold ${(health.status || '') === 'ok' ? 'text-green-600' : 'text-error'}`;
+      }
+      set('[data-ui="st-uptime"]', bootstrap.backend?.uptime);
+      set('[data-ui="st-workers-total"]', bootstrap.workers?.total);
+      set('[data-ui="st-workers-busy"]', bootstrap.workers?.busy);
+      set('[data-ui="st-chaos-level"]', bootstrap.health?.chaos_level);
+      set('[data-ui="st-queue-total"]', bootstrap.queue?.total);
+
+      const workerList = workersData.workers || [];
+      const langCount = {};
+      workerList.forEach((w) => { langCount[w.language || 'unknown'] = (langCount[w.language || 'unknown'] || 0) + 1; });
+      const langBody = document.querySelector('[data-ui="st-lang-body"]');
+      if (langBody) {
+        langBody.innerHTML = Object.entries(langCount).map(([lang, count]) => `
+          <tr class="border-b border-surface-variant">
+            <td class="py-2 px-md font-code-sm text-code-sm">${lang}</td>
+            <td class="py-2 px-md text-on-surface-variant">${count} worker${count > 1 ? 's' : ''}</td>
+            <td class="py-2 px-md"><div class="h-2 bg-surface-container rounded-full overflow-hidden"><div class="h-full bg-primary" style="width:${Math.round(count / workerList.length * 100)}%"></div></div></td>
+          </tr>
+        `).join('') || '<tr><td colspan="3" class="py-4 text-center text-on-surface-variant">No workers</td></tr>';
+      }
+
+      const ngrokInput = document.querySelector('[data-ui="st-ngrok-url"]');
+      if (ngrokInput) ngrokInput.value = window.location.origin;
+
+      // Env var status inference
+      const envBody = document.querySelector('[data-ui="st-env-body"]');
+      const envVars = [
+        { name: 'DATABASE_URL', inferred: bootstrap.backend?.status === 'RUNNING', desc: 'PostgreSQL connection string' },
+        { name: 'REDIS_URL', inferred: bootstrap.backend?.status === 'RUNNING', desc: 'Celery broker URL' },
+        { name: 'JENKINS_URL', inferred: false, desc: 'Jenkins base URL for log fetching' },
+        { name: 'JENKINS_USER', inferred: false, desc: 'Jenkins username' },
+        { name: 'JENKINS_TOKEN', inferred: false, desc: 'Jenkins API token' },
+        { name: 'GROQ_API_KEY', inferred: false, desc: 'Primary LLM (Groq)' },
+        { name: 'ANTHROPIC_API_KEY', inferred: false, desc: 'Secondary LLM fallback' },
+        { name: 'SLACK_BOT_TOKEN', inferred: false, desc: 'Slack alert delivery' },
+        { name: 'GITHUB_WEBHOOK_SECRET', inferred: false, desc: 'HMAC secret for GitHub webhooks' },
+        { name: 'NGROK_URL', inferred: false, desc: 'Public tunnel URL for webhooks' },
+      ];
+      if (envBody) {
+        envBody.innerHTML = envVars.map((v) => `
+          <tr class="border-b border-surface-variant hover:bg-surface-container-low transition-colors">
+            <td class="py-2 px-md font-code-sm text-code-sm">${v.name}</td>
+            <td class="py-2 px-md"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${v.inferred ? 'bg-green-100 text-green-800' : 'bg-surface-container text-on-surface-variant'}">${v.inferred ? '✓ Set' : '— Not detected'}</span></td>
+            <td class="py-2 px-md text-on-surface-variant text-xs">${v.desc}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Dashboard prefs
+      const pollInput = document.querySelector('[data-ui="st-poll-interval"]');
+      const pollDisplay = document.querySelector('[data-ui="st-poll-display"]');
+      if (pollInput) {
+        const saved = localStorage.getItem('schedulerPollMs') || '5000';
+        pollInput.value = saved;
+        if (pollDisplay) pollDisplay.textContent = saved + 'ms';
+        if (!pollInput.dataset.bound) {
+          pollInput.dataset.bound = 'true';
+          pollInput.addEventListener('input', () => {
+            localStorage.setItem('schedulerPollMs', pollInput.value);
+            if (pollDisplay) pollDisplay.textContent = pollInput.value + 'ms';
+          });
+        }
+      }
+
+      // Fetch live routing mode from backend (overrides stale localStorage value)
+      try {
+        const modeRes = await fetch('/ui/scheduler/mode');
+        if (modeRes.ok) {
+          const modeData = await modeRes.json();
+          const routingEl = document.getElementById('st-routing-mode');
+          const fallbackEl = document.getElementById('st-fallback-policy');
+          if (routingEl) routingEl.textContent = modeData.mode || 'Priority';
+          localStorage.setItem('schedulerMode', modeData.mode || 'Priority');
+          if (fallbackEl && !fallbackEl.textContent.trim().replace('—', '')) {
+            fallbackEl.textContent = localStorage.getItem('workerFallbackPolicy') || 'Queue if no match';
+          }
+        }
+      } catch (_) { /* ignore, localStorage fallback already set in inline script */ }
+    } catch (e) {
+      console.error('populateSettings failed', e);
+    }
+  };
+
   const init = () => {
     rewriteNavigation();
     attachRefreshButtons();
     attachViewLogsButtons();
     attachQuickActionButtons();
     attachQueueActions();
-    attachWebhookActions();
+    attachHeaderIconButtons();
+    // Use fixed webhook handler that reads live form values; skip old hardcoded one
+    if (currentPath().startsWith('/webhooks')) {
+      attachWebhookActionsFixed();
+      attachWebhookPageActions();
+    } else {
+      attachWebhookActions();
+    }
     attachSimulationActions();
 
-    if (currentPath().startsWith("/queue")) {
-      if (document.querySelector("table tbody")) {
+    if (currentPath().startsWith('/queue')) {
+      if (document.querySelector('[data-ui="queue-table-body"]')) {
         populateQueueTable();
         populateQueueMetrics();
-        let qInterval = setInterval(() => {
-          if (document.querySelector("table tbody")) {
-            populateQueueTable();
-            populateQueueMetrics();
-          } else {
-            clearInterval(qInterval);
-          }
+        attachQueueSearch();
+        const qInterval = setInterval(() => {
+          if (document.querySelector('[data-ui="queue-table-body"]')) { populateQueueTable(); populateQueueMetrics(); }
+          else clearInterval(qInterval);
         }, 5000);
+        _allPollingIntervals.push(qInterval);
       }
     }
 
-    if (currentPath().startsWith("/scheduler")) {
+    if (currentPath().startsWith('/scheduler')) {
       if (document.querySelector('[data-ui="kanban-queued-list"]')) {
         populateSchedulerKanban();
-        let sInterval = setInterval(() => {
-          if (document.querySelector('[data-ui="kanban-queued-list"]')) {
-            populateSchedulerKanban();
-          } else {
-            clearInterval(sInterval);
-          }
-        }, 5000);
+        const ms = Number(localStorage.getItem('schedulerPollMs') || 5000);
+        _schedulerKanbanInterval = setInterval(() => {
+          if (document.querySelector('[data-ui="kanban-queued-list"]')) populateSchedulerKanban();
+          else clearInterval(_schedulerKanbanInterval);
+        }, ms);
+        _allPollingIntervals.push(_schedulerKanbanInterval);
+        attachSchedulerControls();
       }
     }
 
     if (currentPath().startsWith('/workers')) {
       if (document.querySelector('[data-ui="workers-list"]')) {
         populateWorkers();
-        let wInterval = setInterval(() => {
-          if (document.querySelector('[data-ui="workers-list"]')) {
-            populateWorkers();
-          } else {
-            clearInterval(wInterval);
-          }
+        attachWorkerControls();
+        const wInterval = setInterval(() => {
+          if (document.querySelector('[data-ui="workers-list"]')) populateWorkers();
+          else clearInterval(wInterval);
         }, 5000);
+        _allPollingIntervals.push(wInterval);
       }
     }
 
     if (currentPath().startsWith('/webhooks')) {
       if (document.querySelector('[data-ui="webhook-events-body"]')) {
         populateWebhookEvents();
-        let hInterval = setInterval(() => {
-          if (document.querySelector('[data-ui="webhook-events-body"]')) {
-            populateWebhookEvents();
-          } else {
-            clearInterval(hInterval);
-          }
+        const hInterval = setInterval(() => {
+          if (document.querySelector('[data-ui="webhook-events-body"]')) populateWebhookEvents();
+          else clearInterval(hInterval);
         }, 5000);
+        _allPollingIntervals.push(hInterval);
       }
+    }
+
+    if (currentPath().startsWith('/backend')) {
+      attachBackendButtons();
+    }
+
+    if (currentPath().startsWith('/simulation')) {
+      attachSimulationToggles();
+      const simInterval = setInterval(() => {
+        if (document.querySelector('[data-ui="simulation-live-log"]')) populateBootstrapData();
+        else clearInterval(simInterval);
+      }, 10000);
+      _allPollingIntervals.push(simInterval);
+    }
+
+    if (currentPath().startsWith('/explorer')) {
+      populateExplorer();
+      attachExplorerFilters();
+      const eInterval = setInterval(() => {
+        if (document.querySelector('[data-ui="explorer-table-body"]')) populateExplorer();
+        else clearInterval(eInterval);
+      }, 5000);
+      _allPollingIntervals.push(eInterval);
+    }
+
+    if (currentPath().startsWith('/settings')) {
+      populateSettings();
     }
 
     // Populate global bootstrap/dashboard data when present
     try {
       populateBootstrapData();
       const bInterval = setInterval(() => {
-        if (document.querySelector('[data-ui="last-updated"]')) {
-          populateBootstrapData();
-        } else {
-          clearInterval(bInterval);
-        }
+        if (document.querySelector('[data-ui="last-updated"]')) populateBootstrapData();
+        else clearInterval(bInterval);
       }, 10000);
-    } catch (e) {
-      // ignore
-    }
-
-    // Re-poll bootstrap on the simulation page (live log needs it)
-    if (currentPath().startsWith('/simulation')) {
-      setInterval(() => {
-        if (document.querySelector('[data-ui="simulation-live-log"]')) {
-          populateBootstrapData();
-        }
-      }, 10000);
-    }
+      _allPollingIntervals.push(bInterval);
+    } catch (e) { /* ignore */ }
 
     // Start polling live metrics every 5 seconds
     try {
-      pollLiveMetrics();
-      const metricsInterval = setInterval(() => {
-        pollLiveMetrics();
-      }, 5000);
+      const origPollLiveMetrics = pollLiveMetrics;
+      const guardedPoll = () => { if (!_metricsPaused) origPollLiveMetrics(); };
+      guardedPoll();
+      const metricsInterval = setInterval(guardedPoll, 5000);
+      _allPollingIntervals.push(metricsInterval);
     } catch (e) {
       console.warn('Live metrics polling not available', e);
     }
   };
+
+  window._populateSettings = populateSettings;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init, { once: true });

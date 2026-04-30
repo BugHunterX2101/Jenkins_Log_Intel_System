@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 
 import psutil
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import delete, func, select
 import json
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -274,9 +274,12 @@ async def get_queue_data(session: AsyncSession = Depends(_get_session)) -> dict:
             by_status[status_key].append({
                 "id": run.id,
                 "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
+                "repo_url": run.repo_url,
                 "branch": run.branch,
                 "commit": run.commit_sha[:8] if run.commit_sha else '',
+                "commit_sha": run.commit_sha,
                 "author": run.author,
+                "triggered_by": run.triggered_by,
                 "job_name": run.jenkins_job_name,
                 "status": run.status.value if hasattr(run.status, 'value') else str(run.status),
                 "queued_at": run.queued_at.isoformat() if run.queued_at else None,
@@ -285,7 +288,7 @@ async def get_queue_data(session: AsyncSession = Depends(_get_session)) -> dict:
                 "duration_s": run.duration_s,
             })
     
-    return{"runs_by_status": by_status, "total": len(all_runs)}
+    return {"runs_by_status": by_status, "total": len(all_runs)}
 
 
 @router.get("/scheduler", summary="Real-time scheduler data")
@@ -311,7 +314,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(_get_session)) -> d
     inprog_runs = inprog_result.scalars().all()
     
     scheduled_jobs = []
-    for run in queued_runs[:20]:  # Top 20 scheduled
+    for idx, run in enumerate(queued_runs[:20]):
         scheduled_jobs.append({
             "id": run.id,
             "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
@@ -319,7 +322,8 @@ async def get_scheduler_data(session: AsyncSession = Depends(_get_session)) -> d
             "author": run.author,
             "job_name": run.jenkins_job_name,
             "priority": "high" if run.branch == "main" else "normal",
-            "estimated_wait": f"{(len(queued_runs) - queued_runs.index(run)) * 2}m",
+            "estimated_wait": f"{(len(queued_runs) - idx) * 2}m",
+            "queued_at": run.queued_at.isoformat() if run.queued_at else None,
         })
     
     active_jobs = []
@@ -374,9 +378,12 @@ async def get_scheduler_data(session: AsyncSession = Depends(_get_session)) -> d
         for run in completed_runs_list
     ]
 
+    # "queued"    = newest arrivals (just came in, desc order)
+    # "scheduled" = FIFO order — oldest first = next to run
+    fifo_jobs = list(reversed(scheduled_jobs))
     return {
         "queued": scheduled_jobs,
-        "scheduled": scheduled_jobs,
+        "scheduled": fifo_jobs,
         "running": running_jobs,
         "completed": completed_jobs,
         "active": running_jobs,
@@ -466,7 +473,7 @@ async def get_live_metrics(session: AsyncSession = Depends(_get_session)) -> dic
             select(SystemMetrics).order_by(SystemMetrics.timestamp.asc()).limit(count - 999)
         )
         for old in oldest.scalars().all():
-            await session.delete(old)
+            session.delete(old)
 
     session.add(SystemMetrics(
         uptime_seconds=uptime_seconds,
@@ -536,3 +543,19 @@ async def get_metrics_history(session: AsyncSession = Depends(_get_session), min
         "sample_count": len(samples),
         "samples": samples,
     }
+
+
+@router.get("/scheduler/mode", summary="Get current scheduler routing mode")
+async def get_scheduler_mode() -> dict:
+    from app.scheduler import get_routing_mode
+    return {"mode": get_routing_mode()}
+
+
+@router.post("/scheduler/mode", summary="Set scheduler routing mode")
+async def set_scheduler_mode(body: dict) -> dict:
+    from app.scheduler import set_routing_mode
+    mode = body.get("mode", "Priority")
+    if mode not in ("FIFO", "Priority", "Load-Balanced"):
+        raise HTTPException(status_code=400, detail=f"Unknown routing mode: {mode!r}")
+    set_routing_mode(mode)
+    return {"mode": mode}
