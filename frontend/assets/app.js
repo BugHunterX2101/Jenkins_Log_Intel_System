@@ -207,15 +207,23 @@
         .map(r => Math.max(0, Math.floor((now - new Date(r.queued_at).getTime()) / 1000)));
 
       const avgWaitEl = document.querySelector('[data-ui="avg-wait-queue"]');
-      if (avgWaitEl && waitTimes.length) {
-        const avg = (waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(1);
-        avgWaitEl.innerHTML = `${avg}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
+      if (avgWaitEl) {
+        if (waitTimes.length) {
+          const avg = (waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(1);
+          avgWaitEl.innerHTML = `${avg}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
+        } else {
+          avgWaitEl.innerHTML = `0<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
+        }
       }
 
       const longestEl = document.querySelector('[data-ui="longest-wait"]');
-      if (longestEl && waitTimes.length) {
-        const max = Math.max(...waitTimes);
-        longestEl.innerHTML = `${max}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
+      if (longestEl) {
+        if (waitTimes.length) {
+          const max = Math.max(...waitTimes);
+          longestEl.innerHTML = `${max}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
+        } else {
+          longestEl.innerHTML = `0<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
+        }
       }
 
       const throughputEl = document.querySelector('[data-ui="throughput"]');
@@ -941,10 +949,11 @@
         avgWait.textContent = `Avg wait: ${Number(data.queue.avg_wait_seconds).toFixed(1)}s`;
       }
 
-      // System uptime
+      // System uptime — show actual server uptime (backend.uptime), falling back
+      // to the SLA percentage if uptime isn't available
       const uptime = document.querySelector('[data-ui="system-uptime"]');
-      if (uptime && data.health && data.health.uptime_percentage) {
-        uptime.textContent = String(data.health.uptime_percentage);
+      if (uptime) {
+        uptime.textContent = data.backend?.uptime || data.health?.uptime_percentage || '—';
       }
 
       // Worker utilization
@@ -1263,6 +1272,12 @@
         });
       });
     }
+
+    // "View Full Logs" button in Decision Log footer → Explorer page
+    const viewLogsBtn = Array.from(document.querySelectorAll('button')).find(
+      b => normalize(b.textContent).includes('view full logs')
+    );
+    if (viewLogsBtn) bindOnce(viewLogsBtn, () => goTo('/explorer'));
   };
 
   // ─── Workers page controls ───
@@ -1291,6 +1306,12 @@
   // ─── Webhooks page: copy URL, visibility toggle, reset, burst mode ───
   const attachWebhookPageActions = () => {
     const ngrokInput = document.querySelector('[data-ui="ngrok-url"]');
+    // Populate the ngrok URL field with the actual server origin (the real tunnel URL
+    // if accessed via ngrok, or localhost when running locally)
+    if (ngrokInput && ngrokInput.value.includes('[configure')) {
+      ngrokInput.value = window.location.origin;
+    }
+
     const copyBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('copy url'));
     if (copyBtn && ngrokInput) {
       bindOnce(copyBtn, () => {
@@ -1369,8 +1390,24 @@
     });
   };
 
-  // ─── Backend console: Start / Pause / Stop ───
+  // ─── Backend console: Start / Pause / Stop / View All ───
   const attachBackendButtons = () => {
+    // "View All" in the Endpoint Health Monitor header → open FastAPI interactive docs
+    const viewAllBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent) === 'view all');
+    if (viewAllBtn) bindOnce(viewAllBtn, () => window.open('/docs', '_blank'));
+
+    // "Load More History" in the Live Request Feed footer → re-fetch bootstrap to refresh feed
+    const loadMoreBtn = Array.from(document.querySelectorAll('button')).find(
+      b => normalize(b.textContent).includes('load more history')
+    );
+    if (loadMoreBtn) {
+      bindOnce(loadMoreBtn, async () => {
+        loadMoreBtn.textContent = 'Refreshing…';
+        await populateBootstrapData();
+        loadMoreBtn.textContent = 'Load More History';
+      });
+    }
+
     const startBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('start'));
     const pauseBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('pause'));
     const stopBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('stop') && !normalize(b.textContent).includes('start'));
@@ -1715,11 +1752,7 @@
 
     if (currentPath().startsWith('/simulation')) {
       attachSimulationToggles();
-      const simInterval = setInterval(() => {
-        if (document.querySelector('[data-ui="simulation-live-log"]')) populateBootstrapData();
-        else clearInterval(simInterval);
-      }, 10000);
-      _allPollingIntervals.push(simInterval);
+      // global bootstrap interval (below) already refreshes the simulation panel every 10s
     }
 
     if (currentPath().startsWith('/explorer')) {
@@ -1736,13 +1769,13 @@
       populateSettings();
     }
 
-    // Populate global bootstrap/dashboard data when present
+    // Populate global bootstrap/dashboard data on every page, every 10 s.
+    // Previously this was guarded by [data-ui="last-updated"] which only exists
+    // on index.html — causing the interval to stop immediately on all other pages
+    // and leaving backend/queue/scheduler panels with stale data.
     try {
       populateBootstrapData();
-      const bInterval = setInterval(() => {
-        if (document.querySelector('[data-ui="last-updated"]')) populateBootstrapData();
-        else clearInterval(bInterval);
-      }, 10000);
+      const bInterval = setInterval(populateBootstrapData, 10000);
       _allPollingIntervals.push(bInterval);
     } catch (e) { /* ignore */ }
 
