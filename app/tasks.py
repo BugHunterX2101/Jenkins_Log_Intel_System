@@ -96,6 +96,8 @@ async def _process_async(payload: dict) -> dict:
         )
         session.add(event)
         await session.commit()
+        await session.refresh(event)
+        event_id = event.id  # save before session closes
 
     delivery = await notifier.notify(
         job_name=job_name, build_number=build_number,
@@ -105,4 +107,13 @@ async def _process_async(payload: dict) -> dict:
     )
 
     logger.info("Delivery results for %s #%d: %s", job_name, build_number, delivery)
+
+    # Update delivery_status now that notification result is known
+    slack_ok = delivery.get("slack") == "OK"
+    async with Session() as session:
+        from app.models import BuildEvent as _BE
+        evt = await session.get(_BE, event_id)
+        if evt:
+            evt.delivery_status = "OK" if slack_ok else "FAILED"
+            await session.commit()
     return {"job": job_name, "build": build_number, "delivery": delivery}

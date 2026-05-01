@@ -81,7 +81,12 @@ async def dashboard(session: AsyncSession = Depends(_get_session)) -> dict:
     return await get_dashboard_snapshot(session)
 
 
-@router.get("/{run_id}", summary="Single run detail")
+@router.get("/dashboard", summary="Dashboard snapshot (alias)", include_in_schema=False)
+async def dashboard_alias(session: AsyncSession = Depends(_get_session)) -> dict:
+    return await get_dashboard_snapshot(session)
+
+
+@router.get("/{run_id:int}", summary="Single run detail")
 async def run_detail(
     run_id: int,
     session: AsyncSession = Depends(_get_session),
@@ -92,7 +97,7 @@ async def run_detail(
     return serialise_run(run)
 
 
-@router.post("/{run_id}/stage-event", summary="Receive stage progress event")
+@router.post("/{run_id:int}/stage-event", summary="Receive stage progress event")
 async def stage_event(
     run_id: int,
     body: StageEventRequest,

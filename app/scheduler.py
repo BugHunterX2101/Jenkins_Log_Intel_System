@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import threading
 import time
 
 import psutil
@@ -14,6 +15,19 @@ from celery import Celery
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+# ── Routing mode shared state ─────────────────────────────────────────────────
+# Set via POST /ui/scheduler/mode; read by _scheduler_tick_async each tick.
+_routing_mode: str = "Priority"
+
+
+def get_routing_mode() -> str:
+    return _routing_mode
+
+
+def set_routing_mode(mode: str) -> None:
+    global _routing_mode
+    _routing_mode = mode
 
 celery_app = Celery(
     "scheduler",
@@ -47,13 +61,13 @@ celery_app.conf.update(
 
 @celery_app.task(name="app.scheduler.scheduler_tick")
 def scheduler_tick() -> dict:
-    return asyncio.run(_scheduler_tick_async())
+    return asyncio.run(_scheduler_tick_async(use_celery=True))
 
 
-async def _scheduler_tick_async() -> dict:
+async def _scheduler_tick_async(use_celery: bool = False) -> dict:
     from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
     from sqlalchemy.orm import sessionmaker
-    from sqlalchemy import select, update
+    from sqlalchemy import select, update, case as sa_case
     from app.pipeline_models import PipelineRun, RunStatus
     from app.services.worker_pool import assign_worker, detect_language
 
@@ -62,11 +76,21 @@ async def _scheduler_tick_async() -> dict:
 
     assigned_count = 0
 
+    # Apply routing mode ordering
+    mode = get_routing_mode()
+    if mode == "Priority":
+        ordering = (
+            sa_case((PipelineRun.branch == "main", 0), else_=1),
+            PipelineRun.queued_at.asc(),
+        )
+    else:  # FIFO or Load-Balanced (worker selection already handles load)
+        ordering = (PipelineRun.queued_at.asc(),)
+
     async with Session() as session:
         result = await session.execute(
             select(PipelineRun)
             .where(PipelineRun.status == RunStatus.QUEUED)
-            .order_by(PipelineRun.queued_at.asc())
+            .order_by(*ordering)
         )
         queued_runs = result.scalars().all()
 
@@ -103,15 +127,39 @@ async def _scheduler_tick_async() -> dict:
             worker   = await assign_worker(session, run.id, language)
 
         if worker:
-            execute_pipeline_run.delay(
-                run_id=run.id,
-                worker_id=worker.id,
-                stage_names=stage_names,
-                worker_name=worker.name,
-            )
+            if use_celery:
+                execute_pipeline_run.delay(
+                    run_id=run.id,
+                    worker_id=worker.id,
+                    stage_names=stage_names,
+                    worker_name=worker.name,
+                )
+            else:
+                # Running inside FastAPI process — execute in a daemon thread.
+                # Use new_event_loop() instead of asyncio.run() to avoid
+                # signal-handler restrictions that apply to non-main threads.
+                def _exec_in_thread(rid=run.id, wid=worker.id, stages=stage_names):
+                    import sys
+                    print(f"[scheduler] thread starting run {rid}", flush=True, file=sys.stderr)
+                    # asyncpg requires SelectorEventLoop on Windows;
+                    # ProactorEventLoop (the Windows default) causes silent hangs.
+                    loop = asyncio.SelectorEventLoop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        result = loop.run_until_complete(_run_execution(rid, wid, stages))
+                        print(f"[scheduler] run {rid} finished success={result}", flush=True, file=sys.stderr)
+                        logger.info("Run %d execution completed: success=%s", rid, result)
+                    except Exception as _exc:
+                        print(f"[scheduler] run {rid} FAILED: {_exc}", flush=True, file=sys.stderr)
+                        logger.error("Run %d execution failed: %s", rid, _exc, exc_info=True)
+                    finally:
+                        loop.close()
+                t = threading.Thread(target=_exec_in_thread, daemon=True, name=f"exec-run-{run.id}")
+                t.start()
+                logger.info("Execution thread launched for run %d", run.id)
             logger.info(
-                "Scheduler: dispatched run %d to worker %s (lang=%s)",
-                run.id, worker.name, language.value,
+                "Scheduler: dispatched run %d to worker %s (lang=%s, celery=%s)",
+                run.id, worker.name, language.value, use_celery,
             )
             assigned_count += 1
         else:
@@ -270,10 +318,12 @@ async def _collect_metrics_async() -> dict:
         busy_workers = sum(1 for w in workers if w.status == WorkerStatus.BUSY)
         worker_total = len(workers)
 
-        # Calculate metrics
+        # Calculate metrics — use active queue (QUEUED + IN_PROGRESS) not historical total
         queue_total = sum(len(items) for items in snapshot.values())
-        queue_pressure = queue_total + busy_workers * 2 + len(snapshot.get("FAILED", [])) * 3
-        chaos_intensity = max(0, min(100, int(queue_pressure * 4)))
+        active_queue  = len(snapshot.get("QUEUED", [])) + len(snapshot.get("IN_PROGRESS", []))
+        failed_capped = min(len(snapshot.get("FAILED", [])), 5)
+        queue_pressure = active_queue + busy_workers * 2 + failed_capped
+        chaos_intensity = max(0, min(100, int(queue_pressure * 2)))
 
         if chaos_intensity >= 75:
             chaos_level = "Critical"
@@ -298,15 +348,21 @@ async def _collect_metrics_async() -> dict:
         )
         session.add(metric)
         
-        # Clean up old metrics (keep only last 1000)
+        # Clean up old metrics (keep only last 1000) — single bulk DELETE
         count_result = await session.execute(select(func.count(SystemMetrics.id)))
         metric_count = count_result.scalar() or 0
         if metric_count > 1000:
-            delete_result = await session.execute(
-                select(SystemMetrics).order_by(SystemMetrics.timestamp.asc()).limit(metric_count - 1000)
+            from sqlalchemy import delete as sa_delete
+            old_ids_result = await session.execute(
+                select(SystemMetrics.id)
+                .order_by(SystemMetrics.timestamp.asc())
+                .limit(metric_count - 1000)
             )
-            for old_metric in delete_result.scalars().all():
-                await session.delete(old_metric)
+            old_ids = [row[0] for row in old_ids_result.all()]
+            if old_ids:
+                await session.execute(
+                    sa_delete(SystemMetrics).where(SystemMetrics.id.in_(old_ids))
+                )
 
         await session.commit()
 

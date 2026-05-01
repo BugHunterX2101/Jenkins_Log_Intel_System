@@ -63,7 +63,6 @@ async def worker_detail(
 
     return {
         **serialise_worker(worker),
-        "capabilities": worker.capabilities,
         "recent_assignments": [
             {
                 "run_id":       a.run_id,

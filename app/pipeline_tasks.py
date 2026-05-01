@@ -168,10 +168,13 @@ async def _sync_stages(run_id: int, job_name: str, build_number: int) -> bool:
         get_run as _get_run,
     )
     import app.pipeline_tasks as _pt
-    _on_ss  = getattr(_pt, "on_stage_started",  _on_stage_started)
-    _on_sc  = getattr(_pt, "on_stage_completed", _on_stage_completed)
-    _on_bc  = getattr(_pt, "on_build_completed", _on_build_completed)
-    _gr     = getattr(_pt, "get_run",            _get_run)
+    # Use module-level stub if it's been patched by tests (not None); else fall
+    # back to the real function imported above. getattr() alone would return the
+    # None stub value and never reach the default — use `or` like worker_pool.py.
+    _on_ss  = getattr(_pt, "on_stage_started",  None) or _on_stage_started
+    _on_sc  = getattr(_pt, "on_stage_completed", None) or _on_stage_completed
+    _on_bc  = getattr(_pt, "on_build_completed", None) or _on_build_completed
+    _gr     = getattr(_pt, "get_run",            None) or _get_run
 
     encoded_job = job_name.replace("/", "/job/")
     api_url = (

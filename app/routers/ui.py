@@ -77,15 +77,13 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(_get_sessi
     metric = latest_metric.scalars().first()
 
     if metric:
-        # Use stored metrics
+        # Use stored metrics for process-level data (uptime, memory, cpu)
         uptime_seconds = metric.uptime_seconds
         memory_info_rss = metric.memory_used_bytes
         memory_total = metric.memory_total_bytes
         queue_total = metric.queue_total
         busy_workers = metric.busy_workers
         worker_total = metric.worker_total
-        chaos_intensity = metric.chaos_intensity
-        chaos_level = metric.chaos_level
         cpu_percent = metric.cpu_percent
     else:
         # Fall back to live computation
@@ -100,16 +98,21 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(_get_sessi
         queue_total = sum(len(items) for items in snapshot.values())
         busy_workers = sum(1 for worker in workers if worker.status == WorkerStatus.BUSY)
         worker_total = len(workers)
-        queue_pressure = queue_total + busy_workers * 2 + len(snapshot.get("FAILED", [])) * 3
-        chaos_intensity = max(0, min(100, int(queue_pressure * 4)))
-        if chaos_intensity >= 75:
-            chaos_level = "Critical"
-        elif chaos_intensity >= 45:
-            chaos_level = "High Volatility"
-        elif chaos_intensity >= 20:
-            chaos_level = "Elevated"
-        else:
-            chaos_level = "Normal"
+
+    # Always compute chaos from the live snapshot so it reflects current pressure,
+    # not a stale historical total that causes the dial to be permanently pegged at 100.
+    active_queue = len(snapshot.get("QUEUED", [])) + len(snapshot.get("IN_PROGRESS", []))
+    failed_capped = min(len(snapshot.get("FAILED", [])), 5)
+    queue_pressure = active_queue + busy_workers * 2 + failed_capped
+    chaos_intensity = max(0, min(100, int(queue_pressure * 2)))
+    if chaos_intensity >= 75:
+        chaos_level = "Critical"
+    elif chaos_intensity >= 45:
+        chaos_level = "High Volatility"
+    elif chaos_intensity >= 20:
+        chaos_level = "Elevated"
+    else:
+        chaos_level = "Normal"
 
     from datetime import datetime, timezone
     latest_runs = [run for bucket in snapshot.values() for run in bucket]
@@ -476,8 +479,10 @@ async def get_live_metrics(session: AsyncSession = Depends(_get_session)) -> dic
     busy_workers = sum(1 for w in workers if w.status == WorkerStatus.BUSY)
     worker_total = len(workers)
 
-    queue_pressure  = queue_total + busy_workers * 2 + len(snapshot.get("FAILED", [])) * 3
-    chaos_intensity = max(0, min(100, int(queue_pressure * 4)))
+    active_queue    = len(snapshot.get("QUEUED", [])) + len(snapshot.get("IN_PROGRESS", []))
+    failed_capped   = min(len(snapshot.get("FAILED", [])), 5)
+    queue_pressure  = active_queue + busy_workers * 2 + failed_capped
+    chaos_intensity = max(0, min(100, int(queue_pressure * 2)))
     if chaos_intensity >= 75:
         chaos_level = "Critical"
     elif chaos_intensity >= 45:
