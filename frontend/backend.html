@@ -104,18 +104,17 @@
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Roboto+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <style>
-        body { background-color: #F8FAFC; }
+        body { background-color: #F8FAFC; font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .ambient-shadow { box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.02); }
         .ambient-shadow-hover:hover { box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.05); }
-        .pulse-dot {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
+        .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c2c6d6; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #727785; }
     </style>
 </head>
 <body class="font-body-md text-body-md text-on-surface antialiased bg-surface">
@@ -125,15 +124,15 @@
 <div class="text-lg font-bold tracking-tighter text-slate-900 dark:text-white">Jenkins Log Intel</div>
 <div class="flex items-center gap-6 h-full">
 <!-- Dashboard -->
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-all cursor-pointer active:opacity-80" href="/">Dashboard</a>
 <!-- Webhooks -->
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/webhooks">Webhooks</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-all cursor-pointer active:opacity-80" href="/webhooks">Webhooks</a>
 <!-- Console (Active) -->
 <a class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 pb-4 mt-4 cursor-pointer active:opacity-80 flex h-full items-end" href="/backend" aria-current="page">Console</a>
 <!-- Explorer -->
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/explorer">Explorer</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-all cursor-pointer active:opacity-80" href="/explorer">Explorer</a>
 <!-- Scheduler -->
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80" href="/scheduler">Scheduler</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 mt-4 transition-all cursor-pointer active:opacity-80" href="/scheduler">Scheduler</a>
 </div>
 </div>
 <div class="flex items-center gap-4">
@@ -164,11 +163,11 @@
 </div>
 <div class="flex-1 overflow-y-auto py-2 flex flex-col gap-1">
 <!-- Overview -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/">
 <span class="material-symbols-outlined">dashboard</span> Overview
             </a>
 <!-- Webhooks -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/webhooks">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/webhooks">
 <span class="material-symbols-outlined">settings_ethernet</span> Webhooks
             </a>
 <!-- Backend (Active) -->
@@ -176,29 +175,29 @@
 <span class="material-symbols-outlined">terminal</span> Backend
             </a>
 <!-- Queue -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/queue">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/queue">
 <span class="material-symbols-outlined">database</span> Queue
             </a>
 <!-- Scheduler -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/scheduler">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/scheduler">
 <span class="material-symbols-outlined">calendar_today</span> Scheduler
             </a>
 <!-- Workers -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/workers">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/workers">
 <span class="material-symbols-outlined">engineering</span> Workers
             </a>
 <!-- Simulation -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/simulation">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/simulation">
 <span class="material-symbols-outlined">precision_manufacturing</span> Simulation
             </a>
 </div>
 <div class="border-t border-slate-200 dark:border-slate-800 py-2">
 <!-- Settings -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/settings">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/settings">
 <span class="material-symbols-outlined">settings</span> Settings
             </a>
 <!-- Logs -->
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer" href="/explorer">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/explorer">
 <span class="material-symbols-outlined">list_alt</span> Logs
             </a>
 </div>

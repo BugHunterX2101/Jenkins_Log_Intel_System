@@ -5,7 +5,6 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Job Queue &amp; Database Viewer - Jenkins Log Intel</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
@@ -145,41 +144,41 @@
 <button class="mt-4 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer active:opacity-80 capitalize tracking-normal text-sm font-medium">Quick Actions</button>
 </div>
 <nav class="flex-1 overflow-y-auto py-2 flex flex-col gap-1">
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/">
 <span class="material-symbols-outlined text-lg" data-icon="dashboard">dashboard</span>
 <span>Overview</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/webhooks">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/webhooks">
 <span class="material-symbols-outlined text-lg" data-icon="settings_ethernet">settings_ethernet</span>
 <span>Webhooks</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/backend">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/backend">
 <span class="material-symbols-outlined text-lg" data-icon="terminal">terminal</span>
 <span>Backend</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-r-4 border-blue-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/queue">
+<a class="flex items-center gap-3 px-4 py-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-r-4 border-blue-600 transition-all duration-150 ease-in-out cursor-pointer" href="/queue">
 <span class="material-symbols-outlined text-lg" data-icon="database">database</span>
 <span>Queue</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/scheduler">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/scheduler">
 <span class="material-symbols-outlined text-lg" data-icon="calendar_today">calendar_today</span>
 <span>Scheduler</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/workers">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/workers">
 <span class="material-symbols-outlined text-lg" data-icon="engineering">engineering</span>
 <span>Workers</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/simulation">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/simulation">
 <span class="material-symbols-outlined text-lg" data-icon="precision_manufacturing">precision_manufacturing</span>
 <span>Simulation</span>
 </a>
 </nav>
 <div class="mt-auto border-t border-slate-200 dark:border-slate-800 pt-2 pb-4">
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/settings">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/settings">
 <span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
 <span>Settings</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/explorer">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/explorer">
 <span class="material-symbols-outlined text-lg" data-icon="list_alt">list_alt</span>
 <span>Logs</span>
 </a>
