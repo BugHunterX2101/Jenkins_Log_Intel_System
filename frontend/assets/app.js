@@ -271,6 +271,30 @@
             <td class="px-md py-sm text-right opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-outline hover:text-error transition-colors p-1" title="Cancel Job"><span class="material-symbols-outlined text-[18px]">cancel</span></button></td>
           `;
           tableBody.appendChild(row);
+          const cancelBtn = row.querySelector('button[title="Cancel Job"]');
+          if (cancelBtn) {
+            cancelBtn.addEventListener('click', async () => {
+              cancelBtn.disabled = true;
+              try {
+                const res = await fetch(`/ui/queue/${run.id}/cancel`, { method: 'POST' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50';
+                toast.textContent = `Job #J-${run.id} cancelled`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2500);
+                populateQueueTable();
+                populateQueueMetrics();
+              } catch (err) {
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-6 right-6 bg-error text-on-error px-4 py-2 rounded shadow-lg text-sm z-50';
+                toast.textContent = `Failed to cancel job #J-${run.id}`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2500);
+                cancelBtn.disabled = false;
+              }
+            });
+          }
         });
       }
     } catch (error) {
@@ -480,10 +504,16 @@
     const requestBody = document.querySelector('[data-ui="backend-request-body"]');
 
     if (status) {
-      status.lastChild && (status.lastChild.textContent = ` ${backend.status || 'RUNNING'}`);
+      const tn = Array.from(status.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
+      if (tn) tn.textContent = ` ${backend.status || 'RUNNING'}`;
     }
     if (uptime) uptime.textContent = backend.uptime || '-';
     if (technology) technology.textContent = backend.technology || 'FastAPI / Python';
+    const techIcon = document.querySelector('[data-ui="backend-technology-icon"]');
+    if (techIcon) {
+      const t = (backend.technology || '').toLowerCase();
+      techIcon.textContent = t.includes('node') || t.includes('javascript') ? 'javascript' : 'code';
+    }
     if (port) port.textContent = backend.port || '8000';
     if (memory) {
       const used = Number(backend.memory_used || 0);
@@ -617,25 +647,35 @@
     }
     if (level) level.textContent = simulation.chaos_level || 'Normal';
     if (arrivalSpan && arrivalInput) {
-      arrivalSpan.textContent = `${simulation.arrival_rate || 0} req/s`;
-      arrivalInput.value = simulation.arrival_rate || 0;
-      arrivalInput.addEventListener('input', (e) => {
-        arrivalSpan.textContent = `${e.target.value} req/s`;
-      });
+      const rate = simulation.arrival_rate || 0;
+      arrivalSpan.textContent = `${rate} req/s`;
+      arrivalInput.value = Math.min(rate, Number(arrivalInput.max || 100));
+      if (!arrivalInput.dataset.bound) {
+        arrivalInput.dataset.bound = 'true';
+        arrivalInput.addEventListener('input', (e) => {
+          arrivalSpan.textContent = `${e.target.value} req/s`;
+        });
+      }
     }
     if (burstSpan && burstInput) {
       burstSpan.textContent = `${simulation.burst_prob || 0}%`;
       burstInput.value = simulation.burst_prob || 0;
-      burstInput.addEventListener('input', (e) => {
-        burstSpan.textContent = `${e.target.value}%`;
-      });
+      if (!burstInput.dataset.bound) {
+        burstInput.dataset.bound = 'true';
+        burstInput.addEventListener('input', (e) => {
+          burstSpan.textContent = `${e.target.value}%`;
+        });
+      }
     }
     if (failureSpan && failureInput) {
       failureSpan.textContent = `${simulation.failure_rate || 0}%`;
       failureInput.value = simulation.failure_rate || 0;
-      failureInput.addEventListener('input', (e) => {
-        failureSpan.textContent = `${e.target.value}%`;
-      });
+      if (!failureInput.dataset.bound) {
+        failureInput.dataset.bound = 'true';
+        failureInput.addEventListener('input', (e) => {
+          failureSpan.textContent = `${e.target.value}%`;
+        });
+      }
     }
     if (minDuration) minDuration.value = simulation.min_duration_ms || 100;
     if (maxDuration) maxDuration.value = simulation.max_duration_ms || 5000;
@@ -773,6 +813,11 @@
         const pct = Math.round((merged.load || 0) * 100);
         const jobsRun = merged.jobs_run != null ? merged.jobs_run : '—';
         const currentJob = merged.current_job || null;
+        let capsList = [];
+        try { capsList = JSON.parse(merged.capabilities || '[]'); } catch (_e) { capsList = []; }
+        const capsHtml = capsList.length
+          ? `<div class="flex flex-wrap gap-xs mt-xs">${capsList.map(c => `<span class="bg-surface-container-high px-1.5 py-0.5 rounded text-[9px] font-label-md text-on-surface-variant">${c}</span>`).join('')}</div>`
+          : '';
         const statusBadge = isBusy
           ? `<span class="bg-primary-container text-on-primary-container px-2 py-1 rounded text-[10px] font-label-md flex items-center gap-1"><span class="material-symbols-outlined text-[12px] animate-pulse">sync</span> BUSY</span>`
           : isOffline
@@ -788,6 +833,7 @@
               <div class="flex gap-xs mt-xs">
                 <span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md text-on-surface-variant">${merged.language || ''}</span>
               </div>
+              ${capsHtml}
               ${currentJobRow}
             </div>
             ${statusBadge}
@@ -935,10 +981,11 @@
       const lastEl = document.querySelector('[data-ui="last-updated"]');
       if (lastEl) lastEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
 
-      // Queue counts
+      // Queue counts — show active depth (QUEUED + IN_PROGRESS), not historical total
       const qDepth = document.querySelector('[data-ui="queue-depth"]');
-      if (qDepth && data.queue && typeof data.queue.total !== 'undefined') {
-        qDepth.textContent = String(data.queue.total);
+      if (qDepth && data.queue) {
+        const activeDepth = (data.queue.queued || 0) + (data.queue.in_progress || 0);
+        qDepth.textContent = String(activeDepth);
       }
       const topologyCount = document.querySelector('[data-ui="topology-queue-count"]');
       if (topologyCount && data.queue && typeof data.queue.queued !== 'undefined') {
@@ -1154,7 +1201,6 @@
   // ─── Queue page: live search filter ───
   const attachQueueSearch = () => {
     const searchInput = document.querySelector('input[placeholder="Filter jobs..."]');
-    const filterBtn = document.querySelector('button .material-symbols-outlined');
     if (!searchInput || searchInput.dataset.bound) return;
     searchInput.dataset.bound = 'true';
     let statusFilter = false;

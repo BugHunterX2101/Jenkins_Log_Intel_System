@@ -185,7 +185,7 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(_get_sessi
         "simulation": {
             "chaos_intensity": chaos_intensity,
             "chaos_level": chaos_level,
-            "arrival_rate": max(1, queue_total * 2 + busy_workers * 3),
+            "arrival_rate": max(1, min(100, (len(snapshot.get("QUEUED", [])) + len(snapshot.get("IN_PROGRESS", []))) * 2 + busy_workers * 3)),
             "burst_prob": min(100, len(snapshot.get("FAILED", [])) * 15 + busy_workers * 5),
             "failure_rate": min(100, len(snapshot.get("FAILED", [])) * 10 + busy_workers * 2),
             "min_duration_ms": 100,
@@ -339,15 +339,24 @@ async def get_scheduler_data(session: AsyncSession = Depends(_get_session)) -> d
         })
     
     # running = in-progress jobs (kanban uses 'running' key)
+    from datetime import datetime, timezone as _tz
+    _now = datetime.now(_tz.utc)
     running_jobs = []
     for run in inprog_runs[:10]:
+        # duration_s is None while the job is still running; compute elapsed from started_at
+        if run.duration_s is not None:
+            elapsed = run.duration_s
+        elif run.started_at:
+            elapsed = int((_now - run.started_at).total_seconds())
+        else:
+            elapsed = 0
         running_jobs.append({
             "id": run.id,
             "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
             "branch": run.branch,
             "job_name": run.jenkins_job_name,
             "started": run.started_at.isoformat() if run.started_at else None,
-            "duration_s": run.duration_s or 0,
+            "duration_s": elapsed,
             "summary": f"{run.jenkins_job_name or 'job'} / {run.branch or 'main'}",
             "priority": "high" if run.branch == "main" else "normal",
         })
@@ -388,6 +397,18 @@ async def get_scheduler_data(session: AsyncSession = Depends(_get_session)) -> d
         "completed": completed_jobs,
         "active": running_jobs,
     }
+
+
+@router.post("/queue/{run_id}/cancel", summary="Abort a queued or in-progress pipeline run")
+async def cancel_run(run_id: int, session: AsyncSession = Depends(_get_session)) -> dict:
+    run = await session.get(PipelineRun, run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+    if run.status not in (RunStatus.QUEUED, RunStatus.IN_PROGRESS):
+        raise HTTPException(status_code=400, detail=f"Run {run_id} is not active (status: {run.status.value})")
+    run.status = RunStatus.ABORTED
+    await session.commit()
+    return {"cancelled": run_id, "status": "ABORTED"}
 
 
 @router.post("/queue/flush", summary="Remove queued pipeline runs")

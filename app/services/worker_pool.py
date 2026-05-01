@@ -303,6 +303,7 @@ def serialise_worker(w: Worker) -> dict:
         "jobs_run": w.jobs_run,
         "current_job": w.current_job,
         "last_heartbeat": w.last_heartbeat.isoformat() if w.last_heartbeat else None,
+        "capabilities": w.capabilities,
     }
 
 
