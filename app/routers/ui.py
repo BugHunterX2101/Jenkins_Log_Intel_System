@@ -442,8 +442,14 @@ async def get_build_events(session: AsyncSession = Depends(_get_session), limit:
             fixes = json.loads(e.fix_suggestions) if e.fix_suggestions else []
         except Exception:
             fixes = []
+        # Derive a short repo name from the Jenkins job_name (e.g. "acme/auth-service/main" → "auth-service")
+        _parts = (e.job_name or "").split("/")
+        _repo_short = _parts[1] if len(_parts) >= 2 else (e.job_name or "")
         items.append({
             "id": e.id,
+            "delivery_id": f"evt-{e.id}",       # stable reference for the webhook table Delivery/ID column
+            "event_type": "build_failure",       # semantic webhook event type for the Event Type column
+            "repo_name": _repo_short,            # short repo name for the Source column
             "job_name": e.job_name,
             "build_number": e.build_number,
             "failure_type": e.failure_type,
@@ -528,7 +534,7 @@ async def get_live_metrics(session: AsyncSession = Depends(_get_session)) -> dic
             "worker_total": worker_total,
             "chaos_intensity": chaos_intensity,
             "chaos_level": chaos_level,
-            "queue_pressure": queue_total + busy_workers * 2,
+            "queue_pressure": queue_pressure,
         },
     }
 

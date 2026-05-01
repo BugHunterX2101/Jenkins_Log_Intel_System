@@ -1413,19 +1413,28 @@
     const triggerWebhook = buttonsWithLabel("trigger webhook")[0];
     if (!triggerWebhook) return;
     bindOnce(triggerWebhook, async () => {
-      const repoSelect = document.querySelector('[data-ui="wh-repo"]');
+      const repoSelect  = document.querySelector('[data-ui="wh-repo"]');
       const branchInput = document.querySelector('[data-ui="wh-branch"]');
       const authorInput = document.querySelector('[data-ui="wh-author"]');
+      const shaInput    = document.querySelector('[data-ui="wh-sha"]');
+      const eventSel    = document.querySelector('[data-ui="wh-event-type"]');
       const burstToggle = document.querySelector('[data-ui="burst-mode-toggle"]');
-      const repo = repoSelect ? repoSelect.value : 'acme/service';
-      const branch = branchInput ? branchInput.value : 'main';
-      const author = authorInput ? authorInput.value : 'bot';
-      const count = burstToggle ? Number(burstToggle.dataset.burst || 1) : 1;
+      const repo       = repoSelect  ? repoSelect.value  : 'acme/service';
+      const branch     = branchInput ? branchInput.value : 'main';
+      const author     = authorInput ? authorInput.value : 'bot';
+      const commitSha  = shaInput    ? (shaInput.value || null) : null;
+      const eventType  = eventSel    ? eventSel.value           : 'push';
+      const count      = burstToggle ? Number(burstToggle.dataset.burst || 1) : 1;
       try {
         const response = await fetch('/webhook/github/simulate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ repo_url: `https://github.com/${repo}`, branch, author, count }),
+          body: JSON.stringify({
+            repo_url: `https://github.com/${repo}`,
+            branch, author, count,
+            commit_sha: commitSha,
+            event_type: eventType,
+          }),
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         window.location.reload();

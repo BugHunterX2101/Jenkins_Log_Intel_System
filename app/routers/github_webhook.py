@@ -123,6 +123,8 @@ class SimulateRequest(BaseModel):
     repo_url:   Optional[str] = None
     branch:     Optional[str] = None
     author:     Optional[str] = None
+    commit_sha: Optional[str] = None   # user-supplied SHA from the webhooks form (wh-sha)
+    event_type: Optional[str] = None   # user-supplied event type (wh-event-type)
     count:      int           = 1
 
 
@@ -136,7 +138,7 @@ async def simulate_github_push(body: SimulateRequest, bg: BackgroundTasks) -> di
         )
         branch     = body.branch or random.choice(["main", "develop", f"feature/{_rand_str(6)}"])
         author     = body.author or random.choice(["alice", "bob", "carol", "dave", "eve"])
-        commit_sha = _rand_hex(40)
+        commit_sha = body.commit_sha or _rand_hex(40)
 
         bg.add_task(
             _enqueue_run, repo_url, branch, commit_sha, author,
