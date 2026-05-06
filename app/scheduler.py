@@ -38,18 +38,11 @@ celery_app.conf.update(
     task_serializer="json",
     result_serializer="json",
     accept_content=["json"],
+    include=["app.pipeline_tasks", "app.tasks"],
     beat_schedule={
         "scheduler-tick": {
             "task": "app.scheduler.scheduler_tick",
             "schedule": 5.0,
-        },
-        "random-job-arrival": {
-            "task": "app.scheduler.random_job_arrival",
-            "schedule": 45.0,
-        },
-        "worker-load-drift": {
-            "task": "app.scheduler.worker_load_drift",
-            "schedule": 15.0,
         },
         "collect-system-metrics": {
             "task": "app.scheduler.collect_system_metrics",
@@ -67,11 +60,25 @@ def scheduler_tick() -> dict:
 async def _scheduler_tick_async(use_celery: bool = False) -> dict:
     from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
     from sqlalchemy.orm import sessionmaker
-    from sqlalchemy import select, update, case as sa_case
+    from sqlalchemy import select, update, case as sa_case, func as sa_func
     from app.pipeline_models import PipelineRun, RunStatus
+    from app.worker_models import Worker, WorkerStatus
     from app.services.worker_pool import assign_worker, detect_language
 
-    engine  = create_async_engine(settings.DATABASE_URL, echo=False)
+    # ── Hard cap on concurrent in-process execution threads ─────────────────
+    # Each thread creates its own DB engine + asyncpg connection pool.
+    # Without this cap, 30+ threads running concurrently exhaust PostgreSQL's
+    # max_connections, making the server unresponsive.
+    if not use_celery:
+        active_exec = sum(
+            1 for t in threading.enumerate() if t.name.startswith("exec-run-")
+        )
+        if active_exec >= 6:          # allow at most 6 concurrent executions
+            logger.debug("Scheduler: %d exec threads active — skipping dispatch", active_exec)
+            return {"queued_processed": 0, "assigned": 0, "skipped": True}
+
+    engine  = create_async_engine(settings.DATABASE_URL, echo=False,
+                                   pool_size=3, max_overflow=2)
     Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     assigned_count = 0
@@ -79,8 +86,17 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
     # Apply routing mode ordering
     mode = get_routing_mode()
     if mode == "Priority":
+        priority_expr = sa_case(
+            (PipelineRun.branch.like("hotfix/%"), 1),
+            (PipelineRun.branch == "main", 2),
+            (PipelineRun.branch == "master", 2),
+            (PipelineRun.branch.like("release/%"), 3),
+            (PipelineRun.branch == "develop", 4),
+            (PipelineRun.branch.like("feature/%"), 5),
+            else_=6
+        )
         ordering = (
-            sa_case((PipelineRun.branch == "main", 0), else_=1),
+            priority_expr,
             PipelineRun.queued_at.asc(),
         )
     else:  # FIFO or Load-Balanced (worker selection already handles load)

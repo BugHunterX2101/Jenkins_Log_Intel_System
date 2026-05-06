@@ -13,8 +13,7 @@ from datetime import datetime, timezone
 
 import httpx
 from celery import Celery
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 
@@ -117,11 +116,11 @@ async def _resolve_queue_item(
 
 
 async def _mark_started(run_id: int, build_number: int, build_url: str) -> None:
+    from app.db import get_session_factory
     from app.services.job_scheduler import on_build_started
 
-    engine = create_async_engine(settings.DATABASE_URL, echo=False)
-    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    async with Session() as session:
+    session_factory = get_session_factory()
+    async with session_factory() as session:
         await on_build_started(session, run_id, build_number, build_url)
 
 
@@ -183,8 +182,8 @@ async def _sync_stages(run_id: int, job_name: str, build_number: int) -> bool:
     )
     auth = (settings.JENKINS_USER, settings.JENKINS_TOKEN)
 
-    engine = create_async_engine(settings.DATABASE_URL, echo=False)
-    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    from app.db import get_session_factory
+    session_factory = get_session_factory()
 
     # FIX: Keep the client open for the entire function so stage-log fetches
     # (inside the session block below) can still use it.
@@ -200,7 +199,7 @@ async def _sync_stages(run_id: int, job_name: str, build_number: int) -> bool:
         build_status = data.get("status", "")
         jenkins_stages = data.get("stages", [])
 
-        async with Session() as session:
+        async with session_factory() as session:
             for js in jenkins_stages:
                 name   = js.get("name", "")
                 status = js.get("status", "")

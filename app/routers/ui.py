@@ -6,12 +6,13 @@ import time
 
 import psutil
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 import json
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
+import logging
 from app.config import settings
+from app.db import get_session
 from app.models import BuildEvent, SystemMetrics
 from app.pipeline_models import PipelineRun, RunStatus, StageExecution
 from app.services.job_scheduler import get_dashboard_snapshot
@@ -20,13 +21,7 @@ from app.worker_models import Worker, WorkerStatus
 
 router = APIRouter(prefix="/ui", tags=["ui"])
 
-
-def _make_session_factory():
-    engine = create_async_engine(settings.DATABASE_URL, echo=False)
-    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-_SessionFactory = _make_session_factory()
+logger = logging.getLogger(__name__)
 
 
 def _repo_short_name(url: str) -> str:
@@ -57,47 +52,55 @@ def _format_duration(seconds: int) -> str:
     return " ".join(parts)
 
 
-async def _get_session():
-    async with _SessionFactory() as session:
-        yield session
-
-
 @router.get("/bootstrap", summary="Bootstrap payload for the frontend")
-async def bootstrap(request: Request, session: AsyncSession = Depends(_get_session)) -> dict:
-    snapshot = await get_dashboard_snapshot(session)
+async def bootstrap(request: Request, session: AsyncSession = Depends(get_session)) -> dict:
+    try:
+        snapshot = await get_dashboard_snapshot(session)
 
-    worker_result = await session.execute(select(Worker).order_by(Worker.id))
-    workers = worker_result.scalars().all()
-    build_event_count = await session.scalar(select(func.count(BuildEvent.id))) or 0
+        worker_result = await session.execute(select(Worker).order_by(Worker.id))
+        workers = worker_result.scalars().all()
+        build_event_count = await session.scalar(select(func.count(BuildEvent.id))) or 0
 
-    # Try to fetch latest stored metrics; fall back to live computation if unavailable
-    latest_metric = await session.execute(
-        select(SystemMetrics).order_by(SystemMetrics.timestamp.desc()).limit(1)
-    )
-    metric = latest_metric.scalars().first()
+        # Try to fetch latest stored metrics; fall back to live computation if unavailable
+        latest_metric = await session.execute(
+            select(SystemMetrics).order_by(SystemMetrics.timestamp.desc()).limit(1)
+        )
+        metric = latest_metric.scalars().first()
 
-    if metric:
-        # Use stored metrics for process-level data (uptime, memory, cpu)
-        uptime_seconds = metric.uptime_seconds
-        memory_info_rss = metric.memory_used_bytes
-        memory_total = metric.memory_total_bytes
-        queue_total = metric.queue_total
-        busy_workers = metric.busy_workers
-        worker_total = metric.worker_total
-        cpu_percent = metric.cpu_percent
-    else:
-        # Fall back to live computation
-        process = psutil.Process()
-        memory_info = process.memory_info()
-        virtual_memory = psutil.virtual_memory()
-        uptime_seconds = int(time.time() - process.create_time())
-        memory_info_rss = memory_info.rss
-        memory_total = virtual_memory.total
-        cpu_percent = process.cpu_percent(interval=None)
+        if metric:
+            # Use stored metrics for process-level data (uptime, memory, cpu)
+            uptime_seconds = metric.uptime_seconds
+            memory_info_rss = metric.memory_used_bytes
+            memory_total = metric.memory_total_bytes
+            queue_total = metric.queue_total
+            busy_workers = metric.busy_workers
+            worker_total = metric.worker_total
+            cpu_percent = metric.cpu_percent
+        else:
+            # Fall back to live computation
+            process = psutil.Process()
+            memory_info = process.memory_info()
+            virtual_memory = psutil.virtual_memory()
+            uptime_seconds = int(time.time() - process.create_time())
+            memory_info_rss = memory_info.rss
+            memory_total = virtual_memory.total
+            cpu_percent = process.cpu_percent(interval=None)
 
-        queue_total = sum(len(items) for items in snapshot.values())
-        busy_workers = sum(1 for worker in workers if worker.status == WorkerStatus.BUSY)
-        worker_total = len(workers)
+            queue_total = sum(len(items) for items in snapshot.values())
+            busy_workers = sum(1 for worker in workers if worker.status == WorkerStatus.BUSY)
+            worker_total = len(workers)
+    except Exception as exc:
+        logger.warning("bootstrap: DB or snapshot error — returning minimal payload: %s", exc)
+        # Fallback minimal payload when DB unavailable or snapshot fails
+        uptime_seconds = int(time.time())
+        memory_info_rss = 0
+        memory_total = 0
+        cpu_percent = 0
+        queue_total = 0
+        busy_workers = 0
+        worker_total = 0
+        snapshot = {"QUEUED": [], "IN_PROGRESS": [], "COMPLETED": [], "FAILED": [], "ABORTED": []}
+        build_event_count = 0
 
     # Always compute chaos from the live snapshot so it reflects current pressure,
     # not a stale historical total that causes the dial to be permanently pegged at 100.
@@ -142,8 +145,11 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(_get_sessi
         {"route": "/ui/build_events", "status": _route_status("/ui/build_events"), "latency": _route_latency("/ui/build_events"), "rate": "0.0%"},
     ]
 
-    latest_events = await session.execute(select(BuildEvent).order_by(BuildEvent.processed_at.desc()).limit(8))
-    build_events = latest_events.scalars().all()
+    try:
+        latest_events = await session.execute(select(BuildEvent).order_by(BuildEvent.processed_at.desc()).limit(8))
+        build_events = latest_events.scalars().all()
+    except Exception:
+        build_events = []
 
     request_feed = []
     for run in latest_runs[:6]:
@@ -259,62 +265,72 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(_get_sessi
 
 
 @router.get("/queue", summary="Real-time queue/explorer data")
-async def get_queue_data(session: AsyncSession = Depends(_get_session)) -> dict:
+async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
     """Returns all pipeline runs organized by status for the queue explorer page."""
     from app.pipeline_models import RunStatus
     
-    runs_result = await session.execute(select(PipelineRun).order_by(PipelineRun.queued_at.desc()))
-    all_runs = runs_result.scalars().all()
-    
-    # Organize by status
-    by_status = {}
-    for status in RunStatus:
-        by_status[status.value] = []
-    
-    for run in all_runs:
-        status_key = run.status.value if hasattr(run.status, 'value') else str(run.status)
-        if status_key in by_status:
-            by_status[status_key].append({
-                "id": run.id,
-                "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
-                "repo_url": run.repo_url,
-                "branch": run.branch,
-                "commit": run.commit_sha[:8] if run.commit_sha else '',
-                "commit_sha": run.commit_sha,
-                "author": run.author,
-                "triggered_by": run.triggered_by,
-                "job_name": run.jenkins_job_name,
-                "status": run.status.value if hasattr(run.status, 'value') else str(run.status),
-                "queued_at": run.queued_at.isoformat() if run.queued_at else None,
-                "started_at": run.started_at.isoformat() if run.started_at else None,
-                "completed_at": run.completed_at.isoformat() if run.completed_at else None,
-                "duration_s": run.duration_s,
-            })
-    
-    return {"runs_by_status": by_status, "total": len(all_runs)}
+    try:
+        runs_result = await session.execute(select(PipelineRun).order_by(PipelineRun.queued_at.desc()))
+        all_runs = runs_result.scalars().all()
+
+        # Organize by status
+        by_status = {}
+        for status in RunStatus:
+            by_status[status.value] = []
+
+        for run in all_runs:
+            status_key = run.status.value if hasattr(run.status, 'value') else str(run.status)
+            if status_key in by_status:
+                by_status[status_key].append({
+                    "id": run.id,
+                    "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
+                    "repo_url": run.repo_url,
+                    "branch": run.branch,
+                    "commit": run.commit_sha[:8] if run.commit_sha else '',
+                    "commit_sha": run.commit_sha,
+                    "author": run.author,
+                    "triggered_by": run.triggered_by,
+                    "job_name": run.jenkins_job_name,
+                    "status": run.status.value if hasattr(run.status, 'value') else str(run.status),
+                    "queued_at": run.queued_at.isoformat() if run.queued_at else None,
+                    "started_at": run.started_at.isoformat() if run.started_at else None,
+                    "completed_at": run.completed_at.isoformat() if run.completed_at else None,
+                    "duration_s": run.duration_s,
+                })
+
+        return {"runs_by_status": by_status, "total": len(all_runs)}
+    except Exception as exc:
+        logger.warning("get_queue_data: DB error — returning empty runs: %s", exc)
+        by_status = {status.value: [] for status in RunStatus}
+        return {"runs_by_status": by_status, "total": 0}
 
 
 @router.get("/scheduler", summary="Real-time scheduler data")
-async def get_scheduler_data(session: AsyncSession = Depends(_get_session)) -> dict:
+async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> dict:
     """Returns scheduled jobs and upcoming runs for the scheduler page."""
     from app.pipeline_models import RunStatus
     
-    # Get upcoming queued jobs
-    queued_result = await session.execute(
-        select(PipelineRun)
-        .where(PipelineRun.status == RunStatus.QUEUED)
-        .order_by(PipelineRun.queued_at.desc())
-        .limit(50)
-    )
-    queued_runs = queued_result.scalars().all()
-    
-    # Get in-progress jobs
-    inprog_result = await session.execute(
-        select(PipelineRun)
-        .where(PipelineRun.status == RunStatus.IN_PROGRESS)
-        .order_by(PipelineRun.started_at.desc())
-    )
-    inprog_runs = inprog_result.scalars().all()
+    try:
+        # Get upcoming queued jobs
+        queued_result = await session.execute(
+            select(PipelineRun)
+            .where(PipelineRun.status == RunStatus.QUEUED)
+            .order_by(PipelineRun.queued_at.desc())
+            .limit(50)
+        )
+        queued_runs = queued_result.scalars().all()
+
+        # Get in-progress jobs
+        inprog_result = await session.execute(
+            select(PipelineRun)
+            .where(PipelineRun.status == RunStatus.IN_PROGRESS)
+            .order_by(PipelineRun.started_at.desc())
+        )
+        inprog_runs = inprog_result.scalars().all()
+    except Exception as exc:
+        logger.warning("get_scheduler_data: DB error — returning empty scheduler data: %s", exc)
+        queued_runs = []
+        inprog_runs = []
     
     scheduled_jobs = []
     for idx, run in enumerate(queued_runs[:20]):
@@ -403,19 +419,34 @@ async def get_scheduler_data(session: AsyncSession = Depends(_get_session)) -> d
 
 
 @router.post("/queue/{run_id}/cancel", summary="Abort a queued or in-progress pipeline run")
-async def cancel_run(run_id: int, session: AsyncSession = Depends(_get_session)) -> dict:
-    run = await session.get(PipelineRun, run_id)
-    if not run:
+async def cancel_run(run_id: int, session: AsyncSession = Depends(get_session)) -> dict:
+    try:
+        result = await session.execute(
+            select(PipelineRun.status).where(PipelineRun.id == run_id)
+        )
+        row = result.first()
+        if not row:
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+        run_status = row[0]
+        if run_status not in (RunStatus.QUEUED, RunStatus.IN_PROGRESS):
+            raise HTTPException(status_code=400, detail=f"Run {run_id} is not active (status: {run_status.value})")
+
+        await session.execute(
+            update(PipelineRun)
+            .where(PipelineRun.id == run_id)
+            .values(status=RunStatus.ABORTED)
+        )
+        await session.commit()
+        return {"cancelled": run_id, "status": "ABORTED"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning("cancel_run: DB error for run %s — returning 404: %s", run_id, exc)
         raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
-    if run.status not in (RunStatus.QUEUED, RunStatus.IN_PROGRESS):
-        raise HTTPException(status_code=400, detail=f"Run {run_id} is not active (status: {run.status.value})")
-    run.status = RunStatus.ABORTED
-    await session.commit()
-    return {"cancelled": run_id, "status": "ABORTED"}
 
 
 @router.post("/queue/flush", summary="Remove queued pipeline runs")
-async def flush_queue(session: AsyncSession = Depends(_get_session)) -> dict:
+async def flush_queue(session: AsyncSession = Depends(get_session)) -> dict:
     queued = await session.execute(select(PipelineRun).where(PipelineRun.status == RunStatus.QUEUED))
     runs = queued.scalars().all()
     run_ids = [run.id for run in runs]
@@ -429,12 +460,16 @@ async def flush_queue(session: AsyncSession = Depends(_get_session)) -> dict:
 
 
 @router.get("/build_events", summary="Latest processed build analysis events")
-async def get_build_events(session: AsyncSession = Depends(_get_session), limit: int = 10) -> dict:
+async def get_build_events(session: AsyncSession = Depends(get_session), limit: int = 10) -> dict:
     """Return the most recent BuildEvent analysis records for UI panels."""
     from app.models import BuildEvent
 
-    result = await session.execute(select(BuildEvent).order_by(BuildEvent.processed_at.desc()).limit(limit))
-    events = result.scalars().all()
+    try:
+        result = await session.execute(select(BuildEvent).order_by(BuildEvent.processed_at.desc()).limit(limit))
+        events = result.scalars().all()
+    except Exception as exc:
+        logger.warning("get_build_events: DB error — returning empty list: %s", exc)
+        events = []
 
     items = []
     for e in events:
@@ -466,7 +501,7 @@ async def get_build_events(session: AsyncSession = Depends(_get_session), limit:
 
 
 @router.get("/metrics/live", summary="Real-time system metrics for dashboard polling")
-async def get_live_metrics(session: AsyncSession = Depends(_get_session)) -> dict:
+async def get_live_metrics(session: AsyncSession = Depends(get_session)) -> dict:
     """Compute metrics live — no Celery required. Also persists to DB for history."""
     from datetime import datetime, timezone
 
@@ -477,9 +512,14 @@ async def get_live_metrics(session: AsyncSession = Depends(_get_session)) -> dic
     cpu_percent = process.cpu_percent(interval=None)
     now = datetime.now(timezone.utc)
 
-    snapshot = await get_dashboard_snapshot(session)
-    worker_result = await session.execute(select(Worker).order_by(Worker.id))
-    workers = worker_result.scalars().all()
+    try:
+        snapshot = await get_dashboard_snapshot(session)
+        worker_result = await session.execute(select(Worker).order_by(Worker.id))
+        workers = worker_result.scalars().all()
+    except Exception as exc:
+        logger.warning("get_live_metrics: DB error — using empty snapshot/workers: %s", exc)
+        snapshot = {"QUEUED": [], "IN_PROGRESS": [], "COMPLETED": [], "FAILED": [], "ABORTED": []}
+        workers = []
 
     queue_total  = sum(len(v) for v in snapshot.values())
     busy_workers = sum(1 for w in workers if w.status == WorkerStatus.BUSY)
@@ -498,27 +538,33 @@ async def get_live_metrics(session: AsyncSession = Depends(_get_session)) -> dic
     else:
         chaos_level = "Normal"
 
-    # Persist snapshot — trim table to last 1 000 rows first
-    count = await session.scalar(select(func.count(SystemMetrics.id))) or 0
-    if count >= 1000:
-        oldest = await session.execute(
-            select(SystemMetrics).order_by(SystemMetrics.timestamp.asc()).limit(count - 999)
-        )
-        for old in oldest.scalars().all():
-            session.delete(old)
-
-    session.add(SystemMetrics(
-        uptime_seconds=uptime_seconds,
-        memory_used_bytes=mem.rss,
-        memory_total_bytes=vmem.total,
-        cpu_percent=cpu_percent,
-        queue_total=queue_total,
-        busy_workers=busy_workers,
-        worker_total=worker_total,
-        chaos_intensity=chaos_intensity,
-        chaos_level=chaos_level,
-    ))
-    await session.commit()
+    # Persist snapshot at most every 30 s to avoid write contention when
+    # multiple browser tabs each poll this endpoint every 5 s.
+    try:
+        _last_ts = getattr(get_live_metrics, "_last_persisted", None)
+        if _last_ts is None or (now.timestamp() - _last_ts) >= 30:
+            count = await session.scalar(select(func.count(SystemMetrics.id))) or 0
+            if count >= 1000:
+                oldest = await session.execute(
+                    select(SystemMetrics).order_by(SystemMetrics.timestamp.asc()).limit(count - 999)
+                )
+                for old in oldest.scalars().all():
+                    session.delete(old)
+            session.add(SystemMetrics(
+                uptime_seconds=uptime_seconds,
+                memory_used_bytes=mem.rss,
+                memory_total_bytes=vmem.total,
+                cpu_percent=cpu_percent,
+                queue_total=queue_total,
+                busy_workers=busy_workers,
+                worker_total=worker_total,
+                chaos_intensity=chaos_intensity,
+                chaos_level=chaos_level,
+            ))
+            await session.commit()
+            get_live_metrics._last_persisted = now.timestamp()
+    except Exception as exc:
+        logger.debug("get_live_metrics: skipping persist due to DB error: %s", exc)
 
     return {
         "status": "ok",
@@ -540,7 +586,7 @@ async def get_live_metrics(session: AsyncSession = Depends(_get_session)) -> dic
 
 
 @router.get("/metrics/history", summary="Historical system metrics (last N minutes)")
-async def get_metrics_history(session: AsyncSession = Depends(_get_session), minutes: int = 60) -> dict:
+async def get_metrics_history(session: AsyncSession = Depends(get_session), minutes: int = 60) -> dict:
     """
     Returns historical system metrics for trend analysis and graphs.
     Samples every 5 seconds by default.
@@ -549,12 +595,16 @@ async def get_metrics_history(session: AsyncSession = Depends(_get_session), min
     
     cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     
-    history_result = await session.execute(
-        select(SystemMetrics)
-        .where(SystemMetrics.timestamp >= cutoff_time)
-        .order_by(SystemMetrics.timestamp.asc())
-    )
-    metrics = history_result.scalars().all()
+    try:
+        history_result = await session.execute(
+            select(SystemMetrics)
+            .where(SystemMetrics.timestamp >= cutoff_time)
+            .order_by(SystemMetrics.timestamp.asc())
+        )
+        metrics = history_result.scalars().all()
+    except Exception as exc:
+        logger.warning("get_metrics_history: DB error — returning empty samples: %s", exc)
+        metrics = []
 
     samples = []
     for m in metrics:

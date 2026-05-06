@@ -36,8 +36,7 @@ def process_build_failure_task(self, payload: dict) -> dict:
 
 
 async def _process_async(payload: dict) -> dict:
-    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-    from sqlalchemy.orm import sessionmaker
+    from app.db import get_session_factory
 
     from app.services import classifier, log_fetcher, log_parser, notifier, pattern_store, root_cause
 
@@ -67,10 +66,9 @@ async def _process_async(payload: dict) -> dict:
     tags         = classifier.classify(error_excerpt or raw_log)
     primary_tag  = tags[0]
 
-    engine       = create_async_engine(settings.DATABASE_URL, echo=False)
-    Session      = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    session_factory = get_session_factory()
 
-    async with Session() as session:
+    async with session_factory() as session:
         patterns = await pattern_store.find_similar(session, error_excerpt)
         analysis = await root_cause.analyse(
             job_name=job_name, build_number=build_number,
@@ -110,7 +108,7 @@ async def _process_async(payload: dict) -> dict:
 
     # Update delivery_status now that notification result is known
     slack_ok = delivery.get("slack") == "OK"
-    async with Session() as session:
+    async with session_factory() as session:
         from app.models import BuildEvent as _BE
         evt = await session.get(_BE, event_id)
         if evt:

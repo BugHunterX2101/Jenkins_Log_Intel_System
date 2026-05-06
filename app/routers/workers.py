@@ -5,31 +5,17 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
+from app.db import get_session
 from app.worker_models import Worker, WorkerAssignment, WorkerStatus
 from app.services.worker_pool import seed_workers, serialise_worker
 
 router = APIRouter(prefix="/api/workers", tags=["workers"])
 
 
-def _make_session():
-    engine = create_async_engine(settings.DATABASE_URL, echo=False)
-    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-_SF = _make_session()
-
-
-async def _get_session():
-    async with _SF() as session:
-        yield session
-
-
 @router.get("", summary="List all workers")
-async def list_workers(session: AsyncSession = Depends(_get_session)) -> dict:
+async def list_workers(session: AsyncSession = Depends(get_session)) -> dict:
     result = await session.execute(select(Worker).order_by(Worker.id))
     workers = result.scalars().all()
     return {
@@ -46,7 +32,7 @@ async def list_workers(session: AsyncSession = Depends(_get_session)) -> dict:
 @router.get("/{worker_id}", summary="Worker detail")
 async def worker_detail(
     worker_id: int,
-    session: AsyncSession = Depends(_get_session),
+    session: AsyncSession = Depends(get_session),
 ) -> dict:
     result = await session.execute(select(Worker).where(Worker.id == worker_id))
     worker = result.scalar_one_or_none()
@@ -80,7 +66,7 @@ async def worker_detail(
 @router.post("/{worker_id}/offline", summary="Take worker offline")
 async def set_offline(
     worker_id: int,
-    session: AsyncSession = Depends(_get_session),
+    session: AsyncSession = Depends(get_session),
 ) -> dict:
     result = await session.execute(select(Worker).where(Worker.id == worker_id))
     worker = result.scalar_one_or_none()
@@ -94,7 +80,7 @@ async def set_offline(
 @router.post("/{worker_id}/online", summary="Bring worker online")
 async def set_online(
     worker_id: int,
-    session: AsyncSession = Depends(_get_session),
+    session: AsyncSession = Depends(get_session),
 ) -> dict:
     result = await session.execute(select(Worker).where(Worker.id == worker_id))
     worker = result.scalar_one_or_none()
@@ -107,6 +93,6 @@ async def set_online(
 
 
 @router.post("/seed", summary="Seed default workers")
-async def seed(session: AsyncSession = Depends(_get_session)) -> dict:
+async def seed(session: AsyncSession = Depends(get_session)) -> dict:
     await seed_workers(session)
     return {"seeded": True}

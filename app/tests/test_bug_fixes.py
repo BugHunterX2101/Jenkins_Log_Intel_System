@@ -147,8 +147,7 @@ async def test_sync_stages_uses_single_open_client():
             self._closed = True
 
     with patch("app.pipeline_tasks.httpx.AsyncClient", TrackedClient), \
-         patch("app.pipeline_tasks.create_async_engine", return_value=AsyncMock()), \
-         patch("app.pipeline_tasks.sessionmaker") as mock_sf:
+         patch("app.db.get_session_factory") as mock_sf:
 
         mock_session = AsyncMock()
         mock_sf.return_value.return_value.__aenter__ = AsyncMock(return_value=mock_session)

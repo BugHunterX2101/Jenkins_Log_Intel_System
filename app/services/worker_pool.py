@@ -221,7 +221,10 @@ async def simulate_execution(
     _on_bc  = getattr(_wpm, "on_build_completed", None) or _on_build_completed
     _gr     = getattr(_wpm, "get_run",            None) or _get_run
 
-    engine  = create_async_engine(db_url, echo=False)
+    # pool_size=1: each execution thread needs at most 1 connection at a time.
+    # Without this limit the default pool (5+10) multiplied by N threads can
+    # exhaust PostgreSQL's max_connections.
+    engine  = create_async_engine(db_url, echo=False, pool_size=1, max_overflow=1)
     Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     # FIX: When no stages were parsed from Jenkinsfile, we fall back to a

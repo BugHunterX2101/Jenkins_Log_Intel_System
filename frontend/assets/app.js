@@ -135,19 +135,17 @@
     });
   };
 
-  const readInputValue = (selector, fallback) => {
-    const input = document.querySelector(selector);
-    return input && "value" in input ? input.value : fallback;
-  };
-
   const attachWebhookActions = () => {
     const triggerWebhook = buttonsWithLabel("trigger webhook")[0];
     if (!triggerWebhook) return;
 
     bindOnce(triggerWebhook, async () => {
-      const repository = readInputValue('input[value="jenkins-core/pipeline-engine"]', "acme/service");
-      const branch = readInputValue('input[value="feature/log-streaming"]', "main");
-      const author = readInputValue('input[value="devops-bot"]', "bot");
+      const repoSelect = document.querySelector('[data-ui="wh-repo"]') || document.querySelector('select');
+      const branchInput = document.querySelector('[data-ui="wh-branch"]') || document.querySelector('input[type="text"]');
+      const authorInput = document.querySelector('[data-ui="wh-author"]') || document.querySelectorAll('input[type="text"]')[1];
+      const repository = repoSelect && "value" in repoSelect ? repoSelect.value : "acme/service";
+      const branch = branchInput && "value" in branchInput ? branchInput.value : "main";
+      const author = authorInput && "value" in authorInput ? authorInput.value : "bot";
 
       try {
         const response = await fetch("/webhook/github/simulate", {
@@ -1266,11 +1264,12 @@
       });
     });
 
-    const slider = document.querySelector('input[type="range"][min="100"][max="5000"]');
-    const sliderLabel = slider?.closest('div')?.querySelector('span');
+    const slider = document.querySelector('[data-ui="scheduler-poll-slider"]') || document.querySelector('input[type="range"][min="100"][max="5000"]');
+    const sliderLabel = document.querySelector('[data-ui="scheduler-poll-label"]') || slider?.closest('div')?.querySelector('span');
     if (slider) {
-      const saved = localStorage.getItem('schedulerPollMs');
-      if (saved) { slider.value = saved; if (sliderLabel) sliderLabel.textContent = saved + 'ms'; }
+      const saved = localStorage.getItem('schedulerPollMs') || '5000';
+      slider.value = saved;
+      if (sliderLabel) sliderLabel.textContent = saved + 'ms';
       slider.addEventListener('input', () => {
         if (sliderLabel) sliderLabel.textContent = slider.value + 'ms';
         localStorage.setItem('schedulerPollMs', slider.value);
@@ -1576,7 +1575,7 @@
       const { text, status } = _explorerFilter;
       const filtered = all.filter((r) => {
         const matchText = !text || [r.repo, r.branch, r.author, String(r.id)].join(' ').toLowerCase().includes(text);
-        const matchStatus = !status || r.status === status;
+        const matchStatus = !status || String(r.status || '').toUpperCase() === status;
         return matchText && matchStatus;
       });
 
@@ -1624,7 +1623,7 @@
     }
     if (statusSelect && !statusSelect.dataset.bound) {
       statusSelect.dataset.bound = 'true';
-      statusSelect.addEventListener('change', () => { _explorerFilter.status = statusSelect.value; populateExplorer(); });
+      statusSelect.addEventListener('change', () => { _explorerFilter.status = String(statusSelect.value || '').toUpperCase(); populateExplorer(); });
     }
     if (clearBtn) {
       bindOnce(clearBtn, () => {

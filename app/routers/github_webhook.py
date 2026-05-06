@@ -89,15 +89,12 @@ async def _enqueue_run(
     author: str | None,
     triggered_by: str,
 ) -> None:
-    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-    from sqlalchemy.orm import sessionmaker
-    from app.config import settings
+    from app.db import get_session_factory
     from app.services.job_scheduler import schedule_pipeline
 
-    engine  = create_async_engine(settings.DATABASE_URL, echo=False)
-    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    session_factory = get_session_factory()
 
-    async with Session() as session:
+    async with session_factory() as session:
         await schedule_pipeline(
             session=session,
             repo_url=repo_url,
@@ -106,8 +103,6 @@ async def _enqueue_run(
             author=author,
             triggered_by=triggered_by,
         )
-
-    await engine.dispose()
 
 
 _DEMO_REPOS = [
