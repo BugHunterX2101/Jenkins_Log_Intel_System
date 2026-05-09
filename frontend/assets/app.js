@@ -157,7 +157,7 @@
 
       triggerBtn.disabled = true;
       const origHtml = triggerBtn.innerHTML;
-      triggerBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px">sync</span> Sending…';
+      triggerBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">sync</span> Sending…';
 
       try {
         for (let i = 0; i < burstCount; i++) {
@@ -532,7 +532,7 @@
       const total = Number(backend.memory_total || 0);
       const pct = total > 0 ? Math.round((used / total) * 100) : 0;
       memory.innerHTML = `${formatBytes(used)} <span class="text-outline font-body-md text-body-md">/ ${formatBytes(total)}</span>`;
-      if (memoryBar) memoryBar.style.width = `${pct}%`;
+      if (memoryBar) memoryBar.style.setProperty('--bar-w', `${pct}%`);
     }
 
     const buildEvents = data.build_events || [];
@@ -541,10 +541,10 @@
     if (alertBar) {
       if (latest) {
         alertBar.classList.remove('hidden');
-        alertBar.style.display = 'flex';
+        alertBar.classList.add('flex');
       } else {
+        alertBar.classList.remove('flex');
         alertBar.classList.add('hidden');
-        alertBar.style.display = '';
       }
     }
     if (alertTitle) {
@@ -624,8 +624,8 @@
         row.innerHTML = `
           <div class="w-32 flex-shrink-0 font-code-sm text-code-sm ${index % 2 === 1 ? 'text-on-surface-variant' : ''}">${worker.name || 'worker'}</div>
           <div class="flex-1 relative h-full bg-surface-container-low rounded">
-            <div class="absolute left-0 top-0 h-full bg-secondary-fixed-dim rounded opacity-80 border border-outline-variant" style="width:${Math.max(10, 100 - load)}%" title="${currentJob} (Queued)"></div>
-            <div class="absolute right-0 top-0 h-full bg-primary rounded border border-primary-container shadow-sm" style="width:${load}%" title="${currentJob} (Running)"></div>
+            <div class="absolute left-0 top-0 h-full bg-secondary-fixed-dim rounded opacity-80 border border-outline-variant bar-fill" style="--bar-w:${Math.max(10, 100 - load)}%" title="${currentJob} (Queued)"></div>
+            <div class="absolute right-0 top-0 h-full bg-primary rounded border border-primary-container shadow-sm bar-fill" style="--bar-w:${load}%" title="${currentJob} (Running)"></div>
           </div>
         `;
         timelineRows.appendChild(row);
@@ -698,7 +698,7 @@
               <span>${isBusy ? 'Load' : 'Awaiting assignment'}</span>
               <span>${isBusy ? pct + '%' : '--'}</span>
             </div>
-            <div class="h-2 bg-surface-container rounded-full overflow-hidden"><div class="h-full bg-primary" style="width: ${pct}%"></div></div>
+            <div class="h-2 bg-surface-container rounded-full overflow-hidden"><div class="h-full bg-primary bar-fill" style="--bar-w:${pct}%"></div></div>
           </div>
           <div class="grid grid-cols-2 gap-sm mt-auto pt-sm border-t border-surface-variant ${isBusy ? '' : 'opacity-70'}">
             <div><span class="font-label-md text-[10px] text-on-surface-variant block mb-1">CPU</span><div class="font-code-sm text-code-sm text-on-surface ${pct > 90 ? 'text-error' : ''}">${pct}%</div></div>
@@ -746,8 +746,8 @@
           row.innerHTML = `
             <div class="w-32 flex-shrink-0 font-code-sm text-code-sm text-on-surface-variant truncate">${w.name || 'worker'}</div>
             <div class="flex-1 relative h-full bg-surface-container-low rounded overflow-hidden">
-              <div class="absolute left-0 top-0 h-full bg-secondary-fixed-dim rounded opacity-80" style="width:${Math.max(5, 100 - load)}%" title="Idle"></div>
-              ${isBusy ? `<div class="absolute right-0 top-0 h-full bg-primary rounded" style="width:${load}%" title="${w.current_job || 'running'}"></div>` : ''}
+              <div class="absolute left-0 top-0 h-full bg-secondary-fixed-dim rounded opacity-80 bar-fill" style="--bar-w:${Math.max(5, 100 - load)}%" title="Idle"></div>
+              ${isBusy ? `<div class="absolute right-0 top-0 h-full bg-primary rounded bar-fill" style="--bar-w:${load}%" title="${w.current_job || 'running'}"></div>` : ''}
             </div>
             <div class="ml-2 w-10 text-right font-code-sm text-[11px] text-on-surface-variant">${load}%</div>
           `;
@@ -1062,7 +1062,7 @@
         const busy = data.workers.busy || 0;
         const pct = total > 0 ? Math.round((busy / total) * 100) : 0;
         workerUtil.textContent = `${pct}%`;
-        if (workerBar) workerBar.style.width = `${pct}%`;
+        if (workerBar) workerBar.style.setProperty('--bar-w', `${pct}%`);
         if (workerNodeCount) workerNodeCount.textContent = `${busy} of ${total} nodes active`;
       }
       // initialize page-specific panels if present
@@ -1099,7 +1099,7 @@
         const memBar = document.getElementById('backend-memory-bar');
         if (memBar) {
           const pct = Math.round((data.memory_used_bytes / data.memory_total_bytes) * 100);
-          memBar.style.width = `${pct}%`;
+          memBar.style.setProperty('--bar-w', `${pct}%`);
         }
       }
 
@@ -1154,7 +1154,7 @@
         container.appendChild(block);
       });
     } catch (error) {
-      container.innerHTML = `<div style="color:#dc2626">Error loading analysis: ${error.message}</div>`;
+      container.innerHTML = `<div class="text-error">Error loading analysis: ${error.message}</div>`;
     }
   };
 
@@ -1180,7 +1180,7 @@
       const q = searchInput.value.toLowerCase();
       document.querySelectorAll('[data-ui="queue-table-body"] tr').forEach((row) => {
         const text = row.textContent.toLowerCase();
-        row.style.display = !q || text.includes(q) ? '' : 'none';
+        row.classList.toggle('hidden', !(!q || text.includes(q)));
       });
     });
     const filterButton = Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.material-symbols-outlined')?.textContent?.trim() === 'filter_list');
@@ -1189,9 +1189,9 @@
         statusFilter = !statusFilter;
         filterButton.classList.toggle('text-primary', statusFilter);
         document.querySelectorAll('[data-ui="queue-table-body"] tr').forEach((row) => {
-          if (!statusFilter) { row.style.display = ''; return; }
+          if (!statusFilter) { row.classList.remove('hidden'); return; }
           const isQueued = row.textContent.includes('QUEUED');
-          row.style.display = isQueued ? '' : 'none';
+          row.classList.toggle('hidden', !isQueued);
         });
       });
     }
@@ -1264,7 +1264,7 @@
       masterSwitch.addEventListener('change', () => {
         if (!masterSwitch.checked) {
           if (_schedulerKanbanInterval) clearInterval(_schedulerKanbanInterval);
-          if (kanbanSection) kanbanSection.style.opacity = '0.4';
+          if (kanbanSection) kanbanSection.classList.add('opacity-40');
         } else {
           const ms = Number(localStorage.getItem('schedulerPollMs') || 5000);
           _schedulerKanbanInterval = setInterval(() => {
@@ -1272,7 +1272,7 @@
             else clearInterval(_schedulerKanbanInterval);
           }, ms);
           _allPollingIntervals.push(_schedulerKanbanInterval);
-          if (kanbanSection) kanbanSection.style.opacity = '';
+          if (kanbanSection) kanbanSection.classList.remove('opacity-40');
           populateSchedulerKanban();
         }
       });
@@ -1287,7 +1287,7 @@
         filterBtn.classList.toggle('text-primary', runningOnly);
         ['[data-ui="kanban-queued-list"]', '[data-ui="kanban-scheduled-list"]'].forEach((sel) => {
           const el = document.querySelector(sel);
-          if (el) el.closest('.flex-col')?.style && (el.closest('.flex-col').style.display = runningOnly ? 'none' : '');
+          if (el) el.closest('.flex-col')?.classList.toggle('hidden', runningOnly);
         });
       });
     }
@@ -1336,7 +1336,7 @@
       bindOnce(copyBtn, () => {
         navigator.clipboard.writeText(ngrokInput.value).catch(() => {});
         const orig = copyBtn.innerHTML;
-        copyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">check</span> Copied!';
+        copyBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span> Copied!';
         setTimeout(() => { copyBtn.innerHTML = orig; }, 1500);
       });
     }
@@ -1376,7 +1376,10 @@
         burstToggle.classList.toggle('bg-primary', !active);
         burstToggle.classList.toggle('bg-outline-variant', active);
         const dot = burstToggle.querySelector('div');
-        if (dot) dot.style.left = !active ? '18px' : '2px';
+        if (dot) {
+          dot.classList.toggle('left-[18px]', !active);
+          dot.classList.toggle('left-0.5', active);
+        }
       });
     }
   };
@@ -1411,9 +1414,9 @@
         populateBootstrapData();
         pollLiveMetrics();
         const orig = startBtn.innerHTML;
-        startBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:\'FILL\' 1">sync</span> Syncing…';
+        startBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] icon-filled">sync</span> Syncing…';
         setTimeout(() => { startBtn.innerHTML = orig; }, 1500);
-        if (pauseBtn) { pauseBtn.textContent = ''; pauseBtn.innerHTML = '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">pause</span> Pause'; }
+        if (pauseBtn) { pauseBtn.textContent = ''; pauseBtn.innerHTML = '<span class="material-symbols-outlined icon-filled">pause</span> Pause'; }
       });
     }
 
@@ -1421,8 +1424,8 @@
       bindOnce(pauseBtn, () => {
         _metricsPaused = !_metricsPaused;
         pauseBtn.innerHTML = _metricsPaused
-          ? '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">play_arrow</span> Resume'
-          : '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">pause</span> Pause';
+          ? '<span class="material-symbols-outlined icon-filled">play_arrow</span> Resume'
+          : '<span class="material-symbols-outlined icon-filled">pause</span> Pause';
       });
     }
 
@@ -1562,7 +1565,7 @@
           <tr class="border-b border-surface-variant">
             <td class="py-2 px-md font-code-sm text-code-sm">${lang}</td>
             <td class="py-2 px-md text-on-surface-variant">${count} worker${count > 1 ? 's' : ''}</td>
-            <td class="py-2 px-md"><div class="h-2 bg-surface-container rounded-full overflow-hidden"><div class="h-full bg-primary" style="width:${Math.round(count / workerList.length * 100)}%"></div></div></td>
+            <td class="py-2 px-md"><div class="h-2 bg-surface-container rounded-full overflow-hidden"><div class="h-full bg-primary bar-fill" style="--bar-w:${Math.round(count / workerList.length * 100)}%"></div></div></td>
           </tr>
         `).join('') || '<tr><td colspan="3" class="py-4 text-center text-on-surface-variant">No workers</td></tr>';
       }

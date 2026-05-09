@@ -20,9 +20,8 @@
             white-space: nowrap;
             word-wrap: normal;
             direction: ltr;
-            -webkit-font-feature-settings: 'liga';
+            
             font-feature-settings: 'liga';
-            -webkit-font-smoothing: antialiased;
         }
     </style>
 <script id="tailwind-config">
@@ -305,7 +304,7 @@
 <div data-ui="worker-utilization" class="font-headline-lg text-headline-lg text-on-surface">—</div>
 <!-- Progress Bar -->
 <div class="w-full bg-surface-container-highest rounded-full h-2 mt-2">
-<div id="worker-utilization-bar" class="bg-primary h-2 rounded-full w-0"></div>
+<div id="worker-utilization-bar" class="bg-primary h-2 rounded-full bar-fill"></div>
 </div>
 <div data-ui="worker-node-count" class="font-body-sm text-sm text-on-surface-variant mt-2">—</div>
 </div>
