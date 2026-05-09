@@ -80,22 +80,31 @@ async def lifespan(app: FastAPI):
         
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-            # Add current_job column if it doesn't exist yet (existing DBs)
+            # Add current_job column if it doesn't exist yet (existing DBs).
+            # The IF NOT EXISTS syntax is PostgreSQL-only; silently skip on other dialects.
             from sqlalchemy import text
-            await conn.execute(text(
-                "ALTER TABLE workers ADD COLUMN IF NOT EXISTS current_job VARCHAR(256)"
-            ))
-            # Backfill current_job for workers that were BUSY before the column existed
-            await conn.execute(text("""
-                UPDATE workers w
-                SET current_job = pr.jenkins_job_name
-                FROM worker_assignments wa
-                JOIN pipeline_runs pr ON pr.id = wa.run_id
-                WHERE wa.worker_id = w.id
-                  AND w.status = 'BUSY'
-                  AND w.current_job IS NULL
-                  AND wa.completed_at IS NULL
-            """))
+            dialect = engine.dialect.name
+            try:
+                if dialect == "postgresql":
+                    await conn.execute(text(
+                        "ALTER TABLE workers ADD COLUMN IF NOT EXISTS current_job VARCHAR(256)"
+                    ))
+                    # Backfill current_job for workers that were BUSY before the column existed
+                    await conn.execute(text("""
+                        UPDATE workers w
+                        SET current_job = pr.jenkins_job_name
+                        FROM worker_assignments wa
+                        JOIN pipeline_runs pr ON pr.id = wa.run_id
+                        WHERE wa.worker_id = w.id
+                          AND w.status = 'BUSY'
+                          AND w.current_job IS NULL
+                          AND wa.completed_at IS NULL
+                    """))
+                # For SQLite and other dialects: current_job is defined in the model,
+                # so create_all already created it — no ALTER TABLE needed.
+            except Exception as alter_err:
+                import logging
+                logging.getLogger(__name__).warning("ALTER TABLE skipped: %s", alter_err)
         async with session_factory() as session:
             await seed_workers(session)
     except Exception as e:
