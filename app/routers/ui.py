@@ -293,7 +293,7 @@ async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
             if status_key in by_status:
                 by_status[status_key].append({
                     "id": run.id,
-                    "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
+                    "repo": _repo_short_name(run.repo_url),
                     "repo_url": run.repo_url,
                     "branch": run.branch,
                     "commit": run.commit_sha[:8] if run.commit_sha else '',
@@ -321,11 +321,21 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     from app.pipeline_models import RunStatus
     
     try:
-        # Get upcoming queued jobs
+        from sqlalchemy import case as sa_case
+        priority_expr = sa_case(
+            (PipelineRun.branch.like("hotfix/%"), 1),
+            (PipelineRun.branch == "main", 2),
+            (PipelineRun.branch == "master", 2),
+            (PipelineRun.branch.like("release/%"), 3),
+            (PipelineRun.branch == "develop", 4),
+            (PipelineRun.branch.like("feature/%"), 5),
+            else_=6,
+        )
+        # Get upcoming queued jobs ordered by branch priority then arrival time
         queued_result = await session.execute(
             select(PipelineRun)
             .where(PipelineRun.status == RunStatus.QUEUED)
-            .order_by(PipelineRun.queued_at.desc())
+            .order_by(priority_expr, PipelineRun.queued_at.asc())
             .limit(50)
         )
         queued_runs = queued_result.scalars().all()
@@ -346,7 +356,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     for idx, run in enumerate(queued_runs[:20]):
         scheduled_jobs.append({
             "id": run.id,
-            "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
+            "repo": _repo_short_name(run.repo_url),
             "branch": run.branch,
             "author": run.author,
             "job_name": run.jenkins_job_name,
@@ -360,7 +370,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
         duration = (run.duration_s or 0) if run.started_at else 0
         active_jobs.append({
             "id": run.id,
-            "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
+            "repo": _repo_short_name(run.repo_url),
             "branch": run.branch,
             "job_name": run.jenkins_job_name,
             "started": run.started_at.isoformat() if run.started_at else None,
@@ -381,7 +391,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
             elapsed = 0
         running_jobs.append({
             "id": run.id,
-            "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
+            "repo": _repo_short_name(run.repo_url),
             "branch": run.branch,
             "job_name": run.jenkins_job_name,
             "started": run.started_at.isoformat() if run.started_at else None,
@@ -405,7 +415,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     completed_jobs = [
         {
             "id": run.id,
-            "repo": run.repo_url.split('/')[-1] if run.repo_url else '',
+            "repo": _repo_short_name(run.repo_url),
             "branch": run.branch,
             "job_name": run.jenkins_job_name,
             "completed": run.completed_at.isoformat() if run.completed_at else None,
@@ -634,6 +644,21 @@ async def get_metrics_history(session: AsyncSession = Depends(get_session), minu
         "period_minutes": minutes,
         "sample_count": len(samples),
         "samples": samples,
+    }
+
+
+@router.get("/webhook-config", summary="Webhook URL and secret configuration for GitHub setup")
+async def get_webhook_config(request: Request) -> dict:
+    """Returns the webhook endpoint URL and a masked secret hint for GitHub configuration."""
+    secret = settings.GITHUB_WEBHOOK_SECRET or ""
+    hint = (secret[:4] + "*" * max(0, len(secret) - 4)) if secret else ""
+    base = str(request.base_url).rstrip("/")
+    return {
+        "webhook_url": f"{base}/github-webhook/",
+        "secret_configured": bool(secret),
+        "secret_hint": hint,
+        "events": ["push", "pull_request"],
+        "content_type": "application/json",
     }
 
 

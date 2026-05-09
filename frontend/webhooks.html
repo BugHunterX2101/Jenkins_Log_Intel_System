@@ -184,7 +184,7 @@
 <div class="flex flex-col sm:flex-row gap-sm w-full">
 <div class="relative flex-1">
 <span class="absolute left-3 top-2.5 material-symbols-outlined text-outline text-[20px]">link</span>
-<input data-ui="ngrok-url" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="https://backer-slab-suburb.ngrok-free.dev/github-webhook/"/>
+<input data-ui="ngrok-url" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="[configure ngrok — run: .start-ngrok.ps1]"/>
 </div>
 <button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded font-label-md text-label-md text-on-surface flex items-center justify-center gap-2 transition-colors whitespace-nowrap">
 <span class="material-symbols-outlined text-[16px]">content_copy</span> Copy URL
@@ -301,6 +301,52 @@
 </div>
 </section>
 </div>
+<!-- GitHub Setup Guide -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg mb-lg ambient-shadow">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-md pb-sm border-b border-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">integration_instructions</span> GitHub Webhook Setup Guide
+</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+<!-- Step list -->
+<ol class="flex flex-col gap-sm">
+<li class="flex gap-sm items-start">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center flex-shrink-0 text-[11px]">1</span>
+<div><p class="font-label-md text-label-md text-on-surface">Start ngrok</p><p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Run <code class="bg-surface-container px-1 rounded font-code-sm">.\start-ngrok.ps1</code> in the project root. Copy the <strong>https://</strong> forwarding URL.</p></div>
+</li>
+<li class="flex gap-sm items-start">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center flex-shrink-0 text-[11px]">2</span>
+<div><p class="font-label-md text-label-md text-on-surface">Open your GitHub repo → Settings → Webhooks → Add webhook</p><p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Repeat for each repo. Use the Payload URL and Secret shown on this page.</p></div>
+</li>
+<li class="flex gap-sm items-start">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center flex-shrink-0 text-[11px]">3</span>
+<div><p class="font-label-md text-label-md text-on-surface">Configure the webhook</p>
+<ul class="font-body-md text-body-md text-on-surface-variant text-[12px] mt-1 flex flex-col gap-1">
+<li>• <strong>Payload URL</strong>: copy from the field above</li>
+<li>• <strong>Content type</strong>: <code class="bg-surface-container px-1 rounded font-code-sm">application/json</code></li>
+<li>• <strong>Secret</strong>: copy from the Webhook Secret field above</li>
+<li>• <strong>Events</strong>: select <em>Pushes</em> and <em>Pull requests</em></li>
+</ul>
+</div>
+</li>
+<li class="flex gap-sm items-start">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center flex-shrink-0 text-[11px]">4</span>
+<div><p class="font-label-md text-label-md text-on-surface">Push a commit — watch it appear live</p><p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Branch naming controls priority: <code class="bg-surface-container px-1 rounded font-code-sm">hotfix/*</code> → P1, <code class="bg-surface-container px-1 rounded font-code-sm">main</code> → P2, <code class="bg-surface-container px-1 rounded font-code-sm">release/*</code> → P3, <code class="bg-surface-container px-1 rounded font-code-sm">develop</code> → P4, <code class="bg-surface-container px-1 rounded font-code-sm">feature/*</code> → P5.</p></div>
+</li>
+</ol>
+<!-- Priority reference -->
+<div class="bg-surface-container-low rounded-xl p-md border border-outline-variant flex flex-col gap-sm">
+<p class="font-label-md text-label-md text-on-surface-variant tracking-wider uppercase text-[10px]">Branch Priority Reference</p>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-sm"><span class="w-20 text-[10px] font-label-md px-2 py-0.5 rounded bg-error text-on-error">P1 hotfix</span><code class="font-code-sm text-code-sm text-on-surface-variant text-[11px]">hotfix/*</code></div>
+<div class="flex items-center gap-sm"><span class="w-20 text-[10px] font-label-md px-2 py-0.5 rounded bg-blue-600 text-white">P2 main</span><code class="font-code-sm text-code-sm text-on-surface-variant text-[11px]">main / master</code></div>
+<div class="flex items-center gap-sm"><span class="w-20 text-[10px] font-label-md px-2 py-0.5 rounded bg-violet-600 text-white">P3 release</span><code class="font-code-sm text-code-sm text-on-surface-variant text-[11px]">release/*</code></div>
+<div class="flex items-center gap-sm"><span class="w-20 text-[10px] font-label-md px-2 py-0.5 rounded bg-amber-500 text-white">P4 develop</span><code class="font-code-sm text-code-sm text-on-surface-variant text-[11px]">develop</code></div>
+<div class="flex items-center gap-sm"><span class="w-20 text-[10px] font-label-md px-2 py-0.5 rounded bg-teal-500 text-white">P5 feature</span><code class="font-code-sm text-code-sm text-on-surface-variant text-[11px]">feature/*</code></div>
+<div class="flex items-center gap-sm"><span class="w-20 text-[10px] font-label-md px-2 py-0.5 rounded bg-slate-400 text-white">P6 normal</span><code class="font-code-sm text-code-sm text-on-surface-variant text-[11px]">any other name</code></div>
+</div>
+</div>
+</div>
+</section>
 <!-- Live Webhook Event Log -->
 <section class="bg-surface-container-lowest border border-surface-variant rounded-xl ambient-shadow overflow-hidden">
 <div class="px-md py-sm border-b border-surface-variant flex justify-between items-center bg-surface-container-low">

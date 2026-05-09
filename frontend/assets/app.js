@@ -1325,10 +1325,25 @@
   // ─── Webhooks page: copy URL, visibility toggle, reset, burst mode ───
   const attachWebhookPageActions = () => {
     const ngrokInput = document.querySelector('[data-ui="ngrok-url"]');
-    // Populate the ngrok URL field with the actual server origin (the real tunnel URL
-    // if accessed via ngrok, or localhost when running locally)
+    // Populate with the real public URL including the /github-webhook/ path
     if (ngrokInput && ngrokInput.value.includes('[configure')) {
-      ngrokInput.value = window.location.origin;
+      ngrokInput.value = window.location.origin + '/github-webhook/';
+    }
+
+    // Populate the secret hint from backend config
+    const whSecretInput = document.querySelector('input[type="password"]');
+    if (whSecretInput && !whSecretInput.value) {
+      fetch('/ui/webhook-config')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d && whSecretInput && !whSecretInput.value) {
+            whSecretInput.value = d.secret_hint || '';
+            whSecretInput.placeholder = d.secret_configured
+              ? 'Secret configured — copy hint to use in GitHub'
+              : 'Not configured — set GITHUB_WEBHOOK_SECRET in .env';
+          }
+        })
+        .catch(() => {});
     }
 
     const copyBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('copy url'));
