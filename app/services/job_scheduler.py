@@ -31,7 +31,7 @@ async def schedule_pipeline(
     stages = await get_pipeline_stages(
         repo_url, branch,
         token=git_token or getattr(settings, "GITHUB_TOKEN", None),
-    )
+    ) or ["Checkout", "Build", "Test", "Deploy"]
 
     job_name = _derive_job_name(repo_url, branch)
 
