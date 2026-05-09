@@ -21,6 +21,7 @@
             word-wrap: normal;
             direction: ltr;
             -webkit-font-feature-settings: 'liga';
+            font-feature-settings: 'liga';
             -webkit-font-smoothing: antialiased;
         }
     </style>
@@ -134,13 +135,13 @@
 <button class="bg-primary-container text-on-primary-container font-label-md text-label-md px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Refresh System</button>
 <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
 <button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80 flex items-center justify-center">
-<span class="material-symbols-outlined" style="font-size: 20px;">health_and_safety</span>
+<span class="material-symbols-outlined text-[20px]">health_and_safety</span>
 </button>
 <button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80 flex items-center justify-center">
-<span class="material-symbols-outlined" style="font-size: 20px;">cloud_sync</span>
+<span class="material-symbols-outlined text-[20px]">cloud_sync</span>
 </button>
 <button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:opacity-80 flex items-center justify-center">
-<span class="material-symbols-outlined" style="font-size: 20px;">settings</span>
+<span class="material-symbols-outlined text-[20px]">settings</span>
 </button>
 </div>
 <div class="h-8 w-8 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border border-outline-variant ml-2">
@@ -152,7 +153,7 @@
 <nav class="bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 fixed left-0 top-16 h-[calc(100vh-64px)] w-64 z-40 flex flex-col pt-4 transition-all duration-150 ease-in-out font-sans text-xs uppercase tracking-widest font-semibold">
 <div class="px-4 mb-6 flex items-center gap-3">
 <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200 text-blue-600">
-<span class="material-symbols-outlined" style="font-size: 20px;">memory</span>
+<span class="material-symbols-outlined text-[20px]">memory</span>
 </div>
 <div>
 <div class="text-slate-900 font-bold tracking-tight text-sm capitalize">System Health</div>
@@ -163,41 +164,41 @@
 </div>
 <div class="flex-1 overflow-y-auto">
 <a class="flex items-center gap-3 px-4 py-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-r-4 border-blue-600 transition-all duration-150 ease-in-out cursor-pointer active:opacity-80" href="/">
-<span class="material-symbols-outlined" style="font-size: 18px;">dashboard</span>
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
 <span>Overview</span>
 </a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer active:opacity-80" href="/webhooks">
-<span class="material-symbols-outlined" style="font-size: 18px;">settings_ethernet</span>
+<span class="material-symbols-outlined text-[18px]">settings_ethernet</span>
 <span>Webhooks</span>
 </a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer active:opacity-80" href="/backend">
-<span class="material-symbols-outlined" style="font-size: 18px;">terminal</span>
+<span class="material-symbols-outlined text-[18px]">terminal</span>
 <span>Backend</span>
 </a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer active:opacity-80" href="/queue">
-<span class="material-symbols-outlined" style="font-size: 18px;">database</span>
+<span class="material-symbols-outlined text-[18px]">database</span>
 <span>Queue</span>
 </a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer active:opacity-80" href="/scheduler">
-<span class="material-symbols-outlined" style="font-size: 18px;">calendar_today</span>
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
 <span>Scheduler</span>
 </a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer active:opacity-80" href="/workers">
-<span class="material-symbols-outlined" style="font-size: 18px;">engineering</span>
+<span class="material-symbols-outlined text-[18px]">engineering</span>
 <span>Workers</span>
 </a>
 </div>
 <div class="p-4 mt-auto border-t border-slate-200 dark:border-slate-800">
 <button class="w-full bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 py-2 rounded flex items-center justify-center gap-2 mb-4 transition-colors cursor-pointer active:opacity-80">
-<span class="material-symbols-outlined" style="font-size: 16px;">bolt</span>
+<span class="material-symbols-outlined text-[16px]">bolt</span>
                 Quick Actions
             </button>
 <a class="flex items-center gap-3 px-2 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer active:opacity-80" href="/settings">
-<span class="material-symbols-outlined" style="font-size: 16px;">settings</span>
+<span class="material-symbols-outlined text-[16px]">settings</span>
 <span>Settings</span>
 </a>
 <a class="flex items-center gap-3 px-2 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer active:opacity-80" href="/explorer">
-<span class="material-symbols-outlined" style="font-size: 16px;">list_alt</span>
+<span class="material-symbols-outlined text-[16px]">list_alt</span>
 <span>Logs</span>
 </a>
 </div>
@@ -217,7 +218,7 @@
 <!-- Node 1 -->
 <div class="flex flex-col items-center gap-2 z-10 w-full md:w-auto">
 <div class="w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-center text-primary shadow-sm relative group">
-<span class="material-symbols-outlined" style="font-size: 24px;">bolt</span>
+<span class="material-symbols-outlined text-[24px]">bolt</span>
 <div class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
 </div>
 <span class="font-label-md text-label-md text-on-surface">Triggers</span>
@@ -227,24 +228,24 @@
 <div class="h-[2px] w-full bg-outline-variant relative">
 <div class="absolute inset-0 bg-primary opacity-50 w-1/2 animate-pulse"></div>
 </div>
-<span class="material-symbols-outlined text-outline-variant absolute right-0 -mr-2 bg-surface-container-lowest" style="font-size: 16px;">chevron_right</span>
+<span class="material-symbols-outlined text-outline-variant absolute right-0 -mr-2 bg-surface-container-lowest text-[16px]">chevron_right</span>
 </div>
 <!-- Node 2 -->
 <div class="flex flex-col items-center gap-2 z-10 w-full md:w-auto">
 <div class="w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-center text-primary shadow-sm">
-<span class="material-symbols-outlined" style="font-size: 24px;">dns</span>
+<span class="material-symbols-outlined text-[24px]">dns</span>
 </div>
 <span class="font-label-md text-label-md text-on-surface">Master</span>
 </div>
 <!-- Arrow -->
 <div class="hidden md:flex flex-1 items-center justify-center relative">
 <div class="h-[2px] w-full bg-outline-variant"></div>
-<span class="material-symbols-outlined text-outline-variant absolute right-0 -mr-2 bg-surface-container-lowest" style="font-size: 16px;">chevron_right</span>
+<span class="material-symbols-outlined text-outline-variant absolute right-0 -mr-2 bg-surface-container-lowest text-[16px]">chevron_right</span>
 </div>
 <!-- Node 3 -->
 <div class="flex flex-col items-center gap-2 z-10 w-full md:w-auto">
 <div class="w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-center text-secondary shadow-sm relative">
-<span class="material-symbols-outlined" style="font-size: 24px;">stacked_line_chart</span>
+<span class="material-symbols-outlined text-[24px]">stacked_line_chart</span>
 <div data-ui="topology-queue-count" class="absolute -bottom-2 px-1 rounded text-[10px] bg-primary text-white font-bold">0</div>
 </div>
 <span class="font-label-md text-label-md text-on-surface">Queue</span>
@@ -252,12 +253,12 @@
 <!-- Arrow -->
 <div class="hidden md:flex flex-1 items-center justify-center relative">
 <div class="h-[2px] w-full bg-outline-variant"></div>
-<span class="material-symbols-outlined text-outline-variant absolute right-0 -mr-2 bg-surface-container-lowest" style="font-size: 16px;">chevron_right</span>
+<span class="material-symbols-outlined text-outline-variant absolute right-0 -mr-2 bg-surface-container-lowest text-[16px]">chevron_right</span>
 </div>
 <!-- Node 4 -->
 <div class="flex flex-col items-center gap-2 z-10 w-full md:w-auto">
 <div class="w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-center text-primary shadow-sm">
-<span class="material-symbols-outlined" style="font-size: 24px;">schedule</span>
+<span class="material-symbols-outlined text-[24px]">schedule</span>
 </div>
 <span class="font-label-md text-label-md text-on-surface">Scheduler</span>
 </div>
@@ -266,12 +267,12 @@
 <div class="h-[2px] w-full bg-outline-variant relative">
 <div class="absolute inset-0 bg-primary opacity-50 w-3/4"></div>
 </div>
-<span class="material-symbols-outlined text-outline-variant absolute right-0 -mr-2 bg-surface-container-lowest" style="font-size: 16px;">chevron_right</span>
+<span class="material-symbols-outlined text-outline-variant absolute right-0 -mr-2 bg-surface-container-lowest text-[16px]">chevron_right</span>
 </div>
 <!-- Node 5 -->
 <div class="flex flex-col items-center gap-2 z-10 w-full md:w-auto">
 <div class="w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-center text-primary shadow-sm relative">
-<span class="material-symbols-outlined" style="font-size: 24px;">memory</span>
+<span class="material-symbols-outlined text-[24px]">memory</span>
 <div class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
 </div>
 <span class="font-label-md text-label-md text-on-surface">Workers</span>
@@ -284,12 +285,12 @@
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-md flex flex-col justify-between">
 <div class="flex justify-between items-start mb-sm">
 <h3 class="font-label-md text-label-md text-on-surface-variant uppercase">System Health</h3>
-<span class="material-symbols-outlined text-green-600 bg-green-50 rounded-full p-1" style="font-size: 18px;">check_circle</span>
+<span class="material-symbols-outlined text-green-600 bg-green-50 rounded-full p-1 text-[18px]">check_circle</span>
 </div>
 <div class="mt-2">
 <div data-ui="system-uptime" class="font-headline-lg text-headline-lg text-on-surface">—</div>
 <div class="font-body-sm text-sm text-on-surface-variant mt-1 flex items-center gap-1">
-<span class="material-symbols-outlined text-green-600" style="font-size: 14px;">trending_up</span>
+<span class="material-symbols-outlined text-green-600 text-[14px]">trending_up</span>
 <span>Server uptime</span>
 </div>
 </div>
@@ -298,13 +299,13 @@
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-md flex flex-col justify-between">
 <div class="flex justify-between items-start mb-sm">
 <h3 class="font-label-md text-label-md text-on-surface-variant uppercase">Worker Utilization</h3>
-<span class="material-symbols-outlined text-primary bg-primary-fixed rounded-full p-1" style="font-size: 18px;">group_work</span>
+<span class="material-symbols-outlined text-primary bg-primary-fixed rounded-full p-1 text-[18px]">group_work</span>
 </div>
 <div class="mt-2">
 <div data-ui="worker-utilization" class="font-headline-lg text-headline-lg text-on-surface">—</div>
 <!-- Progress Bar -->
 <div class="w-full bg-surface-container-highest rounded-full h-2 mt-2">
-<div id="worker-utilization-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+<div id="worker-utilization-bar" class="bg-primary h-2 rounded-full w-0"></div>
 </div>
 <div data-ui="worker-node-count" class="font-body-sm text-sm text-on-surface-variant mt-2">—</div>
 </div>
@@ -313,12 +314,12 @@
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-md flex flex-col justify-between">
 <div class="flex justify-between items-start mb-sm">
 <h3 class="font-label-md text-label-md text-on-surface-variant uppercase">Queue Depth</h3>
-<span class="material-symbols-outlined text-tertiary bg-tertiary-fixed rounded-full p-1" style="font-size: 18px;">layers</span>
+<span class="material-symbols-outlined text-tertiary bg-tertiary-fixed rounded-full p-1 text-[18px]">layers</span>
 </div>
 <div class="mt-2">
 <div data-ui="queue-depth" class="font-headline-lg text-headline-lg text-on-surface">—</div>
 <div class="font-body-sm text-sm text-on-surface-variant mt-1 flex items-center gap-1">
-<span class="material-symbols-outlined text-secondary" style="font-size: 14px;">schedule</span>
+<span class="material-symbols-outlined text-secondary text-[14px]">schedule</span>
 <span data-ui="avg-wait">—</span>
 </div>
 </div>
@@ -328,7 +329,7 @@
 <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
   <div class="px-md py-sm border-b border-outline-variant flex justify-between items-center bg-surface-bright">
     <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-primary" style="font-size: 18px;">source</span>
+      <span class="material-symbols-outlined text-primary text-[18px]">source</span>
       <h2 class="font-label-md text-label-md text-on-surface-variant uppercase">Repositories Overview</h2>
     </div>
     <span data-ui="repos-count" class="bg-surface-container text-on-surface-variant font-code-sm text-[11px] px-2 py-0.5 rounded-full">0 repos</span>
@@ -346,7 +347,7 @@
 <div class="px-md py-sm border-b border-outline-variant flex justify-between items-center bg-surface-bright">
 <h2 class="font-label-md text-label-md text-on-surface-variant uppercase">Live Activity Stream</h2>
 <button class="text-primary font-label-md text-xs hover:underline flex items-center gap-1">
-                        View All Logs <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
+                        View All Logs <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
 </button>
 </div>
 <div class="w-full">
