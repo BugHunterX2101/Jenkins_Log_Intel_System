@@ -23,6 +23,8 @@ router = APIRouter(prefix="/ui", tags=["ui"])
 
 logger = logging.getLogger(__name__)
 
+_metrics_last_persisted: float | None = None
+
 
 def _repo_short_name(url: str) -> str:
     name = (url or "").rstrip("/").rstrip(".git").rstrip("/")
@@ -70,11 +72,12 @@ def _get_priority(branch: str) -> str:
 
 @router.get("/bootstrap", summary="Bootstrap payload for the frontend")
 async def bootstrap(request: Request, session: AsyncSession = Depends(get_session)) -> dict:
+    workers: list = []
     try:
         snapshot = await get_dashboard_snapshot(session)
 
         worker_result = await session.execute(select(Worker).order_by(Worker.id))
-        workers = worker_result.scalars().all()
+        workers = list(worker_result.scalars().all())
         build_event_count = await session.scalar(select(func.count(BuildEvent.id))) or 0
 
         # Try to fetch latest stored metrics; fall back to live computation if unavailable
@@ -547,9 +550,9 @@ async def get_live_metrics(session: AsyncSession = Depends(get_session)) -> dict
 
     # Persist snapshot at most every 30 s to avoid write contention when
     # multiple browser tabs each poll this endpoint every 5 s.
+    global _metrics_last_persisted
     try:
-        _last_ts = getattr(get_live_metrics, "_last_persisted", None)
-        if _last_ts is None or (now.timestamp() - _last_ts) >= 30:
+        if _metrics_last_persisted is None or (now.timestamp() - _metrics_last_persisted) >= 30:
             count = await session.scalar(select(func.count(SystemMetrics.id))) or 0
             if count >= 1000:
                 oldest = await session.execute(
@@ -569,7 +572,7 @@ async def get_live_metrics(session: AsyncSession = Depends(get_session)) -> dict
                 chaos_level=chaos_level,
             ))
             await session.commit()
-            get_live_metrics._last_persisted = now.timestamp()
+            _metrics_last_persisted = now.timestamp()
     except Exception as exc:
         logger.debug("get_live_metrics: skipping persist due to DB error: %s", exc)
 

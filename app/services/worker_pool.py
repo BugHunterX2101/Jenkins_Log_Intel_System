@@ -11,8 +11,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.worker_models import (
     AssignmentStatus, Worker, WorkerAssignment, WorkerLanguage, WorkerStatus
@@ -225,7 +224,7 @@ async def simulate_execution(
     # Without this limit the default pool (5+10) multiplied by N threads can
     # exhaust PostgreSQL's max_connections.
     engine  = create_async_engine(db_url, echo=False, pool_size=1, max_overflow=1)
-    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    Session = async_sessionmaker(engine, expire_on_commit=False)
 
     # FIX: When no stages were parsed from Jenkinsfile, we fall back to a
     # synthetic list. But the DB has no StageExecution rows for these names,

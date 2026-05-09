@@ -6,8 +6,9 @@ the entire application. All routers must use the get_session dependency
 from this module to avoid creating redundant connection pools.
 """
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from collections.abc import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
 
@@ -15,10 +16,10 @@ from app.config import settings
 _engine = create_async_engine(settings.DATABASE_URL, echo=False)
 
 # Global session factory
-_SessionFactory = sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
+_SessionFactory = async_sessionmaker(_engine, expire_on_commit=False)
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
     FastAPI dependency for database session.
     

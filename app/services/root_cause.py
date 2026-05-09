@@ -135,7 +135,9 @@ async def _call_anthropic(user_message: str, tag: FailureTag) -> dict | None:
                 system=_SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": user_message}],
             )
-            return message.content[0].text.strip()
+            from anthropic.types import TextBlock
+            text_blocks = [b for b in message.content if isinstance(b, TextBlock)]
+            return text_blocks[0].text.strip() if text_blocks else ""
 
         loop = asyncio.get_running_loop()
         raw = await loop.run_in_executor(None, _sync_call)

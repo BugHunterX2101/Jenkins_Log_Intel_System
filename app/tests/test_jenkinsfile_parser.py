@@ -68,6 +68,7 @@ def test_raw_url_github():
 
 def test_raw_url_github_dotgit():
     url = _raw_url("https://github.com/acme/my-repo.git", "feature/x")
+    assert url is not None
     assert "raw.githubusercontent.com" in url
     assert "feature/x" in url
 

@@ -66,7 +66,7 @@ async def schedule_pipeline(
     # FIX: Wrap Celery dispatch so missing broker doesn't abort the whole request
     try:
         from app.pipeline_tasks import trigger_jenkins_build
-        trigger_jenkins_build.delay(run.id, job_name, branch, commit_sha)
+        trigger_jenkins_build.delay(run.id, job_name, branch, commit_sha)  # type: ignore[attr-defined]
     except Exception as exc:
         logger.warning("Could not dispatch Celery task: %s", exc)
 
@@ -190,15 +190,16 @@ async def on_build_completed(
     run = await get_run(session, run_id)
     if not run:
         return
+    now = datetime.now(timezone.utc)
     run.result = result
-    run.completed_at = datetime.now(timezone.utc)
+    run.completed_at = now
     run.status = (
         RunStatus.COMPLETED if result == "SUCCESS"
         else RunStatus.ABORTED if result == "ABORTED"
         else RunStatus.FAILED   # FAILURE and UNSTABLE both map to FAILED
     )
     if run.started_at:
-        run.duration_s = int((run.completed_at - run.started_at).total_seconds())
+        run.duration_s = int((now - run.started_at).total_seconds())
 
     # Mark any still-PENDING/RUNNING stages as SKIPPED
     for stage in run.stages:

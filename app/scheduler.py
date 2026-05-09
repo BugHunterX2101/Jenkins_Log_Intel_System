@@ -57,8 +57,7 @@ def scheduler_tick() -> dict:
 
 
 async def _scheduler_tick_async(use_celery: bool = False) -> dict:
-    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     from sqlalchemy import select, update, case as sa_case, func as sa_func
     from app.pipeline_models import PipelineRun, RunStatus
     from app.worker_models import Worker, WorkerStatus
@@ -78,7 +77,7 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
 
     engine  = create_async_engine(settings.DATABASE_URL, echo=False,
                                    pool_size=3, max_overflow=2)
-    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    Session = async_sessionmaker(engine, expire_on_commit=False)
 
     assigned_count = 0
 
@@ -133,7 +132,7 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
             )
             await session.commit()
 
-            if claim_result.rowcount == 0:
+            if claim_result.rowcount == 0:  # type: ignore[attr-defined]
                 # Another tick already claimed this run — skip it
                 logger.debug("Scheduler: run %d already claimed, skipping", run.id)
                 continue
@@ -143,7 +142,7 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
 
         if worker:
             if use_celery:
-                execute_pipeline_run.delay(
+                execute_pipeline_run.delay(  # type: ignore[attr-defined]
                     run_id=run.id,
                     worker_id=worker.id,
                     stage_names=stage_names,
@@ -235,8 +234,7 @@ def collect_system_metrics() -> dict:
 
 
 async def _collect_metrics_async() -> dict:
-    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from sqlalchemy import select, func
     from app.models import SystemMetrics
     from app.pipeline_models import PipelineRun, RunStatus
@@ -244,7 +242,7 @@ async def _collect_metrics_async() -> dict:
     from app.services.job_scheduler import get_dashboard_snapshot
 
     engine  = create_async_engine(settings.DATABASE_URL, echo=False)
-    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    Session = async_sessionmaker(engine, expire_on_commit=False)
 
     process = psutil.Process()
     memory_info = process.memory_info()

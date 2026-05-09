@@ -55,7 +55,7 @@ def trigger_jenkins_build(
             _trigger_jenkins(job_name, branch, commit_sha)
         )
         asyncio.run(_mark_started(run_id, build_number, build_url))
-        poll_pipeline_stages.apply_async(
+        poll_pipeline_stages.apply_async(  # type: ignore[attr-defined]
             args=[run_id, job_name, build_number],
             countdown=10,
         )

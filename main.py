@@ -47,12 +47,12 @@ def _serve_page(filename: str) -> FileResponse:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Create database tables and seed workers on startup."""
     try:
         from app.services.worker_pool import seed_workers
-        import app.pipeline_models  # noqa: F401
-        import app.worker_models  # noqa: F401
+        from app import pipeline_models as _pm  # noqa: F401
+        from app import worker_models as _wm    # noqa: F401
 
         # Use the global shared engine from app.db
         engine = get_engine()
