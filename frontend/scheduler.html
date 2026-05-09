@@ -185,8 +185,6 @@
 <a class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="/workers">
 <span class="material-symbols-outlined">engineering</span> Workers
             </a>
-<a class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="/simulation">
-<span class="material-symbols-outlined">precision_manufacturing</span> Simulation
             </a>
 </nav>
 <div class="p-4 border-t border-slate-200 dark:border-slate-800">
@@ -333,6 +331,47 @@
                         View Full Logs
                     </button>
 </div>
+</div>
+<!-- Priority Queue Panel -->
+<div class="col-span-12 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-[0px_4px_6px_rgba(0,0,0,0.02)] overflow-hidden">
+  <div class="p-md border-b border-outline-variant bg-surface-bright flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary" style="font-size: 20px; font-variation-settings: 'FILL' 1;">priority_high</span>
+      <h3 class="font-headline-sm text-headline-sm text-on-surface">Priority Queue</h3>
+      <span data-ui="pq-mode-badge" class="ml-2 px-2 py-0.5 bg-primary text-on-primary font-label-md text-label-md rounded-full text-[10px]">Priority</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="font-label-md text-label-md text-on-surface-variant">Next jobs in dispatch order</span>
+      <span data-ui="pq-total" class="bg-surface-container text-on-surface-variant font-code-sm text-[11px] px-2 py-0.5 rounded-full">0 queued</span>
+    </div>
+  </div>
+  <!-- Priority legend -->
+  <div class="px-md py-sm border-b border-outline-variant bg-surface-container-low flex flex-wrap gap-2">
+    <span class="px-2 py-0.5 bg-red-600 text-white font-label-md text-[10px] rounded">P1 — Hotfix</span>
+    <span class="px-2 py-0.5 bg-blue-600 text-white font-label-md text-[10px] rounded">P2 — Main</span>
+    <span class="px-2 py-0.5 bg-violet-600 text-white font-label-md text-[10px] rounded">P3 — Release</span>
+    <span class="px-2 py-0.5 bg-amber-500 text-white font-label-md text-[10px] rounded">P4 — Develop</span>
+    <span class="px-2 py-0.5 bg-teal-500 text-white font-label-md text-[10px] rounded">P5 — Feature</span>
+    <span class="px-2 py-0.5 bg-slate-400 text-white font-label-md text-[10px] rounded">P6 — Normal</span>
+  </div>
+  <!-- Table -->
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="py-2 px-md font-label-md text-label-md text-on-surface-variant w-12">RANK</th>
+          <th class="py-2 px-md font-label-md text-label-md text-on-surface-variant">PRIORITY</th>
+          <th class="py-2 px-md font-label-md text-label-md text-on-surface-variant">REPO</th>
+          <th class="py-2 px-md font-label-md text-label-md text-on-surface-variant">BRANCH</th>
+          <th class="py-2 px-md font-label-md text-label-md text-on-surface-variant">AUTHOR</th>
+          <th class="py-2 px-md font-label-md text-label-md text-on-surface-variant text-right">WAIT</th>
+        </tr>
+      </thead>
+      <tbody data-ui="priority-queue-list" class="font-code-sm text-code-sm text-on-surface divide-y divide-surface-container-high">
+        <tr><td colspan="6" class="py-6 text-center text-on-surface-variant text-sm">No jobs in queue</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 </div>
 </main>

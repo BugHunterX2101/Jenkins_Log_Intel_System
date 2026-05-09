@@ -18,6 +18,7 @@ from app.routers import webhook
 from app.routers import jobs
 from app.routers import workers
 from app.routers import github_webhook
+from app.routers.github_webhook import github_alias_router
 from app.routers import ui
 from app.models import Base
 
@@ -25,11 +26,9 @@ _sched_logger = logging.getLogger("scheduler.loop")
 
 
 def _background_loops_enabled() -> bool:
-    # Force-disabled by default to keep the test/dev server lightweight.
-    # In-process scheduler and random arrival loops are resource-heavy and
-    # interfere with functional tests; enable them only with a deliberate
-    # code change or explicit runtime orchestration.
-    return False
+    # Enable the scheduler tick and random-arrival loops so real GitHub webhook
+    # events are actually dispatched to workers and reach COMPLETED/FAILED state.
+    return True
 
 
 async def _scheduler_loop() -> None:
@@ -161,12 +160,6 @@ async def frontend_scheduler() -> FileResponse:
     return _serve_page("scheduler.html")
 
 
-@app.get("/simulation", include_in_schema=False)
-@app.get("/simulation.html", include_in_schema=False)
-async def frontend_simulation() -> FileResponse:
-    return _serve_page("simulation.html")
-
-
 @app.get("/webhooks", include_in_schema=False)
 @app.get("/webhooks.html", include_in_schema=False)
 async def frontend_webhooks() -> FileResponse:
@@ -195,6 +188,7 @@ async def frontend_settings() -> FileResponse:
 
 app.include_router(webhook.router)
 app.include_router(github_webhook.router)
+app.include_router(github_alias_router)   # /github-webhook/ — ngrok real webhook path
 app.include_router(jobs.router)
 app.include_router(workers.router)
 app.include_router(ui.router)

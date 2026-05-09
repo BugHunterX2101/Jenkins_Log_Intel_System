@@ -145,7 +145,7 @@
 <div class="w-10 h-10 rounded bg-primary-container text-on-primary-container flex items-center justify-center font-bold">SYS</div>
 <div>
 <div class="font-label-md text-label-md text-on-surface">System Health</div>
-<div class="text-[10px] text-primary mt-1 lowercase tracking-normal">ngrok: running</div>
+<div class="text-[10px] text-primary mt-1 lowercase tracking-normal">webhook: live</div>
 </div>
 </div>
 <button class="w-full mt-4 bg-white border border-outline-variant text-on-surface hover:bg-slate-200 dark:hover:bg-slate-800 py-2 rounded transition-all duration-150 ease-in-out font-label-md text-label-md flex items-center justify-center gap-2">
@@ -159,7 +159,6 @@
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/queue"><span class="material-symbols-outlined">database</span> Queue</a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/scheduler"><span class="material-symbols-outlined">calendar_today</span> Scheduler</a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/workers"><span class="material-symbols-outlined">engineering</span> Workers</a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/simulation"><span class="material-symbols-outlined">precision_manufacturing</span> Simulation</a>
 </nav>
 <div class="mt-auto border-t border-surface-variant pt-2 pb-4">
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/settings"><span class="material-symbols-outlined">settings</span> Settings</a>
@@ -172,20 +171,20 @@
 <header class="mb-lg flex justify-between items-end">
 <div>
 <h1 class="font-headline-lg text-headline-lg text-on-surface">Webhook Control Panel</h1>
-<p class="font-body-md text-body-md text-on-surface-variant mt-sm">Configure routing endpoints and simulate payload bursts for ingestion testing.</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-sm">Configure real routing endpoints and monitor deliveries as they arrive.</p>
 </div>
 </header>
 <!-- Configuration Bar -->
 <section class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md mb-lg ambient-shadow flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
 <div class="flex-1 flex flex-col gap-sm w-full">
 <label class="font-label-md text-label-md text-on-surface-variant flex justify-between">
-                    Endpoint URL (ngrok)
+                    Endpoint URL (real webhook)
                     <span class="text-primary-container flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-container"></span> CONNECTED</span>
 </label>
 <div class="flex flex-col sm:flex-row gap-sm w-full">
 <div class="relative flex-1">
 <span class="absolute left-3 top-2.5 material-symbols-outlined text-outline" style="font-size: 20px;">link</span>
-<input data-ui="ngrok-url" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="[configure NGROK_URL in server environment]"/>
+<input data-ui="ngrok-url" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="https://backer-slab-suburb.ngrok-free.dev/github-webhook/"/>
 </div>
 <button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded font-label-md text-label-md text-on-surface flex items-center justify-center gap-2 transition-colors whitespace-nowrap">
 <span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span> Copy URL
@@ -211,10 +210,10 @@
 <section class="lg:col-span-8 bg-surface-container-lowest border border-surface-variant rounded-xl p-lg ambient-shadow flex flex-col h-full">
 <div class="flex justify-between items-center mb-md pb-sm border-b border-surface-variant">
 <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">rocket_launch</span> Simulated Payload Generator
+<span class="material-symbols-outlined text-primary">rocket_launch</span> Webhook Setup
                     </h2>
 <div class="flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant">
-<span class="font-label-md text-label-md text-on-surface-variant">Burst Mode</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Delivery Notes</span>
 <div data-ui="burst-mode-toggle" class="w-8 h-4 bg-outline-variant rounded-full relative cursor-pointer" data-burst="1">
 <div class="w-3 h-3 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm transition-all"></div>
 </div>
@@ -263,14 +262,14 @@
 <div class="mt-auto pt-md border-t border-surface-variant flex justify-end gap-sm">
 <button class="px-6 py-2 bg-surface text-on-surface border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container transition-colors">Reset Defaults</button>
 <button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-surface-tint shadow-sm transition-all flex items-center gap-2">
-<span class="material-symbols-outlined" style="font-size: 18px;">send</span> Trigger Webhook
+<span class="material-symbols-outlined" style="font-size: 18px;">send</span> Example Payload
                     </button>
 </div>
 </section>
 <!-- Right: Raw Payload Viewer (4 cols) -->
 <section class="lg:col-span-4 bg-inverse-surface rounded-xl overflow-hidden flex flex-col h-full ambient-shadow">
 <div class="px-md py-sm bg-[#1e2026] border-b border-[#3f424e] flex justify-between items-center">
-<span class="font-label-md text-label-md text-inverse-on-surface tracking-wider">RAW PAYLOAD (JSON)</span>
+<span class="font-label-md text-label-md text-inverse-on-surface tracking-wider">SAMPLE PAYLOAD (JSON)</span>
 <button class="text-[#a1a3b1] hover:text-white transition-colors"><span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span></button>
 </div>
 <div class="p-md flex-1 overflow-y-auto">

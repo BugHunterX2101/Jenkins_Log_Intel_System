@@ -6,7 +6,6 @@ const pages = [
   { name: 'queue', url: process.env.APP_URL ? `${process.env.APP_URL}/queue` : `file://${path.resolve(__dirname, '..', 'queue.html')}` },
   { name: 'webhooks', url: process.env.APP_URL ? `${process.env.APP_URL}/webhooks` : `file://${path.resolve(__dirname, '..', 'webhooks.html')}` },
   { name: 'workers', url: process.env.APP_URL ? `${process.env.APP_URL}/workers` : `file://${path.resolve(__dirname, '..', 'workers.html')}` },
-  { name: 'simulation', url: process.env.APP_URL ? `${process.env.APP_URL}/simulation` : `file://${path.resolve(__dirname, '..', 'simulation.html')}` },
   { name: 'scheduler', url: process.env.APP_URL ? `${process.env.APP_URL}/scheduler` : `file://${path.resolve(__dirname, '..', 'scheduler.html')}` },
   { name: 'backend', url: process.env.APP_URL ? `${process.env.APP_URL}/backend` : `file://${path.resolve(__dirname, '..', 'backend.html')}` },
 ];
@@ -26,7 +25,7 @@ for (const p of pages) {
     expect(hasButton.length).toBeGreaterThan(0);
 
     // for pages that should show structured content, check the expected primary container
-    if (['queue','webhooks','simulation','scheduler','backend'].includes(p.name)) {
+    if (['queue','webhooks','scheduler','backend'].includes(p.name)) {
       if (p.name === 'scheduler') {
         const hasKanban = await page.$$('[data-ui="kanban-queued-list"], [data-ui="kanban-scheduled-list"], [data-ui="kanban-running-list"]');
         expect(hasKanban.length).toBeGreaterThan(0);

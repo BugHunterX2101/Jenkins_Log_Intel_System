@@ -6,7 +6,7 @@
 
   const resolveLinkTarget = (text) => {
     const label = normalize(text);
-    if (label.includes("quick actions")) return "/simulation";
+    if (label.includes("quick actions")) return "/webhooks";
     if (label.includes("refresh system")) return null;
     if (label.includes("dashboard") || label.includes("overview")) return "/";
     if (label.includes("webhooks")) return "/webhooks";
@@ -15,7 +15,6 @@
     if (label.includes("queue")) return "/queue";
     if (label.includes("scheduler")) return "/scheduler";
     if (label.includes("workers")) return "/workers";
-    if (label.includes("simulation")) return "/simulation";
     if (label.includes("settings")) return "/settings";
     return null;
   };
@@ -98,20 +97,9 @@
           }
         }
         if (path.startsWith("/webhooks")) {
-          const triggerWebhook = buttonsWithLabel("trigger webhook")[0];
-          if (triggerWebhook) {
-            triggerWebhook.click();
-            return;
-          }
+          return;
         }
-        if (path.startsWith("/simulation")) {
-          const crashButton = buttonsWithLabel("simulate global crash")[0];
-          if (crashButton) {
-            crashButton.click();
-            return;
-          }
-        }
-        goTo("/simulation");
+        goTo("/webhooks");
       });
     });
   };
@@ -135,55 +123,7 @@
     });
   };
 
-  const attachWebhookActions = () => {
-    const triggerWebhook = buttonsWithLabel("trigger webhook")[0];
-    if (!triggerWebhook) return;
-
-    bindOnce(triggerWebhook, async () => {
-      const repoSelect = document.querySelector('[data-ui="wh-repo"]') || document.querySelector('select');
-      const branchInput = document.querySelector('[data-ui="wh-branch"]') || document.querySelector('input[type="text"]');
-      const authorInput = document.querySelector('[data-ui="wh-author"]') || document.querySelectorAll('input[type="text"]')[1];
-      const repository = repoSelect && "value" in repoSelect ? repoSelect.value : "acme/service";
-      const branch = branchInput && "value" in branchInput ? branchInput.value : "main";
-      const author = authorInput && "value" in authorInput ? authorInput.value : "bot";
-
-      try {
-        const response = await fetch("/webhook/github/simulate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ repo_url: `https://github.com/${repository}`, branch, author, count: 1 }),
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        window.location.reload();
-      } catch (error) {
-        console.error("Webhook simulation failed", error);
-        alert("Unable to trigger a simulated webhook.");
-      }
-    });
-  };
-
-  const attachSimulationActions = () => {
-    const simulateCrash = buttonsWithLabel("simulate global crash")[0];
-    if (!simulateCrash) return;
-
-    bindOnce(simulateCrash, async () => {
-      simulateCrash.disabled = true;
-      try {
-        const response = await fetch("/webhook/github/simulate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ count: 3 }),
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        window.location.reload();
-      } catch (error) {
-        console.error("Simulation failed", error);
-        alert("Unable to launch the simulation.");
-      } finally {
-        simulateCrash.disabled = false;
-      }
-    });
-  };
+  const attachWebhookActions = () => {};
 
 
   const populateQueueMetrics = async () => {
@@ -255,10 +195,14 @@
           const waitSeconds = run.queued_at ? Math.max(0, Math.floor((Date.now() - new Date(run.queued_at).getTime()) / 1000)) : null;
           row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors group';
           // F5: derive priority from branch — 'priority' field not in API response
-          const priority = run.branch === 'main' ? 'High' : 'Normal';
-          const priorityClass = priority === 'High'
-            ? 'bg-primary-fixed text-on-primary-fixed'
-            : 'bg-surface-container-highest text-on-surface-variant';
+          const br = run.branch || '';
+          let priority = 'P6 (Normal)';
+          let priorityClass = 'bg-surface-container-highest text-on-surface-variant';
+          if (br.startsWith('hotfix/')) { priority = 'P1 (Hotfix)'; priorityClass = 'bg-error text-on-error font-bold'; }
+          else if (br === 'main' || br === 'master') { priority = 'P2 (Main)'; priorityClass = 'bg-primary-fixed text-on-primary-fixed font-bold'; }
+          else if (br.startsWith('release/')) { priority = 'P3 (Release)'; priorityClass = 'bg-primary text-on-primary'; }
+          else if (br === 'develop') { priority = 'P4 (Develop)'; priorityClass = 'bg-tertiary text-on-tertiary'; }
+          else if (br.startsWith('feature/')) { priority = 'P5 (Feature)'; priorityClass = 'bg-secondary text-on-secondary'; }
           row.innerHTML = `
             <td class="px-md py-sm"><span class="text-code-sm font-code-sm text-surface-tint">#J-${run.id || ''}</span></td>
             <td class="px-md py-sm"><span class="${priorityClass} text-label-md px-2 py-0.5 rounded-full">${priority}</span></td>
@@ -619,163 +563,6 @@
     }
   };
 
-  const renderSimulationPanel = (data) => {
-    const simulation = data.simulation;
-    if (!simulation) return;
-
-    const intensity = document.querySelector('[data-ui="chaos-intensity"]');
-    const level = document.querySelector('[data-ui="chaos-level"]');
-    const arrivalSpan = document.querySelector('[data-ui="arrival-rate"]');
-    const arrivalInput = document.querySelector('[data-ui="arrival-rate-input"]');
-    const burstSpan = document.querySelector('[data-ui="burst-prob"]');
-    const burstInput = document.querySelector('[data-ui="burst-prob-input"]');
-    const failureSpan = document.querySelector('[data-ui="simulation-failure-rate"]');
-    const failureInput = document.querySelector('[data-ui="simulation-failure-rate-input"]');
-    const minDuration = document.querySelector('[data-ui="simulation-min-duration"]');
-    const maxDuration = document.querySelector('[data-ui="simulation-max-duration"]');
-    const pipelineStatus = document.querySelector('[data-ui="pipeline-status"]');
-    const pipelineLog = document.querySelector('[data-ui="pipeline-log"]');
-    const eventBody = document.querySelector('[data-ui="simulation-live-log"]');
-
-    if (intensity) {
-      const pct = simulation.chaos_intensity || 0;
-      intensity.textContent = `${pct}%`;
-      const dialCircle = intensity.closest('div')?.previousElementSibling?.querySelector('circle:last-child');
-      if (dialCircle) dialCircle.setAttribute('stroke-dashoffset', String(Math.round(283 * (1 - pct / 100))));
-    }
-    if (level) level.textContent = simulation.chaos_level || 'Normal';
-    if (arrivalSpan && arrivalInput) {
-      const rate = simulation.arrival_rate || 0;
-      arrivalSpan.textContent = `${rate} req/s`;
-      arrivalInput.value = Math.min(rate, Number(arrivalInput.max || 100));
-      if (!arrivalInput.dataset.bound) {
-        arrivalInput.dataset.bound = 'true';
-        arrivalInput.addEventListener('input', (e) => {
-          arrivalSpan.textContent = `${e.target.value} req/s`;
-        });
-      }
-    }
-    if (burstSpan && burstInput) {
-      burstSpan.textContent = `${simulation.burst_prob || 0}%`;
-      burstInput.value = simulation.burst_prob || 0;
-      if (!burstInput.dataset.bound) {
-        burstInput.dataset.bound = 'true';
-        burstInput.addEventListener('input', (e) => {
-          burstSpan.textContent = `${e.target.value}%`;
-        });
-      }
-    }
-    if (failureSpan && failureInput) {
-      failureSpan.textContent = `${simulation.failure_rate || 0}%`;
-      failureInput.value = simulation.failure_rate || 0;
-      if (!failureInput.dataset.bound) {
-        failureInput.dataset.bound = 'true';
-        failureInput.addEventListener('input', (e) => {
-          failureSpan.textContent = `${e.target.value}%`;
-        });
-      }
-    }
-    if (minDuration) minDuration.value = simulation.min_duration_ms || 100;
-    if (maxDuration) maxDuration.value = simulation.max_duration_ms || 5000;
-
-    if (pipelineStatus && pipelineStatus.textContent.trim() === 'Ready') {
-      pipelineStatus.textContent = `${simulation.chaos_level || 'Normal'} simulation ready`;
-    }
-    if (pipelineLog && pipelineLog.childElementCount === 0) {
-      pipelineLog.innerHTML = '<div>Live simulation data synchronized from the backend.</div>';
-    }
-
-    if (eventBody) {
-      eventBody.innerHTML = '';
-      const buildEvents = data.build_events || [];
-      const latestRuns = data.queue?.latest_runs || [];
-      const rows = [];
-      buildEvents.slice(0, 4).forEach((event) => {
-        rows.push({
-          timestamp: event.processed_at,
-          type: event.failure_type || 'Build Event',
-          target: event.job_name || '-',
-          details: event.summary_text || '-',
-          severity: event.severity,
-        });
-      });
-      latestRuns.slice(0, 4).forEach((run) => {
-        rows.push({
-          timestamp: run.queued_at,
-          type: run.status || 'Queue Update',
-          target: run.repo_url ? run.repo_url.split('/').pop() : '-',
-          details: `${run.branch || 'main'} triggered by ${run.triggered_by || 'system'}`,
-          severity: run.status === 'FAILED' ? 'error' : 'info',
-        });
-      });
-
-      rows.slice(0, 6).forEach((row) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-surface-container-low transition-colors';
-        const labelClass = row.severity === 'error' ? 'bg-error-container text-on-error-container' : row.severity === 'info' ? 'bg-surface-container-high text-on-surface' : 'bg-tertiary-container text-on-tertiary-container';
-        tr.innerHTML = `
-          <td class="p-sm text-on-surface-variant whitespace-nowrap">${row.timestamp ? new Date(row.timestamp).toLocaleTimeString() : '-'}</td>
-          <td class="p-sm"><span class="px-2 py-0.5 ${labelClass} rounded-sm font-semibold">${row.type || '-'}</span></td>
-          <td class="p-sm text-primary">${row.target || '-'}</td>
-          <td class="p-sm">${row.details || '-'}</td>
-        `;
-        eventBody.appendChild(tr);
-      });
-    }
-  };
-
-    // Simulation page bindings
-    function bindSimulationControls(bootstrap) {
-      const intensity = document.querySelector('[data-ui="chaos-intensity"]');
-      const level = document.querySelector('[data-ui="chaos-level"]');
-      const arrivalSpan = document.querySelector('[data-ui="arrival-rate"]');
-      const arrivalInput = document.querySelector('[data-ui="arrival-rate-input"]');
-      const burstSpan = document.querySelector('[data-ui="burst-prob"]');
-      const burstInput = document.querySelector('[data-ui="burst-prob-input"]');
-      const failureSpan = document.querySelector('[data-ui="simulation-failure-rate"]');
-      const failureInput = document.querySelector('[data-ui="simulation-failure-rate-input"]');
-      const minDuration = document.querySelector('[data-ui="simulation-min-duration"]');
-      const maxDuration = document.querySelector('[data-ui="simulation-max-duration"]');
-
-      if (intensity && bootstrap.health) {
-        const pct = Math.round((bootstrap.health.chaos_intensity || 0) * 100);
-        intensity.textContent = pct + '%';
-        const dialCircle = intensity.closest('div')?.previousElementSibling?.querySelector('circle:last-child');
-        if (dialCircle) dialCircle.setAttribute('stroke-dashoffset', String(Math.round(283 * (1 - pct / 100))));
-      }
-      if (level && bootstrap.health) {
-        level.textContent = (bootstrap.health.chaos_level || 'Normal');
-      }
-      if (arrivalSpan && arrivalInput) {
-        const v = bootstrap.simulation?.arrival_rate || 42;
-        arrivalSpan.textContent = v + ' req/s';
-        arrivalInput.value = v;
-        if (!arrivalInput.dataset.bound) {
-          arrivalInput.dataset.bound = 'true';
-          arrivalInput.addEventListener('input', (e) => { arrivalSpan.textContent = e.target.value + ' req/s'; });
-        }
-      }
-      if (burstSpan && burstInput) {
-        const b = bootstrap.simulation?.burst_prob || 15;
-        burstSpan.textContent = b + '%';
-        burstInput.value = b;
-        if (!burstInput.dataset.bound) {
-          burstInput.dataset.bound = 'true';
-          burstInput.addEventListener('input', (e) => { burstSpan.textContent = e.target.value + '%'; });
-        }
-      }
-      if (failureSpan && failureInput) {
-        const failureRate = bootstrap.simulation?.failure_rate || 5;
-        failureSpan.textContent = failureRate + '%';
-        failureInput.value = failureRate;
-        if (!failureInput.dataset.bound) {
-          failureInput.dataset.bound = 'true';
-          failureInput.addEventListener('input', (e) => { failureSpan.textContent = e.target.value + '%'; });
-        }
-      }
-      if (minDuration) minDuration.value = bootstrap.simulation?.min_duration_ms || 100;
-      if (maxDuration) maxDuration.value = bootstrap.simulation?.max_duration_ms || 5000;
-    }
   const populateWorkers = async () => {
     try {
       const workersRes = await fetch('/api/workers');
@@ -908,6 +695,201 @@
   let _schedulerKanbanInterval = null;
   let _activityLastTimestamp = null;
 
+  // ─── Repositories Overview (dashboard) ───────────────────────────────────────
+  const _priorityBadgeClass = (prio) => {
+    const map = {
+      1: 'bg-red-600 text-white',
+      2: 'bg-blue-600 text-white',
+      3: 'bg-violet-600 text-white',
+      4: 'bg-amber-500 text-white',
+      5: 'bg-teal-500 text-white',
+      6: 'bg-slate-400 text-white',
+    };
+    return map[prio] || 'bg-slate-400 text-white';
+  };
+
+  const populateRepositories = async () => {
+    const grid = document.querySelector('[data-ui="repos-grid"]');
+    if (!grid) return;
+    try {
+      const res = await fetch('/ui/repositories');
+      if (!res.ok) throw new Error('Failed to fetch repositories');
+      const data = await res.json();
+      const repos = data.repositories || [];
+
+      // Update count badge
+      const countEl = document.querySelector('[data-ui="repos-count"]');
+      if (countEl) countEl.textContent = `${repos.length} repo${repos.length !== 1 ? 's' : ''}`;
+
+      grid.innerHTML = '';
+      if (!repos.length) {
+        grid.innerHTML = '<div class="col-span-full text-center text-on-surface-variant text-sm py-8">No repositories found. Push a real change to a GitHub repo to get started.</div>';
+        return;
+      }
+
+      repos.forEach((repo) => {
+        const card = document.createElement('div');
+        card.className = 'bg-surface-container-low border border-outline-variant rounded-xl p-md shadow-sm hover:shadow-md transition-shadow';
+
+        const branchRows = (repo.branches || []).map((b) => {
+          const badgeCls = _priorityBadgeClass(b.priority);
+          const c = b.counts || {};
+          return `
+            <div class="flex items-center justify-between py-1.5 border-b border-outline-variant/40 last:border-0">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="inline-block px-1.5 py-0.5 ${badgeCls} font-label-md text-[9px] rounded flex-shrink-0">${b.priority_label}</span>
+                <span class="font-code-sm text-code-sm text-on-surface truncate flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[12px] text-outline">call_split</span>
+                  ${b.branch}
+                </span>
+              </div>
+              <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                ${c.QUEUED ? `<span class="px-1 py-0.5 bg-blue-100 text-blue-800 font-label-md text-[9px] rounded" title="Queued">${c.QUEUED}Q</span>` : ''}
+                ${c.IN_PROGRESS ? `<span class="px-1 py-0.5 bg-amber-100 text-amber-800 font-label-md text-[9px] rounded" title="Running">${c.IN_PROGRESS}R</span>` : ''}
+                ${c.COMPLETED ? `<span class="px-1 py-0.5 bg-green-100 text-green-800 font-label-md text-[9px] rounded" title="Completed">${c.COMPLETED}✓</span>` : ''}
+                ${c.FAILED ? `<span class="px-1 py-0.5 bg-red-100 text-red-800 font-label-md text-[9px] rounded" title="Failed">${c.FAILED}✗</span>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-sm">
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary flex-shrink-0">
+                <span class="material-symbols-outlined text-[16px]">folder_code</span>
+              </span>
+              <div>
+                <div class="font-headline-sm text-[14px] text-on-surface font-semibold">${repo.repo_name}</div>
+                <div class="font-code-sm text-[10px] text-outline truncate max-w-[180px]">${repo.repo_url}</div>
+              </div>
+            </div>
+            <span class="bg-surface-container text-on-surface-variant font-code-sm text-[11px] px-2 py-0.5 rounded-full flex-shrink-0">${repo.total_runs} runs</span>
+          </div>
+          <div class="flex flex-col gap-0">
+            ${branchRows || '<div class="text-on-surface-variant text-xs py-2">No branches</div>'}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    } catch (err) {
+      console.error('populateRepositories failed', err);
+      const grid2 = document.querySelector('[data-ui="repos-grid"]');
+      if (grid2) grid2.innerHTML = '<div class="col-span-full text-center text-on-surface-variant text-sm py-6">Failed to load repositories.</div>';
+    }
+  };
+
+  // ─── Priority Queue (scheduler page) ─────────────────────────────────────────
+  const populatePriorityQueue = async () => {
+    const tbody = document.querySelector('[data-ui="priority-queue-list"]');
+    if (!tbody) return;
+    try {
+      const res = await fetch('/ui/priority-queue');
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+
+      // Update mode badge
+      const modeBadge = document.querySelector('[data-ui="pq-mode-badge"]');
+      if (modeBadge) modeBadge.textContent = data.mode || 'Priority';
+      const totalEl = document.querySelector('[data-ui="pq-total"]');
+      if (totalEl) totalEl.textContent = `${data.total || 0} queued`;
+
+      tbody.innerHTML = '';
+      const jobs = data.jobs || [];
+      if (!jobs.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-on-surface-variant text-sm">Queue is empty — no jobs waiting</td></tr>';
+        return;
+      }
+      jobs.forEach((job) => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
+        const waitLabel = job.wait_seconds > 3600
+          ? `${Math.floor(job.wait_seconds / 3600)}h ${Math.floor((job.wait_seconds % 3600) / 60)}m`
+          : job.wait_seconds > 60
+          ? `${Math.floor(job.wait_seconds / 60)}m ${job.wait_seconds % 60}s`
+          : `${job.wait_seconds}s`;
+        tr.innerHTML = `
+          <td class="py-2 px-md font-bold text-on-surface-variant">#${job.rank}</td>
+          <td class="py-2 px-md"><span class="px-2 py-0.5 ${job.priority_color} font-label-md text-[10px] rounded">${job.priority_label}</span></td>
+          <td class="py-2 px-md font-code-sm text-code-sm text-on-surface">${job.repo}</td>
+          <td class="py-2 px-md">
+            <span class="flex items-center gap-1 font-code-sm text-code-sm">
+              <span class="material-symbols-outlined text-[12px] text-outline">call_split</span>
+              ${job.branch}
+            </span>
+          </td>
+          <td class="py-2 px-md text-on-surface-variant font-code-sm">${job.author}</td>
+          <td class="py-2 px-md text-right font-code-sm text-on-surface-variant">${waitLabel}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error('populatePriorityQueue failed', err);
+    }
+  };
+
+  // ─── Scheduler mode buttons ───────────────────────────────────────────────────
+  const _MODES = ['FIFO', 'Priority', 'Load-Balanced'];
+
+  const _highlightModeBtn = (activeMode) => {
+    document.querySelectorAll('[data-scheduler-mode]').forEach((btn) => {
+      const isActive = btn.dataset.schedulerMode === activeMode;
+      btn.classList.toggle('bg-surface-container-lowest', isActive);
+      btn.classList.toggle('text-on-surface', isActive);
+      btn.classList.toggle('shadow-sm', isActive);
+      btn.classList.toggle('border', isActive);
+      btn.classList.toggle('border-outline-variant/30', isActive);
+      btn.classList.toggle('text-on-surface-variant', !isActive);
+    });
+    // Also update the pq-mode-badge if on scheduler page
+    const badge = document.querySelector('[data-ui="pq-mode-badge"]');
+    if (badge) badge.textContent = activeMode;
+  };
+
+  const attachSchedulerModeButtons = () => {
+    // Stamp data-scheduler-mode onto the three mode buttons (FIFO / Priority / Load-Balanced)
+    const modeContainer = document.querySelector('.flex.bg-surface-container.rounded-lg.p-1');
+    if (modeContainer) {
+      const btns = modeContainer.querySelectorAll('button');
+      btns.forEach((btn, i) => {
+        const mode = _MODES[i];
+        if (mode) btn.dataset.schedulerMode = mode;
+      });
+    }
+
+    // Fetch current mode from backend and highlight
+    fetch('/ui/scheduler/mode')
+      .then(r => r.json())
+      .then(d => _highlightModeBtn(d.mode || 'Priority'))
+      .catch(() => _highlightModeBtn('Priority'));
+
+    // Attach click handlers
+    document.querySelectorAll('[data-scheduler-mode]').forEach((btn) => {
+      bindOnce(btn, async () => {
+        const mode = btn.dataset.schedulerMode;
+        try {
+          const res = await fetch('/ui/scheduler/mode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode }),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          _highlightModeBtn(mode);
+          // Refresh the priority queue to reflect new ordering
+          populatePriorityQueue();
+          // Toast notification
+          const toast = document.createElement('div');
+          toast.className = 'fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50 flex items-center gap-2';
+          toast.innerHTML = `<span class="material-symbols-outlined text-[16px]">check_circle</span> Scheduler mode set to <strong>${mode}</strong>`;
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 2500);
+        } catch (err) {
+          console.error('Failed to set scheduler mode', err);
+        }
+      });
+    });
+  };
+
   const _activityBadge = (status) => {
     const s = (status || '').toUpperCase();
     if (s === 'COMPLETED') return 'bg-green-100 text-green-800 border-green-200';
@@ -1014,11 +996,9 @@
         if (workerNodeCount) workerNodeCount.textContent = `${busy} of ${total} nodes active`;
       }
       // initialize page-specific panels if present
-      try { bindSimulationControls(data); } catch (err) { console.warn('bindSimulationControls failed', err); }
       try { renderQueueDatabaseState(data); } catch (err) { console.warn('renderQueueDatabaseState failed', err); }
       try { renderBackendPanel(data); } catch (err) { console.warn('renderBackendPanel failed', err); }
       try { renderWorkersPanels(data); } catch (err) { console.warn('renderWorkersPanels failed', err); }
-      try { renderSimulationPanel(data); } catch (err) { console.warn('renderSimulationPanel failed', err); }
       try { renderActivityStream(data); } catch (err) { console.warn('renderActivityStream failed', err); }
     } catch (error) {
       console.error('Failed to populate bootstrap data:', error);
@@ -1057,7 +1037,7 @@
       const cpuEl = document.querySelector('[data-ui="backend-cpu"]');
       if (cpuEl) cpuEl.textContent = `${(data.cpu_percent || 0).toFixed(1)}%`;
 
-      // Update simulation page chaos dial
+      // Update live load pressure dial
       const chaosIntensityEl = document.querySelector('[data-ui="chaos-intensity"]');
       if (chaosIntensityEl) {
         chaosIntensityEl.textContent = `${data.chaos_intensity}%`;
@@ -1070,82 +1050,6 @@
 
     } catch (error) {
       console.warn('Live metrics polling failed', error);
-    }
-  };
-
-  window.triggerJenkinsFailure = async () => {
-    const statusEl = document.getElementById("pipeline-status");
-    const logEl = document.getElementById("pipeline-log");
-    if (!statusEl || !logEl) return;
-
-    statusEl.textContent = "Processing...";
-    statusEl.style.color = "#ba1a1a";
-
-    try {
-      const response = await fetch("/webhook/jenkins/simulate", { method: "POST" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const result = await response.json();
-
-      logEl.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ✓ Jenkins failure triggered: ${result.job_name} #${result.build_number}</div>`;
-      statusEl.textContent = "Jenkins failure injected -> Analyzing...";
-      statusEl.style.color = "#f59e0b";
-
-      setTimeout(async () => {
-        try {
-          const queueResponse = await fetch("/ui/queue");
-          const queueData = await queueResponse.json();
-          const failureCount = (queueData.runs_by_status?.FAILED || []).length;
-          logEl.innerHTML += `<div>[${new Date().toLocaleTimeString()}] 📊 LLM analysis running... Check /queue for status</div>`;
-          statusEl.textContent = `Failure analysis complete (${failureCount} failed jobs)`;
-          statusEl.style.color = "#059669";
-        } catch (error) {
-          console.error("Queue poll failed", error);
-        }
-      }, 2000);
-    } catch (error) {
-      logEl.innerHTML += `<div style="color: #dc2626">[${new Date().toLocaleTimeString()}] ✗ Error: ${error.message}</div>`;
-      statusEl.textContent = "Error";
-      statusEl.style.color = "#ba1a1a";
-    }
-  };
-
-  window.triggerGitHubPush = async () => {
-    const statusEl = document.getElementById("pipeline-status");
-    const logEl = document.getElementById("pipeline-log");
-    if (!statusEl || !logEl) return;
-
-    statusEl.textContent = "Processing...";
-    statusEl.style.color = "#0f766e";
-
-    try {
-      const response = await fetch("/webhook/github/simulate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: 1 }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const result = await response.json();
-
-      logEl.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ✓ GitHub push simulated: ${result.simulated} job(s) queued</div>`;
-      statusEl.textContent = "GitHub push -> Enqueued in scheduler...";
-      statusEl.style.color = "#f59e0b";
-
-      setTimeout(async () => {
-        try {
-          const queueResponse = await fetch("/ui/queue");
-          const queueData = await queueResponse.json();
-          const queuedCount = (queueData.runs_by_status?.QUEUED || []).length;
-          logEl.innerHTML += `<div>[${new Date().toLocaleTimeString()}] 📦 Job queued. Awaiting worker dispatch (${queuedCount} in queue)</div>`;
-          statusEl.textContent = "Job queued -> Waiting for worker";
-          statusEl.style.color = "#7c3aed";
-        } catch (error) {
-          console.error("Queue poll failed", error);
-        }
-      }, 1500);
-    } catch (error) {
-      logEl.innerHTML += `<div style="color: #dc2626">[${new Date().toLocaleTimeString()}] ✗ Error: ${error.message}</div>`;
-      statusEl.textContent = "Error";
-      statusEl.style.color = "#ba1a1a";
     }
   };
 
@@ -1408,41 +1312,7 @@
   };
 
   // ─── Patched Trigger Webhook — reads live form values ───
-  const attachWebhookActionsFixed = () => {
-    const triggerWebhook = buttonsWithLabel("trigger webhook")[0];
-    if (!triggerWebhook) return;
-    bindOnce(triggerWebhook, async () => {
-      const repoSelect  = document.querySelector('[data-ui="wh-repo"]');
-      const branchInput = document.querySelector('[data-ui="wh-branch"]');
-      const authorInput = document.querySelector('[data-ui="wh-author"]');
-      const shaInput    = document.querySelector('[data-ui="wh-sha"]');
-      const eventSel    = document.querySelector('[data-ui="wh-event-type"]');
-      const burstToggle = document.querySelector('[data-ui="burst-mode-toggle"]');
-      const repo       = repoSelect  ? repoSelect.value  : 'acme/service';
-      const branch     = branchInput ? branchInput.value : 'main';
-      const author     = authorInput ? authorInput.value : 'bot';
-      const commitSha  = shaInput    ? (shaInput.value || null) : null;
-      const eventType  = eventSel    ? eventSel.value           : 'push';
-      const count      = burstToggle ? Number(burstToggle.dataset.burst || 1) : 1;
-      try {
-        const response = await fetch('/webhook/github/simulate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            repo_url: `https://github.com/${repo}`,
-            branch, author, count,
-            commit_sha: commitSha,
-            event_type: eventType,
-          }),
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        window.location.reload();
-      } catch (error) {
-        console.error('Webhook simulation failed', error);
-        alert('Unable to trigger a simulated webhook.');
-      }
-    });
-  };
+  const attachWebhookActionsFixed = () => {};
 
   // ─── Backend console: Start / Pause / Stop / View All ───
   const attachBackendButtons = () => {
@@ -1503,50 +1373,6 @@
     }
   };
 
-  // ─── Simulation page toggles ───
-  const attachSimulationToggles = () => {
-    const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
-    let autoArriveCheckbox = null;
-    let priorityCheckbox = null;
-    let duplicateCheckbox = null;
-
-    allCheckboxes.forEach((cb) => {
-      const label = cb.closest('label') || cb.closest('div');
-      const text = (label?.textContent || '').toLowerCase();
-      if (text.includes('auto-arrive') || cb.classList.contains('sr-only')) autoArriveCheckbox = cb;
-      else if (text.includes('priority')) priorityCheckbox = cb;
-      else if (text.includes('duplicate')) duplicateCheckbox = cb;
-    });
-
-    if (autoArriveCheckbox) {
-      autoArriveCheckbox.addEventListener('change', () => {
-        if (autoArriveCheckbox.checked) {
-          _autoArriveInterval = setInterval(() => {
-            fetch('/webhook/github/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ count: 1 }) }).catch(() => {});
-          }, 30000);
-          // F4: register so the central Stop button can clear it
-          _allPollingIntervals.push(_autoArriveInterval);
-        } else {
-          clearInterval(_autoArriveInterval);
-          _allPollingIntervals = _allPollingIntervals.filter(id => id !== _autoArriveInterval);
-          _autoArriveInterval = null;
-        }
-      });
-    }
-
-    if (priorityCheckbox) {
-      const saved = localStorage.getItem('chaosInversion') === 'true';
-      priorityCheckbox.checked = saved;
-      priorityCheckbox.addEventListener('change', () => localStorage.setItem('chaosInversion', String(priorityCheckbox.checked)));
-    }
-
-    if (duplicateCheckbox) {
-      const saved = localStorage.getItem('chaosDuplicate') === 'true';
-      duplicateCheckbox.checked = saved;
-      duplicateCheckbox.addEventListener('change', () => localStorage.setItem('chaosDuplicate', String(duplicateCheckbox.checked)));
-    }
-  };
-
   // ─── Explorer page ───
   let _explorerFilter = { text: '', status: '' };
 
@@ -1595,7 +1421,7 @@
         tr.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
         const queuedAt = run.queued_at ? new Date(run.queued_at).toLocaleString() : '—';
         const duration = run.duration_s != null ? `${Math.floor(run.duration_s / 60)}m ${run.duration_s % 60}s` : '—';
-        const trigger = (run.triggered_by || 'api').replace('github-push-simulated', 'simulated').replace('github-push', 'github').replace('random-arrival', 'scheduler');
+        const trigger = (run.triggered_by || 'api').replace('github-push', 'github').replace('random-arrival', 'scheduler');
         tr.innerHTML = `
           <td class="px-md py-sm font-code-sm text-code-sm text-primary">#${run.id}</td>
           <td class="px-md py-sm"><div class="font-medium">${run.repo || '—'}</div><div class="text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span>${run.branch || ''}</div></td>
@@ -1742,14 +1568,9 @@
     attachQuickActionButtons();
     attachQueueActions();
     attachHeaderIconButtons();
-    // Use fixed webhook handler that reads live form values; skip old hardcoded one
     if (currentPath().startsWith('/webhooks')) {
-      attachWebhookActionsFixed();
       attachWebhookPageActions();
-    } else {
-      attachWebhookActions();
     }
-    attachSimulationActions();
 
     if (currentPath().startsWith('/queue')) {
       if (document.querySelector('[data-ui="queue-table-body"]')) {
@@ -1774,7 +1595,15 @@
         }, ms);
         _allPollingIntervals.push(_schedulerKanbanInterval);
         attachSchedulerControls();
+        attachSchedulerModeButtons();
       }
+      // Priority queue panel — always present on scheduler page
+      populatePriorityQueue();
+      const pqInterval = setInterval(() => {
+        if (document.querySelector('[data-ui="priority-queue-list"]')) populatePriorityQueue();
+        else clearInterval(pqInterval);
+      }, 5000);
+      _allPollingIntervals.push(pqInterval);
     }
 
     if (currentPath().startsWith('/workers')) {
@@ -1804,11 +1633,6 @@
       attachBackendButtons();
     }
 
-    if (currentPath().startsWith('/simulation')) {
-      attachSimulationToggles();
-      // global bootstrap interval (below) already refreshes the simulation panel every 10s
-    }
-
     if (currentPath().startsWith('/explorer')) {
       populateExplorer();
       attachExplorerFilters();
@@ -1832,6 +1656,16 @@
       const bInterval = setInterval(populateBootstrapData, 10000);
       _allPollingIntervals.push(bInterval);
     } catch (e) { /* ignore */ }
+
+    // Repositories overview — only on dashboard (index)
+    if (currentPath() === '/' || currentPath() === '' || currentPath() === '/index.html') {
+      populateRepositories();
+      const repoInterval = setInterval(() => {
+        if (document.querySelector('[data-ui="repos-grid"]')) populateRepositories();
+        else clearInterval(repoInterval);
+      }, 10000);
+      _allPollingIntervals.push(repoInterval);
+    }
 
     // Start polling live metrics every 5 seconds
     try {

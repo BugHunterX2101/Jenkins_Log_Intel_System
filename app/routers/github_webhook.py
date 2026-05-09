@@ -1,5 +1,11 @@
 """
-GitHub Webhook Router — POST /webhook/github
+GitHub Webhook Router
+
+Handles real GitHub webhook payloads at TWO paths:
+  - POST /webhook/github        (original internal path)
+  - POST /github-webhook/       (ngrok-exposed path configured on GitHub)
+
+Both paths call the same _handle_github_event() core function.
 """
 from __future__ import annotations
 
@@ -7,79 +13,145 @@ import hashlib
 import hmac
 import json
 import logging
-import random
-import string
-from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
-from pydantic import BaseModel
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Primary internal router
 router = APIRouter(prefix="/webhook", tags=["webhooks"])
+
+# Alias router — matches the ngrok-exposed URL /github-webhook/
+github_alias_router = APIRouter(prefix="", tags=["webhooks"])
 
 _GH_SECRET: str = settings.GITHUB_WEBHOOK_SECRET
 
 
 def _verify_github_sig(body: bytes, sig_header: str | None) -> bool:
+    """Verify HMAC-SHA256 signature from GitHub. Permissive when no secret set."""
     if not _GH_SECRET:
         return True
     if not sig_header or not sig_header.startswith("sha256="):
+        logger.warning("GitHub webhook: missing or malformed signature header")
         return False
-    # hmac.new(key, msg, digestmod) is the standard Python 3 HMAC constructor alias
     expected = "sha256=" + hmac.new(
         _GH_SECRET.encode(), body, hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(expected, sig_header)
 
 
-@router.post("/github", summary="Receive GitHub push/PR webhook")
-async def github_webhook(
+async def _handle_github_event(
     request: Request,
     bg: BackgroundTasks,
-    x_hub_signature_256: str | None = Header(default=None),
-    x_github_event:      str | None = Header(default=None),
+    x_hub_signature_256: str | None,
+    x_github_event: str | None,
 ) -> dict:
+    """Core handler for real GitHub webhook payloads."""
     body = await request.body()
 
     if not _verify_github_sig(body, x_hub_signature_256):
-        logger.warning("GitHub webhook: invalid signature")
+        logger.warning("GitHub webhook: invalid HMAC signature — rejecting")
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
     event = x_github_event or "unknown"
-    payload = json.loads(body)
 
-    repo_url  = payload.get("repository", {}).get("clone_url", "")
-    repo_name = payload.get("repository", {}).get("full_name", "unknown")
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as exc:
+        logger.error("GitHub webhook: malformed JSON body — %s", exc)
+        raise HTTPException(status_code=400, detail="Malformed JSON payload")
 
-    branch = None
+    repo_obj  = payload.get("repository", {})
+    repo_url  = repo_obj.get("clone_url") or repo_obj.get("html_url") or ""
+    repo_name = repo_obj.get("full_name", "unknown")
+
+    branch: str | None = None
     if event == "push":
         ref = payload.get("ref", "")
         if ref.startswith("refs/heads/"):
             branch = ref[len("refs/heads/"):]
+        else:
+            # Tag push or non-branch ref — skip
+            logger.info("GitHub push: non-branch ref %s — skipping", ref)
+            return {"received": True, "skipped": True, "reason": f"Non-branch ref: {ref}"}
+
     elif event == "pull_request":
         action = payload.get("action", "")
         if action not in ("opened", "synchronize", "reopened"):
             return {"received": True, "skipped": True, "reason": f"PR action '{action}' ignored"}
         branch = payload.get("pull_request", {}).get("head", {}).get("ref", "")
 
-    if not branch or not repo_url:
-        return {"received": True, "skipped": True, "reason": "No branch or repo_url resolved"}
+    elif event == "ping":
+        # GitHub sends a ping when a webhook is first configured — acknowledge it
+        hook_id = payload.get("hook_id", "?")
+        logger.info("GitHub webhook PING received (hook_id=%s) — webhook is live!", hook_id)
+        return {"received": True, "event": "ping", "message": "Webhook is live!"}
 
-    commit_sha = (
-        payload.get("after") or
-        payload.get("pull_request", {}).get("head", {}).get("sha")
+    else:
+        logger.debug("GitHub webhook: unhandled event type '%s' — ignoring", event)
+        return {"received": True, "skipped": True, "reason": f"Event '{event}' not handled"}
+
+    if not branch:
+        return {"received": True, "skipped": True, "reason": "Could not resolve branch name"}
+
+    if not repo_url:
+        # Fallback: construct URL from repo full_name
+        if repo_name and repo_name != "unknown":
+            repo_url = f"https://github.com/{repo_name}.git"
+        else:
+            return {"received": True, "skipped": True, "reason": "No repository URL in payload"}
+
+    commit_sha: str | None = (
+        payload.get("after")
+        or payload.get("head_commit", {}).get("id")
+        or payload.get("pull_request", {}).get("head", {}).get("sha")
     )
-    author = (
-        payload.get("pusher", {}).get("name") or
-        payload.get("pull_request", {}).get("user", {}).get("login")
+    author: str | None = (
+        payload.get("pusher", {}).get("name")
+        or payload.get("sender", {}).get("login")
+        or payload.get("pull_request", {}).get("user", {}).get("login")
     )
 
-    logger.info("GitHub webhook: %s %s@%s (commit=%s)", event, repo_name, branch, commit_sha)
+    logger.info(
+        "REAL GitHub webhook: event=%s repo=%s branch=%s author=%s commit=%s",
+        event, repo_name, branch, author, (commit_sha or "")[:8]
+    )
 
     bg.add_task(_enqueue_run, repo_url, branch, commit_sha, author, f"github-{event}")
-    return {"received": True, "repo": repo_name, "branch": branch, "event": event}
+    return {
+        "received": True,
+        "real": True,
+        "repo": repo_name,
+        "repo_url": repo_url,
+        "branch": branch,
+        "author": author,
+        "commit": (commit_sha or "")[:8],
+        "event": event,
+    }
+
+
+# ── Route: /webhook/github  (original path) ───────────────────────────────────
+@router.post("/github", summary="Receive GitHub push/PR webhook (original path)")
+async def github_webhook(
+    request: Request,
+    bg: BackgroundTasks,
+    x_hub_signature_256: str | None = Header(default=None),
+    x_github_event:      str | None = Header(default=None),
+) -> dict:
+    return await _handle_github_event(request, bg, x_hub_signature_256, x_github_event)
+
+
+# ── Route: /github-webhook/  (ngrok-exposed alias path) ───────────────────────
+@github_alias_router.post("/github-webhook",  summary="Receive GitHub push/PR (ngrok alias)")
+@github_alias_router.post("/github-webhook/", summary="Receive GitHub push/PR (ngrok alias with slash)")
+async def github_webhook_alias(
+    request: Request,
+    bg: BackgroundTasks,
+    x_hub_signature_256: str | None = Header(default=None),
+    x_github_event:      str | None = Header(default=None),
+) -> dict:
+    return await _handle_github_event(request, bg, x_hub_signature_256, x_github_event)
 
 
 async def _enqueue_run(
@@ -93,9 +165,8 @@ async def _enqueue_run(
     from app.services.job_scheduler import schedule_pipeline
 
     session_factory = get_session_factory()
-
     async with session_factory() as session:
-        await schedule_pipeline(
+        run = await schedule_pipeline(
             session=session,
             repo_url=repo_url,
             branch=branch,
@@ -103,53 +174,10 @@ async def _enqueue_run(
             author=author,
             triggered_by=triggered_by,
         )
-
-
-_DEMO_REPOS = [
-    ("https://github.com/acme/auth-service",    "python"),
-    ("https://github.com/acme/api-gateway",     "node"),
-    ("https://github.com/acme/payment-service", "java"),
-    ("https://github.com/acme/data-pipeline",   "python"),
-    ("https://github.com/acme/frontend-app",    "node"),
-    ("https://github.com/acme/billing-svc",     "java"),
-]
-
-class SimulateRequest(BaseModel):
-    repo_url:   Optional[str] = None
-    branch:     Optional[str] = None
-    author:     Optional[str] = None
-    commit_sha: Optional[str] = None   # user-supplied SHA from the webhooks form (wh-sha)
-    event_type: Optional[str] = None   # user-supplied event type (wh-event-type)
-    count:      int           = 1
-
-
-@router.post("/github/simulate", summary="Inject a simulated GitHub push event")
-async def simulate_github_push(body: SimulateRequest, bg: BackgroundTasks) -> dict:
-    injected = []
-    for _ in range(max(1, min(body.count, 20))):
-        repo_url, lang = (
-            (body.repo_url, "unknown") if body.repo_url
-            else random.choice(_DEMO_REPOS)
+        logger.info(
+            "Enqueued PipelineRun id=%s for %s@%s (triggered_by=%s)",
+            getattr(run, 'id', '?'), repo_url, branch, triggered_by
         )
-        branch     = body.branch or random.choice(["main", "develop", f"feature/{_rand_str(6)}"])
-        author     = body.author or random.choice(["alice", "bob", "carol", "dave", "eve"])
-        commit_sha = body.commit_sha or _rand_hex(40)
-
-        bg.add_task(
-            _enqueue_run, repo_url, branch, commit_sha, author,
-            "github-push-simulated"
-        )
-        injected.append({"repo_url": repo_url, "branch": branch, "author": author, "commit_sha": commit_sha})
-
-    return {
-        "simulated": len(injected),
-        "jobs": injected,
-        "message": f"Injected {len(injected)} job(s) into the queue",
-    }
 
 
-def _rand_str(n: int) -> str:
-    return "".join(random.choices(string.ascii_lowercase, k=n))
 
-def _rand_hex(n: int) -> str:
-    return "".join(random.choices("0123456789abcdef", k=n))

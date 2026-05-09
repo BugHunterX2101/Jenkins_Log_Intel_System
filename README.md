@@ -1,6 +1,6 @@
 # Jenkins Log Intelligence Engine
 
-A full-stack CI/CD intelligence platform built with FastAPI and vanilla JS. It intercepts Jenkins build failures, analyses logs with an LLM-backed root-cause engine, dispatches pipeline runs across a simulated worker pool, streams live commit activity to a real-time dashboard, and fires Slack/email alerts — all autonomously.
+A full-stack CI/CD intelligence platform built with FastAPI and vanilla JS. It intercepts Jenkins build failures, analyses logs with an LLM-backed root-cause engine, dispatches pipeline runs across the worker pool, streams live commit activity to a real-time dashboard, and fires Slack/email alerts — all autonomously.
 
 ---
 
@@ -14,9 +14,8 @@ Seven live pages served at `http://localhost:8000`:
 | **Queue Explorer** | `/queue` | All pipeline runs by status, wait times, database state |
 | **Scheduler** | `/scheduler` | Kanban board (Queued → Scheduled → Running → Completed), decision log |
 | **Workers** | `/workers` | Worker pool cards, assignment log, load timeline |
-| **Webhooks** | `/webhooks` | Webhook event stream, simulated payload generator |
+| **Webhooks** | `/webhooks` | Webhook event stream and endpoint configuration |
 | **Backend Console** | `/backend` | API route health, live request feed, memory/CPU metrics |
-| **Simulation** | `/simulation` | Chaos controls, job arrival randomiser, LLM analysis panel |
 
 Every panel polls live data from the backend — no hardcoded placeholder values anywhere. Commits pushed via the GitHub webhook appear in the Live Activity Stream within 10 seconds.
 
@@ -65,7 +64,7 @@ Jenkins_Log_Intel_System/
 │   ├── pipeline_models.py           # PipelineRun, RunStatus, StageExecution
 │   ├── worker_models.py             # Worker, WorkerStatus, language enum
 │   ├── tasks.py                     # process_build_failure — orchestrates full pipeline
-│   ├── pipeline_tasks.py            # Stage simulation and event emission
+│   ├── pipeline_tasks.py            # Stage execution and event emission
 │   ├── scheduler.py                 # Celery app + beat tasks (tick, arrival, drift)
 │   │
 │   ├── routers/
@@ -101,9 +100,8 @@ Jenkins_Log_Intel_System/
 │   ├── queue.html                   # Queue explorer
 │   ├── scheduler.html               # Kanban + decision log
 │   ├── workers.html                 # Worker pool monitor
-│   ├── webhooks.html                # Webhook event log + payload generator
+│   ├── webhooks.html                # Webhook event log + setup panel
 │   ├── backend.html                 # Backend console
-│   ├── simulation.html              # Chaos + trigger controls
 │   └── assets/app.js               # All UI logic — polling, rendering, empty states
 │
 └── rules/
@@ -206,7 +204,7 @@ api     -> http://localhost:8000    https://xxxx.ngrok-free.app
 jenkins -> http://localhost:8080    https://xxxx.ngrok-free.app
 ```
 
-Configure GitHub to send push events to `https://xxxx.ngrok-free.app/webhook/github`. Within 10 seconds of a push, the commit appears in the Live Activity Stream on the dashboard.
+Configure GitHub to send push events to `https://backer-slab-suburb.ngrok-free.dev/github-webhook/`. Within 10 seconds of a push, the commit appears in the Live Activity Stream on the dashboard.
 
 ---
 
@@ -217,9 +215,8 @@ Configure GitHub to send push events to `https://xxxx.ngrok-free.app/webhook/git
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/webhook/jenkins` | Ingest Jenkins build result (HMAC-verified) |
-| `POST` | `/webhook/jenkins/simulate` | Inject a synthetic Jenkins failure |
 | `POST` | `/webhook/github` | Ingest GitHub push/PR event (HMAC-verified) |
-| `POST` | `/webhook/github/simulate` | Inject a synthetic GitHub push |
+| `POST` | `/github-webhook` | Ingest GitHub push/PR event via ngrok alias |
 
 ### Jobs & Workers
 

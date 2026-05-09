@@ -9,7 +9,6 @@ Included pages:
 - `queue.html` — job queue & DB viewer (design copy)
 - `scheduler.html` — pipeline manager / scheduler (design copy)
 - `webhooks.html` — webhook control panel (design copy)
-- `simulation.html` — simulation control panel (design copy)
 - `workers.html` — worker fleet monitor (design copy)
 
 How to serve locally

@@ -1,0 +1,4135 @@
+INFO:     Started server process [21292]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[scheduler] thread starting run 672
+[scheduler] thread starting run 673
+No idle workers available for run 674 (language=WorkerLanguage.GENERIC)
+No idle workers available for run 674 (language=WorkerLanguage.GENERIC)
+No idle workers available for run 674 (language=WorkerLanguage.GENERIC)
+[scheduler] run 672 finished success=True
+[scheduler] run 673 finished success=True
+[scheduler] thread starting run 674
+[scheduler] run 674 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 675
+[scheduler] run 675 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 676
+[scheduler] run 676 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 677
+[scheduler] run 677 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 678
+[scheduler] run 678 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 679
+[scheduler] run 679 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 680
+[scheduler] run 680 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 681
+[scheduler] run 681 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 682
+[scheduler] run 682 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 683
+Worker 2 | Run 683 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 683 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 684
+Worker 2 | Run 684 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 684 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 685
+Worker 2 | Run 685 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 685 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+scheduler tick error: 
+[scheduler] thread starting run 686
+[scheduler] run 686 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 687
+Worker 2 | Run 687 | Stage 'Build' FAILED (build_config)
+[scheduler] run 687 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 688
+[scheduler] run 688 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 689
+[scheduler] run 689 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 690
+[scheduler] run 690 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 691
+[scheduler] run 691 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 692
+Worker 2 | Run 692 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 692 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 693
+[scheduler] run 693 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 694
+[scheduler] run 694 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 695
+[scheduler] run 695 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 696
+[scheduler] run 696 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 697
+Worker 3 | Run 697 | Stage 'Test' FAILED (infrastructure)
+[scheduler] run 697 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 698
+[scheduler] run 698 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 699
+Worker 3 | Run 699 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 699 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 700
+[scheduler] run 700 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 701
+[scheduler] run 701 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 702
+[scheduler] run 702 finished success=True
+scheduler tick error: 
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 703
+[scheduler] run 703 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 704
+[scheduler] run 704 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 705
+Worker 3 | Run 705 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 705 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 706
+[scheduler] run 706 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 707
+Worker 3 | Run 707 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 707 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 708
+[scheduler] run 708 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 709
+Worker 2 | Run 709 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 709 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 710
+Worker 2 | Run 710 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 710 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 711
+Worker 3 | Run 711 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 711 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 712
+Worker 3 | Run 712 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 712 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 713
+[scheduler] run 713 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 714
+Worker 2 | Run 714 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 714 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 715
+Worker 2 | Run 715 | Stage 'Deploy' FAILED (env_issue)
+[scheduler] run 715 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 716
+[scheduler] run 716 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 717
+Worker 2 | Run 717 | Stage 'Build' FAILED (build_config)
+[scheduler] run 717 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 718
+Worker 2 | Run 718 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 718 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 719
+[scheduler] run 719 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 720
+[scheduler] run 720 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 721
+Worker 2 | Run 721 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 721 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 722
+Worker 2 | Run 722 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 722 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 723
+[scheduler] run 723 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 724
+Worker 2 | Run 724 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 724 finished success=False
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 725
+[scheduler] run 725 finished success=True
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 726
+Worker 2 | Run 726 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 726 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 727
+[scheduler] run 727 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 728
+[scheduler] run 728 finished success=True
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 729
+Worker 3 | Run 729 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 729 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 730
+[scheduler] run 730 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 731
+Worker 3 | Run 731 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 731 finished success=False
+Jenkinsfile fetch failed: 
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 732
+[scheduler] run 732 finished success=True
+Jenkinsfile fetch failed: 
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 733
+[scheduler] run 733 finished success=True
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 734
+[scheduler] run 734 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 735
+[scheduler] run 735 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 736
+Worker 2 | Run 736 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 736 finished success=False
+Jenkinsfile fetch failed: 
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 737
+[scheduler] run 737 finished success=True
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 738
+[scheduler] run 738 finished success=True
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 739
+[scheduler] run 739 finished success=True
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 740
+[scheduler] run 740 finished success=True
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 741
+[scheduler] run 741 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 742
+Worker 2 | Run 742 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 742 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 743
+Worker 2 | Run 743 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 743 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 744
+[scheduler] run 744 finished success=True
+Jenkinsfile fetch failed: [Errno 11001] getaddrinfo failed
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 745
+[scheduler] run 745 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+scheduler tick error: 
+[scheduler] thread starting run 746
+[scheduler] run 746 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 747
+Worker 2 | Run 747 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 747 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 748
+[scheduler] run 748 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 749
+[scheduler] run 749 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 750
+[scheduler] run 750 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 751
+Worker 2 | Run 751 | Stage 'Deploy' FAILED (dependency_error)
+[scheduler] run 751 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 752
+[scheduler] run 752 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 753
+[scheduler] run 753 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 754
+Worker 3 | Run 754 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 754 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 755
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+[scheduler] run 755 finished success=True
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 756
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Worker 3 | Run 756 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 756 finished success=False
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 757
+Worker 2 | Run 757 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 757 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 758
+[scheduler] run 758 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 759
+[scheduler] run 759 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 760
+[scheduler] run 760 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 761
+Worker 3 | Run 761 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 761 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 762
+[scheduler] run 762 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 763
+Worker 2 | Run 763 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 763 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 764
+Worker 2 | Run 764 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 764 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 765
+[scheduler] run 765 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 766
+[scheduler] run 766 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 767
+[scheduler] run 767 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 768
+Worker 2 | Run 768 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 768 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 769
+[scheduler] run 769 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 770
+Worker 3 | Run 770 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 770 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 771
+Worker 3 | Run 771 | Stage 'Build' FAILED (build_config)
+[scheduler] run 771 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 772
+[scheduler] run 772 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 773
+[scheduler] run 773 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 774
+[scheduler] run 774 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 775
+Worker 2 | Run 775 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 775 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 776
+Worker 3 | Run 776 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 776 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 777
+[scheduler] run 777 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 778
+Worker 3 | Run 778 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 778 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 779
+[scheduler] run 779 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 780
+Worker 2 | Run 780 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 780 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 781
+[scheduler] run 781 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 782
+[scheduler] run 782 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 783
+[scheduler] run 783 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 784
+Worker 2 | Run 784 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 784 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 785
+Worker 2 | Run 785 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 785 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 786
+[scheduler] run 786 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 787
+[scheduler] run 787 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 788
+[scheduler] run 788 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 789
+Worker 2 | Run 789 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 789 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 790
+Worker 2 | Run 790 | Stage 'Deploy' FAILED (env_issue)
+[scheduler] run 790 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 791
+[scheduler] run 791 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 792
+Worker 2 | Run 792 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 792 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 793
+[scheduler] run 793 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 794
+[scheduler] run 794 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 795
+[scheduler] run 795 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 796
+[scheduler] run 796 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 797
+Worker 2 | Run 797 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 797 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 798
+Worker 2 | Run 798 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 798 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 799
+[scheduler] run 799 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 800
+[scheduler] run 800 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 801
+[scheduler] run 801 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 802
+[scheduler] run 802 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 803
+[scheduler] run 803 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 804
+[scheduler] run 804 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 805
+Worker 2 | Run 805 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 805 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 806
+Worker 2 | Run 806 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 806 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 807
+Worker 2 | Run 807 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 807 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 808
+Worker 3 | Run 808 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 808 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 809
+[scheduler] run 809 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 810
+[scheduler] run 810 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 811
+[scheduler] run 811 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 812
+[scheduler] run 812 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 813
+[scheduler] run 813 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 814
+Worker 3 | Run 814 | Stage 'Test' FAILED (dependency_error)
+[scheduler] run 814 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 815
+Worker 2 | Run 815 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 815 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 816
+[scheduler] run 816 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 817
+[scheduler] run 817 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 818
+[scheduler] run 818 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 819
+[scheduler] run 819 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 820
+Worker 2 | Run 820 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 820 finished success=False
+Jenkinsfile fetch failed: 
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 821
+Worker 2 | Run 821 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 821 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 822
+[scheduler] run 822 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 823
+Worker 2 | Run 823 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 823 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 824
+Worker 2 | Run 824 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 824 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 825
+[scheduler] run 825 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 826
+[scheduler] run 826 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 827
+[scheduler] run 827 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 828
+[scheduler] run 828 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 829
+[scheduler] run 829 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 830
+[scheduler] run 830 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 831
+[scheduler] run 831 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 832
+[scheduler] run 832 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 833
+Worker 2 | Run 833 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 833 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 834
+[scheduler] run 834 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 835
+[scheduler] run 835 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 836
+[scheduler] run 836 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 837
+[scheduler] run 837 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 838
+[scheduler] run 838 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 839
+Worker 2 | Run 839 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 839 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 840
+Worker 2 | Run 840 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 840 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 841
+Worker 2 | Run 841 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 841 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 842
+[scheduler] run 842 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 843
+[scheduler] run 843 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 844
+[scheduler] run 844 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 845
+[scheduler] run 845 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 846
+[scheduler] run 846 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 847
+[scheduler] run 847 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 848
+[scheduler] run 848 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 849
+[scheduler] run 849 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 850
+[scheduler] run 850 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 851
+Worker 2 | Run 851 | Stage 'Test' FAILED (dependency_error)
+[scheduler] run 851 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 852
+[scheduler] run 852 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 853
+Worker 2 | Run 853 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 853 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 854
+[scheduler] run 854 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 855
+[scheduler] run 855 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 856
+[scheduler] run 856 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 857
+Worker 2 | Run 857 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 857 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 858
+[scheduler] run 858 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 859
+Worker 2 | Run 859 | Stage 'Deploy' FAILED (env_issue)
+[scheduler] run 859 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 860
+[scheduler] run 860 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 861
+[scheduler] run 861 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 862
+Worker 2 | Run 862 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 862 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 863
+[scheduler] run 863 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 864
+Worker 3 | Run 864 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 864 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 865
+Worker 3 | Run 865 | Stage 'Test' FAILED (infrastructure)
+[scheduler] run 865 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 866
+[scheduler] run 866 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 867
+[scheduler] run 867 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 868
+[scheduler] run 868 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 869
+[scheduler] run 869 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 870
+Worker 3 | Run 870 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 870 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 871
+[scheduler] run 871 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 872
+[scheduler] run 872 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 873
+[scheduler] run 873 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 874
+Worker 3 | Run 874 | Stage 'Test' FAILED (dependency_error)
+[scheduler] run 874 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 875
+[scheduler] run 875 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 876
+[scheduler] run 876 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 877
+[scheduler] run 877 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 878
+[scheduler] run 878 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 879
+[scheduler] run 879 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 880
+[scheduler] run 880 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 881
+[scheduler] run 881 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 882
+Worker 3 | Run 882 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 882 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 883
+Worker 2 | Run 883 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 883 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 884
+[scheduler] run 884 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 885
+[scheduler] run 885 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 886
+Worker 2 | Run 886 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 886 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 887
+Worker 2 | Run 887 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 887 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 888
+[scheduler] run 888 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 889
+Worker 2 | Run 889 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 889 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 890
+[scheduler] run 890 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 891
+Worker 2 | Run 891 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 891 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 892
+[scheduler] run 892 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 893
+[scheduler] run 893 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 894
+[scheduler] run 894 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 895
+[scheduler] run 895 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 896
+Worker 2 | Run 896 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 896 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 897
+[scheduler] run 897 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 898
+[scheduler] run 898 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 899
+[scheduler] run 899 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 900
+[scheduler] run 900 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 901
+Worker 2 | Run 901 | Stage 'Build' FAILED (build_config)
+[scheduler] run 901 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 902
+[scheduler] run 902 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 903
+Worker 2 | Run 903 | Stage 'Test' FAILED (build_config)
+[scheduler] run 903 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 904
+[scheduler] run 904 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 905
+Worker 2 | Run 905 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 905 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 906
+Worker 2 | Run 906 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 906 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 907
+Worker 3 | Run 907 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 907 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 908
+[scheduler] run 908 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 909
+[scheduler] run 909 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 910
+Worker 2 | Run 910 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 910 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 911
+[scheduler] run 911 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 912
+[scheduler] run 912 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 913
+[scheduler] run 913 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 914
+[scheduler] run 914 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 915
+[scheduler] run 915 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 916
+[scheduler] run 916 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 917
+[scheduler] run 917 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 918
+Worker 2 | Run 918 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 918 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 919
+[scheduler] run 919 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 920
+[scheduler] run 920 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 921
+[scheduler] run 921 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 922
+[scheduler] run 922 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 923
+Worker 2 | Run 923 | Stage 'Test' FAILED (dependency_error)
+[scheduler] run 923 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 924
+Worker 2 | Run 924 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 924 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 925
+[scheduler] run 925 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 926
+[scheduler] run 926 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 927
+[scheduler] run 927 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 928
+[scheduler] run 928 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 929
+[scheduler] run 929 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 930
+[scheduler] run 930 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 931
+Worker 2 | Run 931 | Stage 'Deploy' FAILED (env_issue)
+[scheduler] run 931 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 932
+Worker 2 | Run 932 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 932 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 933
+Worker 2 | Run 933 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 933 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 934
+[scheduler] run 934 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 935
+Worker 2 | Run 935 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 935 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 936
+[scheduler] run 936 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 937
+[scheduler] run 937 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 938
+[scheduler] run 938 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 939
+[scheduler] run 939 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 940
+[scheduler] run 940 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 941
+[scheduler] run 941 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 942
+[scheduler] run 942 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 943
+Worker 2 | Run 943 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 943 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 944
+[scheduler] run 944 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 945
+[scheduler] run 945 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 946
+[scheduler] run 946 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 947
+[scheduler] run 947 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 948
+[scheduler] run 948 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 949
+Worker 2 | Run 949 | Stage 'Deploy' FAILED (env_issue)
+[scheduler] run 949 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 950
+[scheduler] run 950 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 951
+Worker 3 | Run 951 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 951 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 952
+[scheduler] run 952 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 953
+[scheduler] run 953 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 954
+[scheduler] run 954 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 955
+[scheduler] run 955 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 956
+[scheduler] run 956 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 957
+[scheduler] run 957 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 958
+Worker 2 | Run 958 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 958 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 959
+[scheduler] run 959 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 960
+[scheduler] run 960 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 961
+[scheduler] run 961 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 962
+[scheduler] run 962 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 963
+[scheduler] run 963 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 964
+[scheduler] run 964 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 965
+[scheduler] run 965 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 966
+[scheduler] run 966 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 967
+Worker 3 | Run 967 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 967 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 968
+[scheduler] run 968 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 969
+Worker 2 | Run 969 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 969 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 970
+[scheduler] run 970 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 971
+[scheduler] run 971 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 972
+[scheduler] run 972 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 973
+[scheduler] run 973 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 974
+[scheduler] run 974 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 975
+[scheduler] run 975 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 976
+[scheduler] run 976 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 977
+[scheduler] run 977 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 978
+[scheduler] run 978 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 979
+[scheduler] run 979 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 980
+Worker 2 | Run 980 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 980 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 981
+Worker 2 | Run 981 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 981 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 982
+[scheduler] run 982 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 983
+[scheduler] run 983 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 984
+[scheduler] run 984 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 985
+[scheduler] run 985 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 986
+[scheduler] run 986 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 987
+Worker 2 | Run 987 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 987 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 988
+[scheduler] run 988 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 989
+[scheduler] run 989 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 990
+Worker 2 | Run 990 | Stage 'Test' FAILED (build_config)
+[scheduler] run 990 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 991
+[scheduler] run 991 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 992
+Worker 2 | Run 992 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 992 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 993
+[scheduler] run 993 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 994
+[scheduler] run 994 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 995
+[scheduler] run 995 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 996
+Worker 3 | Run 996 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 996 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 997
+[scheduler] run 997 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 998
+[scheduler] run 998 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 999
+Worker 2 | Run 999 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 999 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1000
+[scheduler] run 1000 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1001
+[scheduler] run 1001 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1002
+[scheduler] run 1002 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1003
+[scheduler] run 1003 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1004
+Worker 2 | Run 1004 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 1004 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1005
+[scheduler] run 1005 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1006
+Worker 2 | Run 1006 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 1006 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1007
+[scheduler] run 1007 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1008
+Worker 2 | Run 1008 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 1008 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1009
+[scheduler] run 1009 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1010
+Worker 2 | Run 1010 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 1010 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1011
+[scheduler] run 1011 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1012
+Worker 2 | Run 1012 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1012 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1013
+[scheduler] run 1013 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1014
+Worker 2 | Run 1014 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1014 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1015
+[scheduler] run 1015 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1016
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Worker 2 | Run 1016 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1016 finished success=False
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1017
+[scheduler] run 1017 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1018
+[scheduler] run 1018 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1019
+[scheduler] run 1019 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1020
+[scheduler] run 1020 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1021
+[scheduler] run 1021 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1022
+[scheduler] run 1022 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1023
+Worker 2 | Run 1023 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 1023 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1024
+Worker 2 | Run 1024 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 1024 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1025
+[scheduler] run 1025 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1026
+Worker 2 | Run 1026 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 1026 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1027
+[scheduler] run 1027 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1028
+Worker 2 | Run 1028 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 1028 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1029
+[scheduler] run 1029 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1030
+[scheduler] run 1030 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1031
+[scheduler] run 1031 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1032
+[scheduler] run 1032 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1033
+Worker 3 | Run 1033 | Stage 'Test' FAILED (build_config)
+[scheduler] run 1033 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1034
+[scheduler] run 1034 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1035
+[scheduler] run 1035 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1036
+[scheduler] run 1036 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1037
+Worker 2 | Run 1037 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1037 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1038
+Worker 2 | Run 1038 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 1038 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1039
+[scheduler] run 1039 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1040
+Worker 2 | Run 1040 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1040 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1041
+[scheduler] run 1041 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1042
+Worker 3 | Run 1042 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1042 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1043
+Worker 2 | Run 1043 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 1043 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1044
+[scheduler] run 1044 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1045
+Worker 3 | Run 1045 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1045 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1046
+[scheduler] run 1046 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1047
+[scheduler] run 1047 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1048
+[scheduler] run 1048 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1049
+[scheduler] run 1049 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1050
+[scheduler] run 1050 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1051
+Worker 2 | Run 1051 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 1051 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1052
+[scheduler] run 1052 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1053
+[scheduler] run 1053 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1054
+[scheduler] run 1054 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1055
+[scheduler] run 1055 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1056
+Worker 2 | Run 1056 | Stage 'Deploy' FAILED (dependency_error)
+[scheduler] run 1056 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1057
+[scheduler] run 1057 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1058
+[scheduler] run 1058 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1059
+Worker 2 | Run 1059 | Stage 'Test' FAILED (infrastructure)
+[scheduler] run 1059 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1060
+Worker 2 | Run 1060 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 1060 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1061
+Worker 2 | Run 1061 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1061 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1062
+Worker 2 | Run 1062 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 1062 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1063
+[scheduler] run 1063 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1064
+[scheduler] run 1064 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1065
+[scheduler] run 1065 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1066
+[scheduler] run 1066 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1067
+Worker 2 | Run 1067 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1067 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1068
+[scheduler] run 1068 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1069
+[scheduler] run 1069 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1070
+[scheduler] run 1070 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1071
+[scheduler] run 1071 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1072
+[scheduler] run 1072 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1073
+[scheduler] run 1073 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1074
+Worker 3 | Run 1074 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1074 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1075
+[scheduler] run 1075 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1076
+[scheduler] run 1076 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1077
+[scheduler] run 1077 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1078
+[scheduler] run 1078 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1079
+[scheduler] run 1079 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1080
+Worker 3 | Run 1080 | Stage 'Deploy' FAILED (env_issue)
+[scheduler] run 1080 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1081
+Worker 2 | Run 1081 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 1081 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1082
+Worker 2 | Run 1082 | Stage 'Deploy' FAILED (dependency_error)
+[scheduler] run 1082 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1083
+Worker 2 | Run 1083 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1083 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1084
+[scheduler] run 1084 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1085
+Worker 2 | Run 1085 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1085 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1086
+[scheduler] run 1086 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1087
+Worker 2 | Run 1087 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1087 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1088
+[scheduler] run 1088 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1089
+[scheduler] run 1089 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1090
+[scheduler] run 1090 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1091
+[scheduler] run 1091 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1092
+Worker 2 | Run 1092 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 1092 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1093
+Worker 2 | Run 1093 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1093 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1094
+Worker 2 | Run 1094 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1094 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1095
+[scheduler] run 1095 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1096
+Worker 2 | Run 1096 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 1096 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1097
+[scheduler] run 1097 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1098
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+[scheduler] run 1098 finished success=True
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1099
+[scheduler] run 1099 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1100
+[scheduler] run 1100 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1101
+Worker 2 | Run 1101 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 1101 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1102
+[scheduler] run 1102 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1103
+[scheduler] run 1103 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1104
+Worker 2 | Run 1104 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1104 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1105
+[scheduler] run 1105 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1106
+Worker 2 | Run 1106 | Stage 'Deploy' FAILED (dependency_error)
+[scheduler] run 1106 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1107
+[scheduler] run 1107 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1108
+[scheduler] run 1108 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1109
+Worker 2 | Run 1109 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 1109 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1110
+[scheduler] run 1110 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1111
+Worker 2 | Run 1111 | Stage 'Deploy' FAILED (dependency_error)
+[scheduler] run 1111 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1112
+[scheduler] run 1112 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1113
+[scheduler] run 1113 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1114
+Worker 2 | Run 1114 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1114 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1115
+[scheduler] run 1115 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1116
+Worker 2 | Run 1116 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 1116 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1117
+Worker 2 | Run 1117 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1117 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1118
+[scheduler] run 1118 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1119
+Worker 2 | Run 1119 | Stage 'Deploy' FAILED (dependency_error)
+[scheduler] run 1119 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1120
+Worker 2 | Run 1120 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1120 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1121
+Worker 2 | Run 1121 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 1121 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1122
+[scheduler] run 1122 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1123
+Worker 2 | Run 1123 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 1123 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1124
+[scheduler] run 1124 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1125
+Worker 2 | Run 1125 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 1125 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1126
+Worker 2 | Run 1126 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 1126 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1127
+Worker 2 | Run 1127 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 1127 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1128
+[scheduler] run 1128 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1129
+[scheduler] run 1129 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1130
+[scheduler] run 1130 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1131
+[scheduler] run 1131 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1132
+Worker 2 | Run 1132 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1132 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1133
+[scheduler] run 1133 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1134
+Worker 2 | Run 1134 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 1134 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1135
+Worker 2 | Run 1135 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1135 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1136
+Worker 2 | Run 1136 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1136 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1137
+[scheduler] run 1137 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1138
+Worker 2 | Run 1138 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1138 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1139
+[scheduler] run 1139 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1140
+[scheduler] run 1140 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1141
+[scheduler] run 1141 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1142
+[scheduler] run 1142 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1143
+[scheduler] run 1143 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1144
+[scheduler] run 1144 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1145
+[scheduler] run 1145 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1146
+Worker 2 | Run 1146 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 1146 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1147
+Worker 2 | Run 1147 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1147 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1148
+[scheduler] run 1148 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1149
+Worker 2 | Run 1149 | Stage 'Deploy' FAILED (dependency_error)
+[scheduler] run 1149 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1150
+[scheduler] run 1150 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1151
+[scheduler] run 1151 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1152
+Worker 2 | Run 1152 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 1152 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1153
+Worker 2 | Run 1153 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1153 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1154
+[scheduler] run 1154 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1155
+[scheduler] run 1155 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1156
+[scheduler] run 1156 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1157
+Worker 2 | Run 1157 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1157 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1158
+[scheduler] run 1158 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1159
+[scheduler] run 1159 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1160
+[scheduler] run 1160 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1161
+Worker 2 | Run 1161 | Stage 'Deploy' FAILED (dependency_error)
+[scheduler] run 1161 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1162
+[scheduler] run 1162 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1163
+[scheduler] run 1163 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1164
+Worker 2 | Run 1164 | Stage 'Test' FAILED (build_config)
+[scheduler] run 1164 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1165
+[scheduler] run 1165 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1166
+Worker 2 | Run 1166 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 1166 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1167
+[scheduler] run 1167 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1168
+[scheduler] run 1168 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1169
+[scheduler] run 1169 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1170
+Worker 2 | Run 1170 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1170 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1171
+Worker 2 | Run 1171 | Stage 'Deploy' FAILED (env_issue)
+[scheduler] run 1171 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1172
+Worker 2 | Run 1172 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 1172 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1173
+Worker 2 | Run 1173 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 1173 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1174
+Worker 2 | Run 1174 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 1174 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1175
+Worker 2 | Run 1175 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 1175 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1176
+Worker 2 | Run 1176 | Stage 'Checkout' FAILED (env_issue)
+[scheduler] run 1176 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1177
+Worker 2 | Run 1177 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1177 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1178
+[scheduler] run 1178 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1179
+[scheduler] run 1179 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1180
+Worker 2 | Run 1180 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1180 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1181
+Worker 2 | Run 1181 | Stage 'Test' FAILED (build_config)
+[scheduler] run 1181 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1182
+[scheduler] run 1182 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1183
+[scheduler] run 1183 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1184
+Worker 2 | Run 1184 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1184 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1185
+[scheduler] run 1185 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1186
+[scheduler] run 1186 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1187
+Worker 2 | Run 1187 | Stage 'Deploy' FAILED (env_issue)
+[scheduler] run 1187 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1188
+[scheduler] run 1188 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1189
+[scheduler] run 1189 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1190
+[scheduler] run 1190 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1191
+[scheduler] run 1191 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1192
+[scheduler] run 1192 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1193
+[scheduler] run 1193 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1194
+Worker 2 | Run 1194 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1194 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1195
+Worker 2 | Run 1195 | Stage 'Build' FAILED (build_config)
+[scheduler] run 1195 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1196
+[scheduler] run 1196 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1197
+[scheduler] run 1197 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1198
+[scheduler] run 1198 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1199
+[scheduler] run 1199 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1200
+Worker 2 | Run 1200 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1200 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1201
+[scheduler] run 1201 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1202
+Worker 3 | Run 1202 | Stage 'Test' FAILED (flaky_test)
+[scheduler] run 1202 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1203
+[scheduler] run 1203 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1204
+[scheduler] run 1204 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1205
+[scheduler] run 1205 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1206
+[scheduler] run 1206 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1207
+Worker 2 | Run 1207 | Stage 'Build' FAILED (env_issue)
+[scheduler] run 1207 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1208
+Worker 2 | Run 1208 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 1208 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1209
+Worker 2 | Run 1209 | Stage 'Deploy' FAILED (infrastructure)
+[scheduler] run 1209 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1210
+[scheduler] run 1210 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1211
+[scheduler] run 1211 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1212
+Worker 2 | Run 1212 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 1212 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1213
+Worker 2 | Run 1213 | Stage 'Checkout' FAILED (build_config)
+[scheduler] run 1213 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1214
+[scheduler] run 1214 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1215
+[scheduler] run 1215 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1216
+Worker 2 | Run 1216 | Stage 'Build' FAILED (dependency_error)
+[scheduler] run 1216 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1217
+[scheduler] run 1217 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1218
+[scheduler] run 1218 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1219
+Worker 2 | Run 1219 | Stage 'Deploy' FAILED (build_config)
+[scheduler] run 1219 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1220
+[scheduler] run 1220 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/api-gateway@develop
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1221
+[scheduler] run 1221 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1222
+[scheduler] run 1222 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1223
+Worker 2 | Run 1223 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 1223 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1224
+[scheduler] run 1224 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1225
+Worker 2 | Run 1225 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 1225 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1226
+[scheduler] run 1226 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1227
+Worker 2 | Run 1227 | Stage 'Build' FAILED (infrastructure)
+[scheduler] run 1227 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1228
+Worker 2 | Run 1228 | Stage 'Checkout' FAILED (infrastructure)
+[scheduler] run 1228 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1229
+Worker 2 | Run 1229 | Stage 'Test' FAILED (env_issue)
+[scheduler] run 1229 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1230
+[scheduler] run 1230 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/payment-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1231
+Worker 3 | Run 1231 | Stage 'Checkout' FAILED (dependency_error)
+[scheduler] run 1231 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/auth-service@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1232
+Worker 3 | Run 1232 | Stage 'Test' FAILED (build_config)
+[scheduler] run 1232 finished success=False
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/frontend-app@main
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1233
+[scheduler] run 1233 finished success=True
+Jenkinsfile fetch returned HTTP 404 for https://github.com/acme/data-pipeline@feature/etl-v2
+Could not dispatch Celery task: 
+Retry limit exceeded while trying to reconnect to the Celery result store
+backend. The Celery application must be restarted.
+
+[scheduler] thread starting run 1234
+[scheduler] run 1234 finished success=True

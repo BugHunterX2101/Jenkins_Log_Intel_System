@@ -1,5 +1,11 @@
 """End-to-end smoke test — verifies every frontend/backend wiring point."""
-import urllib.request, json, sys
+import hashlib
+import hmac
+import json
+import sys
+import urllib.request
+
+from app.config import settings
 
 BASE = "http://localhost:8000"
 PASS = "PASS"
@@ -19,10 +25,12 @@ def get(path):
     except Exception as e:
         return 0, {"error": str(e)}
 
-def post(path, data=None):
+def post(path, data=None, headers=None):
     body = json.dumps(data or {}).encode()
-    req = urllib.request.Request(BASE + path, data=body,
-                                  headers={"Content-Type": "application/json"}, method="POST")
+    req_headers = {"Content-Type": "application/json"}
+    if headers:
+        req_headers.update(headers)
+    req = urllib.request.Request(BASE + path, data=body, headers=req_headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
             status = r.status
@@ -42,7 +50,7 @@ def check(label, ok, detail=""):
 
 # ── HTML pages ──────────────────────────────────────────────────────────────
 print("\n### HTML PAGES (9 routes) ###")
-for page in ["/", "/backend", "/queue", "/scheduler", "/simulation",
+for page in ["/", "/backend", "/queue", "/scheduler",
              "/webhooks", "/workers", "/explorer", "/settings"]:
     s, _ = get(page)
     check(page, s == 200, f"HTTP {s}")
@@ -53,22 +61,18 @@ print("\n### CORE READ ENDPOINTS ###")
 s, d = get("/health")
 check("/health", s == 200 and d.get("status") == "ok", d.get("status", ""))
 
-# /ui/bootstrap — feeds index, backend, simulation, workers panels
+# /ui/bootstrap — feeds index, backend, queue, workers panels
 s, d = get("/ui/bootstrap")
 check("/ui/bootstrap", s == 200, f"{len(d)} top-level keys")
-h = d.get("health", {}); sim = d.get("simulation", {}); q = d.get("queue", {})
+h = d.get("health", {}); q = d.get("queue", {})
 w = d.get("workers", {}); db = q.get("database", {})
-check("  health.chaos_intensity in (0,1]", 0 < h.get("chaos_intensity", 1.0) <= 1.0,
-      str(round(h.get("chaos_intensity", 0) * 100)) + "%")
-check("  simulation.arrival_rate <= 100", sim.get("arrival_rate", 999) <= 100,
-      str(sim.get("arrival_rate")))
-check("  simulation has all slider keys",
-      {"arrival_rate","burst_prob","failure_rate","min_duration_ms","max_duration_ms"}.issubset(sim))
+check("  health.chaos_intensity in (0,1]", 0 <= h.get("chaos_intensity", 1.0) <= 1.0,
+    str(round(h.get("chaos_intensity", 0) * 100)) + "%")
 check("  queue has queued + in_progress", {"queued","in_progress"}.issubset(q))
 check("  queue.database has total_records/file_size/tables",
       {"total_records","file_size","tables"}.issubset(db))
 check("  workers.items all have capabilities",
-      all("capabilities" in ww for ww in w.get("items", [])), f"{len(w.get('items',[]))} workers")
+    all("capabilities" in ww for ww in w.get("items", [])), f"{len(w.get('items',[]))} workers")
 check("  activity_stream is list", isinstance(d.get("activity_stream"), list),
       f"{len(d.get('activity_stream',[]))} items")
 check("  backend_routes == 4", len(d.get("backend_routes", [])) == 4)
@@ -161,17 +165,45 @@ check("/ui/scheduler/mode", s == 200, d.get("mode", ""))
 # ── Write endpoints ──────────────────────────────────────────────────────────
 print("\n### WRITE ENDPOINTS ###")
 
-s, d = post("/webhook/github/simulate", {"count": 1, "branch": "smoke-test-branch"})
-check("POST /webhook/github/simulate", s == 200, f"simulated={d.get('simulated')}")
-check("  branch param respected", d.get("jobs", [{}])[0].get("branch") == "smoke-test-branch")
+github_payload = {
+    "ref": "refs/heads/main",
+    "after": "abc123def4567890abc123def4567890abc123de",
+    "repository": {
+        "name": "pipeline-engine",
+        "full_name": "acme/pipeline-engine",
+        "clone_url": "https://github.com/acme/pipeline-engine.git",
+        "html_url": "https://github.com/acme/pipeline-engine",
+    },
+    "pusher": {"name": "smoke-bot"},
+    "head_commit": {"id": "abc123def4567890abc123def4567890abc123de"},
+}
+github_body = json.dumps(github_payload).encode()
+github_headers = {"X-GitHub-Event": "push"}
+if settings.GITHUB_WEBHOOK_SECRET:
+    github_headers["X-Hub-Signature-256"] = "sha256=" + hmac.new(
+        settings.GITHUB_WEBHOOK_SECRET.encode(), github_body, hashlib.sha256
+    ).hexdigest()
+s, d = post("/github-webhook/", github_payload, headers=github_headers)
+check("POST /github-webhook/", s == 200, str(d.get("repo", "")))
+check("  received real webhook", d.get("received") is True)
 
-s, d = post("/webhook/github/simulate", {"commit_sha": "abc123smoke", "branch": "main"})
-check("POST simulate with commit_sha", s == 200)
-check("  commit_sha passed through", d.get("jobs", [{}])[0].get("commit_sha") == "abc123smoke",
-      d.get("jobs", [{}])[0].get("commit_sha", "")[:12])
-
-s, d = post("/webhook/jenkins/simulate")
-check("POST /webhook/jenkins/simulate", s == 200, d.get("message", "")[:40])
+jenkins_payload = {
+    "build": {
+        "number": 12847,
+        "phase": "FINALIZED",
+        "status": "FAILURE",
+        "url": "http://jenkins.example/job/backend-tests/12847/",
+        "result": "FAILURE",
+    }
+}
+jenkins_body = json.dumps(jenkins_payload).encode()
+jenkins_headers = {}
+if settings.JENKINS_WEBHOOK_SECRET:
+    jenkins_headers["X-Jenkins-Signature"] = "sha256=" + hmac.new(
+        settings.JENKINS_WEBHOOK_SECRET.encode(), jenkins_body, hashlib.sha256
+    ).hexdigest()
+s, d = post("/webhook/jenkins", jenkins_payload, headers=jenkins_headers)
+check("POST /webhook/jenkins", s == 200, str(d.get("received", "")))
 
 s, d = post("/ui/queue/99999/cancel")
 check("POST /ui/queue/{id}/cancel 404 on missing", s == 404)

@@ -328,7 +328,7 @@ GET /workers/list	GET	Worker Fleet Monitor (all 4 cards)
 GET /jobs/:id	GET	Pipeline Stage Visualizer (card detail)
 POST /scheduler/pause	POST	Pipeline Manager (pause scheduler)
 GET /metrics/live	GET	Pipeline Flow Diagram + top nav health badge
-POST /simulation/randomize	POST	Randomness Control Panel
+POST /webhook/github	POST	Webhook Ingestion
 DELETE /queue/flush	DELETE	Queue Viewer (flush button)
 
 10.3  Key UX Principles to Maintain

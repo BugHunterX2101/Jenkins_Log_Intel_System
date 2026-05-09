@@ -60,7 +60,19 @@ async def _process_async(payload: dict) -> dict:
         raw_log = embedded_log
         logger.info("Using embedded log for %s #%d (%d chars)", job_name, build_number, len(raw_log))
     else:
-        raw_log = await log_fetcher.fetch_console_log(job_name, build_number)
+        try:
+            raw_log = await log_fetcher.fetch_console_log(job_name, build_number)
+        except Exception as exc:
+            logger.warning(
+                "Failed to fetch Jenkins console log for %s #%d: %s",
+                job_name,
+                build_number,
+                exc,
+            )
+            raw_log = (
+                f"Jenkins console log unavailable for {job_name} #{build_number}. "
+                f"Fetcher error: {exc}"
+            )
     blocks       = log_parser.parse(raw_log)
     error_excerpt = "\n\n".join(b.full_text for b in blocks[:5]) if blocks else raw_log[-2000:]
     tags         = classifier.classify(error_excerpt or raw_log)
