@@ -6,7 +6,7 @@ import time
 
 import psutil
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import case, delete, func, select, update
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,7 @@ import logging
 from app.config import settings
 from app.db import get_session
 from app.models import BuildEvent, SystemMetrics
-from app.pipeline_models import PipelineRun, RunStatus, StageExecution
+from app.pipeline_models import PipelineRun, RunStatus, StageExecution, branch_priority_expr
 from app.services.job_scheduler import get_dashboard_snapshot
 from app.services.worker_pool import serialise_worker
 from app.worker_models import Worker, WorkerStatus
@@ -321,21 +321,11 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     from app.pipeline_models import RunStatus
     
     try:
-        from sqlalchemy import case as sa_case
-        priority_expr = sa_case(
-            (PipelineRun.branch.like("hotfix/%"), 1),
-            (PipelineRun.branch == "main", 2),
-            (PipelineRun.branch == "master", 2),
-            (PipelineRun.branch.like("release/%"), 3),
-            (PipelineRun.branch == "develop", 4),
-            (PipelineRun.branch.like("feature/%"), 5),
-            else_=6,
-        )
         # Get upcoming queued jobs ordered by branch priority then arrival time
         queued_result = await session.execute(
             select(PipelineRun)
             .where(PipelineRun.status == RunStatus.QUEUED)
-            .order_by(priority_expr, PipelineRun.queued_at.asc())
+            .order_by(branch_priority_expr(), PipelineRun.queued_at.asc())
             .limit(50)
         )
         queued_runs = queued_result.scalars().all()
@@ -651,7 +641,7 @@ async def get_metrics_history(session: AsyncSession = Depends(get_session), minu
 async def get_webhook_config(request: Request) -> dict:
     """Returns the webhook endpoint URL and a masked secret hint for GitHub configuration."""
     secret = settings.GITHUB_WEBHOOK_SECRET or ""
-    hint = (secret[:4] + "*" * max(0, len(secret) - 4)) if secret else ""
+    hint = (secret[:4] + "*" * (len(secret) - 4)) if secret else ""
     base = str(request.base_url).rstrip("/")
     return {
         "webhook_url": f"{base}/github-webhook/",
@@ -779,27 +769,17 @@ async def get_repositories(session: AsyncSession = Depends(get_session)) -> dict
 @router.get("/priority-queue", summary="QUEUED runs sorted by branch priority")
 async def get_priority_queue(session: AsyncSession = Depends(get_session)) -> dict:
     """Returns queued pipeline runs in the order the scheduler will dispatch them."""
-    from app.pipeline_models import PipelineRun, RunStatus
     from app.scheduler import get_routing_mode
-    from sqlalchemy import case as sa_case
     from datetime import datetime, timezone
 
     mode = get_routing_mode()
 
     try:
-        if mode == "Priority":
-            priority_expr = sa_case(
-                (PipelineRun.branch.like("hotfix/%"), 1),
-                (PipelineRun.branch == "main", 2),
-                (PipelineRun.branch == "master", 2),
-                (PipelineRun.branch.like("release/%"), 3),
-                (PipelineRun.branch == "develop", 4),
-                (PipelineRun.branch.like("feature/%"), 5),
-                else_=6,
-            )
-            ordering = (priority_expr, PipelineRun.queued_at.asc())
-        else:
-            ordering = (PipelineRun.queued_at.asc(),)
+        ordering = (
+            (branch_priority_expr(), PipelineRun.queued_at.asc())
+            if mode == "Priority"
+            else (PipelineRun.queued_at.asc(),)
+        )
 
         result = await session.execute(
             select(PipelineRun)

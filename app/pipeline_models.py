@@ -8,7 +8,7 @@ import enum
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, case
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import Base
@@ -90,3 +90,16 @@ class StageExecution(Base):
     log_excerpt:  Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     run: Mapped["PipelineRun"] = relationship("PipelineRun", back_populates="stages")
+
+
+def branch_priority_expr():
+    """CASE expression mapping branch names to priority integers (1=highest, 6=lowest)."""
+    return case(
+        (PipelineRun.branch.like("hotfix/%"), 1),
+        (PipelineRun.branch == "main", 2),
+        (PipelineRun.branch == "master", 2),
+        (PipelineRun.branch.like("release/%"), 3),
+        (PipelineRun.branch == "develop", 4),
+        (PipelineRun.branch.like("feature/%"), 5),
+        else_=6,
+    )

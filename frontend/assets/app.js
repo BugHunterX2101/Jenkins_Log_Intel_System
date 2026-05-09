@@ -63,6 +63,20 @@
     return allButtons().filter((button) => normalize(button.textContent || "").includes(expected));
   };
 
+  const showToast = (message, isError = false, durationMs = 3000) => {
+    const toast = document.createElement("div");
+    toast.className = isError
+      ? "fixed bottom-6 right-6 bg-error text-on-error px-4 py-2 rounded shadow-lg text-sm z-50"
+      : "fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50 flex items-center gap-2";
+    if (typeof message === "string") {
+      toast.textContent = message;
+    } else {
+      toast.appendChild(message);
+    }
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), durationMs);
+  };
+
   const bindOnce = (button, handler) => {
     if (!button || button.dataset.bound === "true") return;
     button.dataset.bound = "true";
@@ -159,36 +173,37 @@
       const origHtml = triggerBtn.innerHTML;
       triggerBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">sync</span> Sending…';
 
+      const triggerPayload = JSON.stringify({
+        repo_url:     repoUrl,
+        branch,
+        commit_sha:   sha || undefined,
+        author,
+        triggered_by: "manual-webhook",
+      });
+
       try {
-        for (let i = 0; i < burstCount; i++) {
-          const res = await fetch("/jobs/trigger", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              repo_url:     repoUrl,
-              branch,
-              commit_sha:   sha || undefined,
-              author,
-              triggered_by: "manual-webhook",
-            }),
-          });
-          if (!res.ok) {
-            const err = await res.text();
-            throw new Error(`HTTP ${res.status}: ${err}`);
-          }
-        }
-        const toast = document.createElement("div");
-        toast.className = "fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50 flex items-center gap-2";
-        toast.innerHTML = `<span class="material-symbols-outlined text-[16px]">check_circle</span> Webhook triggered — ${burstCount} run${burstCount > 1 ? "s" : ""} queued`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        await Promise.all(
+          Array.from({ length: burstCount }, () =>
+            fetch("/jobs/trigger", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: triggerPayload,
+            }).then(async (res) => {
+              if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+            })
+          )
+        );
+        const icon = document.createElement("span");
+        icon.className = "material-symbols-outlined text-[16px]";
+        icon.textContent = "check_circle";
+        const msg = document.createTextNode(` Webhook triggered — ${burstCount} run${burstCount > 1 ? "s" : ""} queued`);
+        const frag = document.createDocumentFragment();
+        frag.appendChild(icon);
+        frag.appendChild(msg);
+        showToast(frag);
         setTimeout(populateWebhookEvents, 600);
       } catch (err) {
-        const toast = document.createElement("div");
-        toast.className = "fixed bottom-6 right-6 bg-error text-on-error px-4 py-2 rounded shadow-lg text-sm z-50";
-        toast.textContent = `Trigger failed: ${err.message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
+        showToast(`Trigger failed: ${err.message}`, true, 4000);
       } finally {
         triggerBtn.disabled = false;
         triggerBtn.innerHTML = origHtml;
@@ -290,19 +305,11 @@
               try {
                 const res = await fetch(`/ui/queue/${run.id}/cancel`, { method: 'POST' });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50';
-                toast.textContent = `Job #J-${run.id} cancelled`;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2500);
+                showToast(`Job #J-${run.id} cancelled`, false, 2500);
                 populateQueueTable();
                 populateQueueMetrics();
               } catch (err) {
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-6 right-6 bg-error text-on-error px-4 py-2 rounded shadow-lg text-sm z-50';
-                toast.textContent = `Failed to cancel job #J-${run.id}`;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2500);
+                showToast(`Failed to cancel job #J-${run.id}`, true, 2500);
                 cancelBtn.disabled = false;
               }
             });
@@ -947,12 +954,16 @@
           _highlightModeBtn(mode);
           // Refresh the priority queue to reflect new ordering
           populatePriorityQueue();
-          // Toast notification
-          const toast = document.createElement('div');
-          toast.className = 'fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50 flex items-center gap-2';
-          toast.innerHTML = `<span class="material-symbols-outlined text-[16px]">check_circle</span> Scheduler mode set to <strong>${mode}</strong>`;
-          document.body.appendChild(toast);
-          setTimeout(() => toast.remove(), 2500);
+          const modeMsg = document.createDocumentFragment();
+          const modeIcon = document.createElement('span');
+          modeIcon.className = 'material-symbols-outlined text-[16px]';
+          modeIcon.textContent = 'check_circle';
+          modeMsg.appendChild(modeIcon);
+          modeMsg.appendChild(document.createTextNode(` Scheduler mode set to `));
+          const b = document.createElement('strong');
+          b.textContent = mode;
+          modeMsg.appendChild(b);
+          showToast(modeMsg, false, 2500);
         } catch (err) {
           console.error('Failed to set scheduler mode', err);
         }
@@ -1313,11 +1324,7 @@
       }
       fallback.addEventListener('change', () => {
         localStorage.setItem('workerFallbackPolicy', fallback.options[fallback.selectedIndex].text);
-        const toast = document.createElement('div');
-        toast.className = 'fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50';
-        toast.textContent = 'Policy saved';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
+        showToast('Policy saved', false, 2000);
       });
     }
   };

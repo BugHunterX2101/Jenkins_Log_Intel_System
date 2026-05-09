@@ -24,10 +24,6 @@ from app.models import Base
 _sched_logger = logging.getLogger("scheduler.loop")
 
 
-def _background_loops_enabled() -> bool:
-    return True
-
-
 async def _scheduler_loop() -> None:
     """Run scheduler_tick every 5 s inside the FastAPI process (no Celery needed)."""
     from app.scheduler import _scheduler_tick_async
@@ -91,18 +87,12 @@ async def lifespan(_app: FastAPI):
         import logging
         logging.getLogger(__name__).warning("Worker seed skipped: %s", e)
 
-    tick_task = None
-    if _background_loops_enabled():
-        tick_task = asyncio.create_task(_scheduler_loop())
+    tick_task = asyncio.create_task(_scheduler_loop())
 
     yield
 
-    if tick_task is not None:
-        tick_task.cancel()
-        try:
-            await asyncio.gather(tick_task, return_exceptions=True)
-        except Exception:
-            pass
+    tick_task.cancel()
+    await asyncio.gather(tick_task, return_exceptions=True)
 
 
 app = FastAPI(

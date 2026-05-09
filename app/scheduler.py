@@ -58,8 +58,8 @@ def scheduler_tick() -> dict:
 
 async def _scheduler_tick_async(use_celery: bool = False) -> dict:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-    from sqlalchemy import select, update, case as sa_case, func as sa_func
-    from app.pipeline_models import PipelineRun, RunStatus
+    from sqlalchemy import select, update, func as sa_func
+    from app.pipeline_models import PipelineRun, RunStatus, branch_priority_expr
     from app.worker_models import Worker, WorkerStatus
     from app.services.worker_pool import assign_worker, detect_language
 
@@ -81,24 +81,12 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
 
     assigned_count = 0
 
-    # Apply routing mode ordering
     mode = get_routing_mode()
-    if mode == "Priority":
-        priority_expr = sa_case(
-            (PipelineRun.branch.like("hotfix/%"), 1),
-            (PipelineRun.branch == "main", 2),
-            (PipelineRun.branch == "master", 2),
-            (PipelineRun.branch.like("release/%"), 3),
-            (PipelineRun.branch == "develop", 4),
-            (PipelineRun.branch.like("feature/%"), 5),
-            else_=6
-        )
-        ordering = (
-            priority_expr,
-            PipelineRun.queued_at.asc(),
-        )
-    else:  # FIFO or Load-Balanced (worker selection already handles load)
-        ordering = (PipelineRun.queued_at.asc(),)
+    ordering = (
+        (branch_priority_expr(), PipelineRun.queued_at.asc())
+        if mode == "Priority"
+        else (PipelineRun.queued_at.asc(),)
+    )
 
     async with Session() as session:
         result = await session.execute(
