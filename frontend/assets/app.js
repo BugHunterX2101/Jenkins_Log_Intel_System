@@ -125,6 +125,76 @@
 
   const attachWebhookActions = () => {};
 
+  // ─── Webhook trigger form → POST /jobs/trigger ────────────────────────────
+  const _REPO_URL_MAP = {
+    "jenkins-core/pipeline-engine": "https://github.com/jenkins-core/pipeline-engine",
+    "frontend/ui-components":       "https://github.com/frontend/ui-components",
+    "backend/auth-service":         "https://github.com/backend/auth-service",
+  };
+
+  const attachWebhookTrigger = () => {
+    const triggerBtn = Array.from(document.querySelectorAll("button")).find(
+      (b) => normalize(b.textContent).includes("example payload") ||
+             normalize(b.textContent).includes("trigger webhook") ||
+             normalize(b.textContent).includes("send webhook")
+    );
+    if (!triggerBtn) return;
+
+    bindOnce(triggerBtn, async () => {
+      const repoEl   = document.querySelector('[data-ui="wh-repo"]');
+      const branchEl = document.querySelector('[data-ui="wh-branch"]');
+      const shaEl    = document.querySelector('[data-ui="wh-sha"]');
+      const authorEl = document.querySelector('[data-ui="wh-author"]');
+      const burstEl  = document.querySelector('[data-ui="burst-mode-toggle"]');
+
+      const repoName  = repoEl?.value  || "jenkins-core/pipeline-engine";
+      const branch    = branchEl?.value || "main";
+      const sha       = shaEl?.value   || "";
+      const author    = authorEl?.value || "devops-bot";
+      const burstCount = Math.max(1, Math.min(5, Number(burstEl?.dataset.burst || 1)));
+
+      const repoUrl = _REPO_URL_MAP[repoName] || `https://github.com/${repoName}`;
+
+      triggerBtn.disabled = true;
+      const origHtml = triggerBtn.innerHTML;
+      triggerBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px">sync</span> Sending…';
+
+      try {
+        for (let i = 0; i < burstCount; i++) {
+          const res = await fetch("/jobs/trigger", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              repo_url:     repoUrl,
+              branch,
+              commit_sha:   sha || undefined,
+              author,
+              triggered_by: "manual-webhook",
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`HTTP ${res.status}: ${err}`);
+          }
+        }
+        const toast = document.createElement("div");
+        toast.className = "fixed bottom-6 right-6 bg-on-surface text-surface px-4 py-2 rounded shadow-lg text-sm z-50 flex items-center gap-2";
+        toast.innerHTML = `<span class="material-symbols-outlined text-[16px]">check_circle</span> Webhook triggered — ${burstCount} run${burstCount > 1 ? "s" : ""} queued`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+        setTimeout(populateWebhookEvents, 600);
+      } catch (err) {
+        const toast = document.createElement("div");
+        toast.className = "fixed bottom-6 right-6 bg-error text-on-error px-4 py-2 rounded shadow-lg text-sm z-50";
+        toast.textContent = `Trigger failed: ${err.message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+      } finally {
+        triggerBtn.disabled = false;
+        triggerBtn.innerHTML = origHtml;
+      }
+    });
+  };
 
   const populateQueueMetrics = async () => {
     try {
@@ -1311,8 +1381,6 @@
     }
   };
 
-  // ─── Patched Trigger Webhook — reads live form values ───
-  const attachWebhookActionsFixed = () => {};
 
   // ─── Backend console: Start / Pause / Stop / View All ───
   const attachBackendButtons = () => {
@@ -1570,6 +1638,7 @@
     attachHeaderIconButtons();
     if (currentPath().startsWith('/webhooks')) {
       attachWebhookPageActions();
+      attachWebhookTrigger();
     }
 
     if (currentPath().startsWith('/queue')) {

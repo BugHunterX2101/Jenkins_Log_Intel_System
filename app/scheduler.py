@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import random
 import threading
 import time
 
@@ -227,78 +226,6 @@ async def _run_execution(run_id: int, worker_id: int, stage_names: list[str]) ->
         stage_names=stage_names,
         db_url=settings.DATABASE_URL,
     )
-
-
-_SYNTHETIC_REPOS = [
-    ("https://github.com/acme/auth-service",    "main"),
-    ("https://github.com/acme/api-gateway",     "develop"),
-    ("https://github.com/acme/payment-service", "main"),
-    ("https://github.com/acme/data-pipeline",   "feature/etl-v2"),
-    ("https://github.com/acme/frontend-app",    "main"),
-]
-
-
-@celery_app.task(name="app.scheduler.random_job_arrival")
-def random_job_arrival() -> dict:
-    if random.random() > 0.6:
-        return {"injected": False, "reason": "random skip"}
-
-    repo_url, branch = random.choice(_SYNTHETIC_REPOS)
-    author = random.choice(["alice", "bob", "carol", "dave", "ci-bot"])
-
-    import string
-    commit_sha = "".join(random.choices("0123456789abcdef", k=40))
-
-    asyncio.run(_enqueue_synthetic(repo_url, branch, commit_sha, author))
-    logger.info("Random arrival: injected %s@%s", repo_url, branch)
-    return {"injected": True, "repo": repo_url, "branch": branch}
-
-
-async def _enqueue_synthetic(repo_url, branch, commit_sha, author):
-    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-    from sqlalchemy.orm import sessionmaker
-    from app.services.job_scheduler import schedule_pipeline
-
-    engine  = create_async_engine(settings.DATABASE_URL, echo=False)
-    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-    async with Session() as session:
-        await schedule_pipeline(
-            session=session,
-            repo_url=repo_url,
-            branch=branch,
-            commit_sha=commit_sha,
-            author=author,
-            triggered_by="random-arrival",
-        )
-    await engine.dispose()
-
-
-@celery_app.task(name="app.scheduler.worker_load_drift")
-def worker_load_drift() -> dict:
-    return asyncio.run(_drift_async())
-
-
-async def _drift_async() -> dict:
-    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-    from sqlalchemy.orm import sessionmaker
-    from sqlalchemy import select
-    from app.worker_models import Worker, WorkerStatus
-
-    engine  = create_async_engine(settings.DATABASE_URL, echo=False)
-    Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-    async with Session() as session:
-        result = await session.execute(
-            select(Worker).where(Worker.status == WorkerStatus.IDLE)
-        )
-        workers = result.scalars().all()
-        for w in workers:
-            w.load = max(0.0, min(0.3, w.load + random.uniform(-0.05, 0.05)))
-        await session.commit()
-
-    await engine.dispose()
-    return {"drifted": len(workers)}
 
 
 @celery_app.task(name="app.scheduler.collect_system_metrics")

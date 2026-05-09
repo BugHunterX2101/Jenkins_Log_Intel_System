@@ -5,7 +5,6 @@ Jenkins Log Intelligence Engine — FastAPI application factory v1.2
 import asyncio
 import os
 import logging
-import random
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -26,8 +25,6 @@ _sched_logger = logging.getLogger("scheduler.loop")
 
 
 def _background_loops_enabled() -> bool:
-    # Enable the scheduler tick and random-arrival loops so real GitHub webhook
-    # events are actually dispatched to workers and reach COMPLETED/FAILED state.
     return True
 
 
@@ -40,23 +37,6 @@ async def _scheduler_loop() -> None:
         except Exception as exc:
             _sched_logger.warning("scheduler tick error: %s", exc)
         await asyncio.sleep(5)
-
-
-async def _random_arrival_loop() -> None:
-    """Inject synthetic pipeline runs periodically (mirrors the Celery beat task)."""
-    from app.scheduler import _enqueue_synthetic, _SYNTHETIC_REPOS
-    await asyncio.sleep(20)          # initial delay so workers are ready first
-    while True:
-        await asyncio.sleep(45)
-        if random.random() <= 0.6:
-            repo_url, branch = random.choice(_SYNTHETIC_REPOS)
-            author = random.choice(["alice", "bob", "carol", "dave", "ci-bot"])
-            sha = "".join(random.choices("0123456789abcdef", k=40))
-            try:
-                await _enqueue_synthetic(repo_url, branch, sha, author)
-                _sched_logger.info("Random arrival injected: %s@%s", repo_url, branch)
-            except Exception as exc:
-                _sched_logger.warning("random arrival error: %s", exc)
 
 
 FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
@@ -112,20 +92,15 @@ async def lifespan(app: FastAPI):
         logging.getLogger(__name__).warning("Worker seed skipped: %s", e)
 
     tick_task = None
-    arrival_task = None
     if _background_loops_enabled():
-        # Start background scheduler loops (no Celery / Redis required)
         tick_task = asyncio.create_task(_scheduler_loop())
-        arrival_task = asyncio.create_task(_random_arrival_loop())
 
     yield
 
-    tasks = [task for task in (tick_task, arrival_task) if task is not None]
-    for task in tasks:
-        task.cancel()
-    if tasks:
+    if tick_task is not None:
+        tick_task.cancel()
         try:
-            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.gather(tick_task, return_exceptions=True)
         except Exception:
             pass
 
@@ -134,7 +109,7 @@ app = FastAPI(
     title="Jenkins Log Intelligence Engine",
     description=(
         "CI/CD intelligence platform: intercepts failed builds, analyses logs, "
-        "schedules jobs across a simulated worker pool, and streams live "
+        "schedules jobs across a worker pool, and streams live "
         "pipeline progress to the dashboard."
     ),
     version="1.2.0",
