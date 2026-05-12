@@ -139,6 +139,46 @@
 
   const attachWebhookActions = () => {};
 
+  const populateQueueChart = async () => {
+    const svg = document.getElementById('queue-depth-svg');
+    const empty = document.getElementById('queue-depth-empty');
+    if (!svg) return;
+    try {
+      const res = await fetch('/ui/metrics/history?period_minutes=60');
+      if (!res.ok) return;
+      const result = await res.json();
+      const samples = (result.samples || []).slice(-40);
+
+      if (!samples.length) {
+        svg.innerHTML = '';
+        if (empty) { empty.classList.remove('hidden'); empty.style.display = 'flex'; }
+        return;
+      }
+      if (empty) { empty.classList.add('hidden'); empty.style.display = ''; }
+
+      const values = samples.map(s => Number(s.queue_total || 0));
+      const maxVal = Math.max(...values, 1);
+      const pts = values.map((v, i) => {
+        const x = (i / (values.length - 1)) * 100;
+        const y = 100 - (v / maxVal) * 90;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0058be" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#0058be" stop-opacity="0.02"/>
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#chartGrad)" points="0,100 ${pts} 100,100"/>
+        <polyline fill="none" points="${pts}" stroke="#0058be" stroke-width="2" stroke-linejoin="round"/>
+      `;
+    } catch (e) {
+      console.warn('populateQueueChart failed', e);
+    }
+  };
+
   const populateQueueMetrics = async () => {
     try {
       const response = await fetch('/ui/queue');
@@ -1052,14 +1092,6 @@
       const cpuEl = document.querySelector('[data-ui="backend-cpu"]');
       if (cpuEl) cpuEl.textContent = `${(data.cpu_percent || 0).toFixed(1)}%`;
 
-      // Update live load pressure dial
-      const chaosIntensityEl = document.querySelector('[data-ui="chaos-intensity"]');
-      if (chaosIntensityEl) {
-        chaosIntensityEl.textContent = `${data.chaos_intensity}%`;
-        const dialCircle = chaosIntensityEl.closest('div')?.previousElementSibling?.querySelector('circle:last-child');
-        if (dialCircle) dialCircle.setAttribute('stroke-dashoffset', String(Math.round(283 * (1 - data.chaos_intensity / 100))));
-      }
-
       const chaosLevelEl = document.querySelector('[data-ui="chaos-level"]');
       if (chaosLevelEl) chaosLevelEl.textContent = data.chaos_level || '';
 
@@ -1574,12 +1606,21 @@
       if (document.querySelector('[data-ui="queue-table-body"]')) {
         populateQueueTable();
         populateQueueMetrics();
+        populateQueueChart();
         attachQueueSearch();
         const qInterval = setInterval(() => {
-          if (document.querySelector('[data-ui="queue-table-body"]')) { populateQueueTable(); populateQueueMetrics(); }
+          if (document.querySelector('[data-ui="queue-table-body"]')) {
+            populateQueueTable();
+            populateQueueMetrics();
+          }
           else clearInterval(qInterval);
         }, 5000);
         _allPollingIntervals.push(qInterval);
+        const chartInterval = setInterval(() => {
+          if (document.getElementById('queue-depth-svg')) populateQueueChart();
+          else clearInterval(chartInterval);
+        }, 30000);
+        _allPollingIntervals.push(chartInterval);
       }
     }
 

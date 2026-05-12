@@ -183,7 +183,7 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
         "health": {
             "status": "ok",
             "version": "1.2.0",
-            "chaos_intensity": chaos_intensity / 100.0,
+            "chaos_intensity": chaos_intensity,
             "chaos_level": chaos_level,
         },
         "backend": {

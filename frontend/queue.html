@@ -138,7 +138,7 @@
 </div>
 <div>
 <h2 class="text-slate-900 dark:text-white font-bold capitalize text-sm tracking-normal mb-0.5">System Health</h2>
-<p class="text-slate-500 dark:text-slate-400 text-xs normal-case tracking-normal">ngrok: running</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs normal-case tracking-normal">api: online</p>
 </div>
 </div>
 <button class="mt-4 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer active:opacity-80 capitalize tracking-normal text-sm font-medium">Quick Actions</button>
@@ -202,9 +202,7 @@
 <h3 class="text-label-md font-label-md uppercase tracking-widest">Total Jobs in Queue</h3>
 </div>
 <div data-ui="queue-total" class="text-headline-lg font-headline-lg text-on-surface">—</div>
-<div class="mt-sm h-unit w-full bg-surface-container rounded-full overflow-hidden">
-<div class="h-full bg-primary w-3/4 rounded-full"></div>
-</div>
+<p class="text-body-md font-body-md text-on-surface-variant mt-sm">Active pipeline runs</p>
 </div>
 <div class="col-span-3 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_4px_6px_rgba(0,0,0,0.02)] flex flex-col justify-between">
 <div class="flex items-center gap-2 text-on-surface-variant mb-sm">
@@ -212,10 +210,7 @@
 <h3 class="text-label-md font-label-md uppercase tracking-widest">Avg Wait Time</h3>
 </div>
 <div data-ui="avg-wait-queue" class="text-headline-lg font-headline-lg text-on-surface">—</div>
-<p class="text-body-md font-body-md text-surface-tint mt-sm flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]">arrow_downward</span>
-                        0.3s from baseline
-                    </p>
+<p class="text-body-md font-body-md text-on-surface-variant mt-sm">Across active jobs</p>
 </div>
 <div class="col-span-3 bg-surface-container-lowest border border-error border-opacity-30 rounded-xl p-md shadow-[0px_4px_6px_rgba(186,26,26,0.05)] bg-error-container bg-opacity-10 flex flex-col justify-between">
 <div class="flex items-center gap-2 text-error mb-sm">
@@ -239,21 +234,13 @@
 </section>
 <!-- Middle Row: Chart & Database State -->
 <section class="grid grid-cols-12 gap-lg">
-<!-- Queue Depth Chart -->
+<!-- Queue Depth Chart (live from /ui/metrics/history) -->
 <div class="col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_4px_6px_rgba(0,0,0,0.02)] flex flex-col h-[320px]">
 <div class="flex items-center justify-between mb-lg">
-<h2 class="text-headline-sm font-headline-sm text-on-surface m-0">Queue Depth (Live)</h2>
+<h2 class="text-headline-sm font-headline-sm text-on-surface m-0">Queue Depth History</h2>
 <span class="text-label-md font-label-md text-on-surface-variant border border-outline px-2 py-1 rounded">Past 60 Minutes</span>
 </div>
-<div class="flex-1 relative w-full border-b border-l border-outline-variant">
-<!-- Simulated Line Chart with Gradient Area -->
-<div class="absolute inset-0 flex items-end">
-<div class="w-full h-3/4 bg-gradient-to-t from-primary-fixed-dim to-transparent opacity-40 rounded-tr-xl clip-wave"></div>
-<!-- Line path -->
-<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
-<polyline fill="none" points="0,60 10,50 20,70 30,40 40,60 50,30 60,50 70,20 80,40 90,10 100,30" stroke="#0058be" stroke-width="2"></polyline>
-</svg>
-</div>
+<div class="flex-1 relative w-full border-b border-l border-outline-variant" id="queue-depth-chart">
 <!-- Grid Lines -->
 <div class="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none">
 <div class="w-full border-t border-on-surface"></div>
@@ -261,6 +248,10 @@
 <div class="w-full border-t border-on-surface"></div>
 <div class="w-full border-t border-on-surface"></div>
 </div>
+<!-- Live SVG chart populated by app.js -->
+<svg id="queue-depth-svg" class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+</svg>
+<div id="queue-depth-empty" class="absolute inset-0 items-center justify-center text-on-surface-variant text-sm hidden">No metrics yet — data appears after the first pipeline run</div>
 </div>
 </div>
 <!-- Database State Panel -->
