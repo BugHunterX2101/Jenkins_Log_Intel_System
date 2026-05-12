@@ -235,11 +235,19 @@ async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
         )
         all_runs = runs_result.scalars().all()
         total_runs = await session.scalar(select(func.count(PipelineRun.id))) or 0
+        counts_result = await session.execute(
+            select(PipelineRun.status, func.count(PipelineRun.id)).group_by(PipelineRun.status)
+        )
+        counts_by_status = {
+            status.value if hasattr(status, "value") else str(status): int(count)
+            for status, count in counts_result.all()
+        }
 
         # Organize by status
         by_status = {}
         for status in RunStatus:
             by_status[status.value] = []
+            counts_by_status.setdefault(status.value, 0)
 
         for run in all_runs:
             status_key = run.status.value if hasattr(run.status, 'value') else str(run.status)
@@ -261,11 +269,18 @@ async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
                     "duration_s": run.duration_s,
                 })
 
-        return {"runs_by_status": by_status, "total": int(total_runs), "returned": len(all_runs)}
+        return {
+            "runs_by_status": by_status,
+            "counts_by_status": counts_by_status,
+            "active_total": counts_by_status.get("QUEUED", 0) + counts_by_status.get("IN_PROGRESS", 0),
+            "total": int(total_runs),
+            "returned": len(all_runs),
+        }
     except Exception as exc:
         logger.warning("get_queue_data: DB error — returning empty runs: %s", exc)
         by_status = {status.value: [] for status in RunStatus}
-        return {"runs_by_status": by_status, "total": 0}
+        counts_by_status = {status.value: 0 for status in RunStatus}
+        return {"runs_by_status": by_status, "counts_by_status": counts_by_status, "active_total": 0, "total": 0, "returned": 0}
 
 
 @router.get("/scheduler", summary="Real-time scheduler data")

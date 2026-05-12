@@ -186,11 +186,12 @@
       const data = await response.json();
       const queued = data.runs_by_status?.QUEUED || [];
       const inProg = data.runs_by_status?.IN_PROGRESS || [];
+      const counts = data.counts_by_status || {};
       const active = [...queued, ...inProg];
 
       const totalEl = document.querySelector('[data-ui="queue-total"]');
       // F6: show active queue depth only (not historical completed/failed count)
-      if (totalEl) totalEl.textContent = String(active.length);
+      if (totalEl) totalEl.textContent = String(data.active_total ?? ((counts.QUEUED || 0) + (counts.IN_PROGRESS || 0)) ?? active.length);
 
       const now = Date.now();
       const waitTimes = active
@@ -219,7 +220,7 @@
 
       const throughputEl = document.querySelector('[data-ui="throughput"]');
       if (throughputEl) {
-        const completed = (data.runs_by_status?.COMPLETED || []).length;
+        const completed = counts.COMPLETED ?? (data.runs_by_status?.COMPLETED || []).length;
         throughputEl.innerHTML = `${completed}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">/session</span>`;
       }
     } catch (error) {
@@ -468,14 +469,15 @@
 
     const findRows = (name) => {
       const t = (database.tables || []).find(t => t.name === name);
-      return Number(t?.rows || 0).toLocaleString();
+      return Number(t?.rows || 0);
     };
+    const rowLabel = (count) => `${count.toLocaleString()} ${count === 1 ? 'row' : 'rows'}`;
 
     if (totalRecords) totalRecords.textContent = Number(database.total_records || 0).toLocaleString();
-    if (jobRows)     jobRows.textContent     = `${findRows('pipeline_runs')} rows`;
-    if (execRows)    execRows.textContent    = `${findRows('stage_executions')} rows`;
-    if (workerRows)  workerRows.textContent  = `${findRows('build_events')} rows`;
-    if (webhookRows) webhookRows.textContent = `${findRows('workers')} rows`;
+    if (jobRows)     jobRows.textContent     = rowLabel(findRows('pipeline_runs'));
+    if (execRows)    execRows.textContent    = rowLabel(findRows('stage_executions'));
+    if (workerRows)  workerRows.textContent  = rowLabel(findRows('workers'));
+    if (webhookRows) webhookRows.textContent = rowLabel(findRows('build_events'));
   };
 
   const renderBackendPanel = (data) => {
