@@ -41,7 +41,6 @@ async def _process_async(payload: dict) -> dict:
     from app.services import classifier, log_fetcher, log_parser, notifier, pattern_store, root_cause
 
     build        = payload.get("build", {})
-    # B1: Simulated payloads use "jobName"; real Jenkins webhooks use "name"
     job_name: str = (
         payload.get("name")
         or payload.get("jobName")
@@ -53,8 +52,6 @@ async def _process_async(payload: dict) -> dict:
 
     logger.info("Processing failure: %s #%d", job_name, build_number)
 
-    # B2: Use embedded log content when present (simulate endpoint includes it)
-    # avoids a slow Jenkins API roundtrip that fails when Jenkins isn't reachable
     embedded_log: str | None = build.get("fullLog") or build.get("log") or None
     if embedded_log:
         raw_log = embedded_log

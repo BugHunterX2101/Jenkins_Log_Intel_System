@@ -79,6 +79,7 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
         worker_result = await session.execute(select(Worker).order_by(Worker.id))
         workers = list(worker_result.scalars().all())
         build_event_count = await session.scalar(select(func.count(BuildEvent.id))) or 0
+        stage_exec_count = await session.scalar(select(func.count(StageExecution.id))) or 0
 
         # Try to fetch latest stored metrics; fall back to live computation if unavailable
         latest_metric = await session.execute(
@@ -120,6 +121,7 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
         worker_total = 0
         snapshot = {"QUEUED": [], "IN_PROGRESS": [], "COMPLETED": [], "FAILED": [], "ABORTED": []}
         build_event_count = 0
+        stage_exec_count = 0
 
     # Always compute chaos from the live snapshot so it reflects current pressure,
     # not a stale historical total that causes the dial to be permanently pegged at 100.
@@ -141,27 +143,11 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
     latest_runs.sort(key=lambda run: run.get("queued_at") or "", reverse=True)
     queue_depth_samples = [max(0, queue_total - index) for index, _ in enumerate(range(min(queue_total, 12)))]
 
-    def _route_status(path: str) -> str:
-        if path in {"/ui/bootstrap", "/ui/queue", "/ui/scheduler", "/ui/build_events"}:
-            return "Healthy"
-        return "Healthy"
-
-    def _route_latency(path: str) -> str:
-        if path == "/ui/bootstrap":
-            return "12ms"
-        if path == "/ui/queue":
-            return "45ms"
-        if path == "/ui/scheduler":
-            return "28ms"
-        if path == "/ui/build_events":
-            return "52ms"
-        return "31ms"
-
     endpoint_rows = [
-        {"route": "/ui/bootstrap", "status": _route_status("/ui/bootstrap"), "latency": _route_latency("/ui/bootstrap"), "rate": "0.0%"},
-        {"route": "/ui/queue", "status": _route_status("/ui/queue"), "latency": _route_latency("/ui/queue"), "rate": "0.0%"},
-        {"route": "/ui/scheduler", "status": _route_status("/ui/scheduler"), "latency": _route_latency("/ui/scheduler"), "rate": "0.0%"},
-        {"route": "/ui/build_events", "status": _route_status("/ui/build_events"), "latency": _route_latency("/ui/build_events"), "rate": "0.0%"},
+        {"route": "/ui/bootstrap",    "status": "Healthy", "latency": "-", "rate": "-"},
+        {"route": "/ui/queue",        "status": "Healthy", "latency": "-", "rate": "-"},
+        {"route": "/ui/scheduler",    "status": "Healthy", "latency": "-", "rate": "-"},
+        {"route": "/ui/build_events", "status": "Healthy", "latency": "-", "rate": "-"},
     ]
 
     try:
@@ -199,7 +185,6 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
             "version": "1.2.0",
             "chaos_intensity": chaos_intensity / 100.0,
             "chaos_level": chaos_level,
-            "uptime_percentage": "99.98%",
         },
         "backend": {
             "status": "RUNNING",
@@ -227,13 +212,12 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
             ) if any(r.get("status") == "QUEUED" for r in latest_runs) else 0.0,
             "latest_runs": latest_runs[:12],
             "database": {
-                "total_records": queue_total + build_event_count,
-                "file_size": f"{max(1, int((queue_total + build_event_count) / 1000))} MB",
+                "total_records": queue_total + int(stage_exec_count) + int(build_event_count) + worker_total,
                 "tables": [
-                    {"name": "job_queue", "rows": len(latest_runs)},
-                    {"name": "execution_logs", "rows": int(build_event_count)},
-                    {"name": "worker_metrics", "rows": worker_total},
-                    {"name": "webhook_events", "rows": int(build_event_count)},
+                    {"name": "pipeline_runs",    "rows": int(queue_total)},
+                    {"name": "stage_executions", "rows": int(stage_exec_count)},
+                    {"name": "build_events",     "rows": int(build_event_count)},
+                    {"name": "workers",          "rows": int(worker_total)},
                 ],
             },
         },
@@ -814,3 +798,22 @@ async def get_priority_queue(session: AsyncSession = Depends(get_session)) -> di
         })
 
     return {"mode": mode, "jobs": jobs, "total": len(jobs)}
+
+
+@router.get("/config-status", summary="Which env vars are configured (non-empty)")
+async def config_status() -> dict:
+    """Returns a map of env-var name → bool (True = configured/non-empty)."""
+    return {
+        "vars": {
+            "DATABASE_URL":           bool(settings.DATABASE_URL),
+            "REDIS_URL":              bool(settings.REDIS_URL),
+            "JENKINS_URL":            bool(settings.JENKINS_URL and settings.JENKINS_URL != "http://localhost:8080"),
+            "JENKINS_USER":           bool(settings.JENKINS_USER and settings.JENKINS_USER != "admin"),
+            "JENKINS_TOKEN":          bool(settings.JENKINS_TOKEN),
+            "GROQ_API_KEY":           bool(settings.GROQ_API_KEY),
+            "ANTHROPIC_API_KEY":      bool(settings.ANTHROPIC_API_KEY),
+            "SLACK_BOT_TOKEN":        bool(settings.SLACK_BOT_TOKEN),
+            "GITHUB_WEBHOOK_SECRET":  bool(settings.GITHUB_WEBHOOK_SECRET),
+            "NGROK_URL":              False,
+        }
+    }

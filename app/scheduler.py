@@ -202,17 +202,18 @@ def execute_pipeline_run(
 
 
 async def _run_execution(run_id: int, worker_id: int, stage_names: list[str]) -> bool:
-    from app.services.worker_pool import simulate_execution
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from app.services.worker_pool import release_worker
 
-    if not stage_names:
-        stage_names = ["Checkout", "Build", "Test", "Deploy"]
+    engine = create_async_engine(settings.DATABASE_URL, echo=False, pool_size=1, max_overflow=1)
+    Session = async_sessionmaker(engine, expire_on_commit=False)
 
-    return await simulate_execution(
-        run_id=run_id,
-        worker_id=worker_id,
-        stage_names=stage_names,
-        db_url=settings.DATABASE_URL,
-    )
+    async with Session() as session:
+        await release_worker(session, worker_id, run_id, success=True)
+
+    await engine.dispose()
+    logger.info("Run %d dispatched — worker %d released, awaiting Jenkins callbacks", run_id, worker_id)
+    return True
 
 
 @celery_app.task(name="app.scheduler.collect_system_metrics")

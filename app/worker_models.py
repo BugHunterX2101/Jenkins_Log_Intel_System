@@ -1,5 +1,5 @@
 """
-Worker ORM models — simulated CI worker pool.
+Worker ORM models — CI worker pool.
 """
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ class AssignmentStatus(str, enum.Enum):
 
 
 class Worker(Base):
-    """A simulated worker node that can execute pipeline jobs."""
+    """A worker node that tracks pipeline job assignments."""
     __tablename__ = "workers"
 
     id:          Mapped[int]    = mapped_column(Integer, primary_key=True, autoincrement=True)

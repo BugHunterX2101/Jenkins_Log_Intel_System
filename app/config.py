@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # Git token — used to fetch Jenkinsfiles from private repositories
     GITHUB_TOKEN: str = ""
 
+    # Email notifications (optional)
+    SENDER_EMAIL: str = ""
+
     # Webhook HMAC secrets — omit or leave blank to disable signature verification
     JENKINS_WEBHOOK_SECRET: str = ""
     GITHUB_WEBHOOK_SECRET: str = ""

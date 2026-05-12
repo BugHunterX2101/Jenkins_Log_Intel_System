@@ -63,12 +63,13 @@ async def _run_email(job_name, build_number, summary_text, fix_suggestions, seve
 
 
 def _send_email_sync(job_name, build_number, summary_text, fix_suggestions, severity, log_url, to_address, smtp_host="localhost", smtp_port=25):
+    sender = settings.SENDER_EMAIL or f"cibot@{smtp_host}"
     fix_items = "".join(f"<li>{f}</li>" for f in fix_suggestions)
     html = f"<html><body><h2>🔴 {job_name} #{build_number} [{severity}]</h2><p>{summary_text}</p><ol>{fix_items}</ol><a href='{log_url}'>View Log</a></body></html>"
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"[{severity}] Jenkins failed — {job_name} #{build_number}"
-    msg["From"]    = "cibot@example.com"
+    msg["From"]    = sender
     msg["To"]      = to_address
     msg.attach(MIMEText(html, "html"))
     with smtplib.SMTP(smtp_host, smtp_port) as smtp:
-        smtp.sendmail("cibot@example.com", [to_address], msg.as_string())
+        smtp.sendmail(sender, [to_address], msg.as_string())

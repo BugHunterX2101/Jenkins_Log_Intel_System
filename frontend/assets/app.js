@@ -139,78 +139,6 @@
 
   const attachWebhookActions = () => {};
 
-  // ─── Webhook trigger form → POST /jobs/trigger ────────────────────────────
-  const _REPO_URL_MAP = {
-    "jenkins-core/pipeline-engine": "https://github.com/jenkins-core/pipeline-engine",
-    "frontend/ui-components":       "https://github.com/frontend/ui-components",
-    "backend/auth-service":         "https://github.com/backend/auth-service",
-  };
-
-  const attachWebhookTrigger = () => {
-    const triggerBtn = Array.from(document.querySelectorAll("button")).find(
-      (b) => normalize(b.textContent).includes("example payload") ||
-             normalize(b.textContent).includes("trigger webhook") ||
-             normalize(b.textContent).includes("send webhook")
-    );
-    if (!triggerBtn) return;
-
-    bindOnce(triggerBtn, async () => {
-      const repoEl   = document.querySelector('[data-ui="wh-repo"]');
-      const branchEl = document.querySelector('[data-ui="wh-branch"]');
-      const shaEl    = document.querySelector('[data-ui="wh-sha"]');
-      const authorEl = document.querySelector('[data-ui="wh-author"]');
-      const burstEl  = document.querySelector('[data-ui="burst-mode-toggle"]');
-
-      const repoName  = repoEl?.value  || "jenkins-core/pipeline-engine";
-      const branch    = branchEl?.value || "main";
-      const sha       = shaEl?.value   || "";
-      const author    = authorEl?.value || "devops-bot";
-      const burstCount = Math.max(1, Math.min(5, Number(burstEl?.dataset.burst || 1)));
-
-      const repoUrl = _REPO_URL_MAP[repoName] || `https://github.com/${repoName}`;
-
-      triggerBtn.disabled = true;
-      const origHtml = triggerBtn.innerHTML;
-      triggerBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">sync</span> Sending…';
-
-      const triggerPayload = JSON.stringify({
-        repo_url:     repoUrl,
-        branch,
-        commit_sha:   sha || undefined,
-        author,
-        triggered_by: "manual-webhook",
-      });
-
-      try {
-        await Promise.all(
-          Array.from({ length: burstCount }, () =>
-            fetch("/jobs/trigger", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: triggerPayload,
-            }).then(async (res) => {
-              if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-            })
-          )
-        );
-        const icon = document.createElement("span");
-        icon.className = "material-symbols-outlined text-[16px]";
-        icon.textContent = "check_circle";
-        const msg = document.createTextNode(` Webhook triggered — ${burstCount} run${burstCount > 1 ? "s" : ""} queued`);
-        const frag = document.createDocumentFragment();
-        frag.appendChild(icon);
-        frag.appendChild(msg);
-        showToast(frag);
-        setTimeout(populateWebhookEvents, 600);
-      } catch (err) {
-        showToast(`Trigger failed: ${err.message}`, true, 4000);
-      } finally {
-        triggerBtn.disabled = false;
-        triggerBtn.innerHTML = origHtml;
-      }
-    });
-  };
-
   const populateQueueMetrics = async () => {
     try {
       const response = await fetch('/ui/queue');
@@ -493,18 +421,21 @@
     if (!database) return;
 
     const totalRecords = document.querySelector('[data-ui="queue-db-total-records"]');
-    const fileSize = document.querySelector('[data-ui="queue-db-size"]');
-    const jobRows = document.querySelector('[data-ui="queue-db-job-rows"]');
-    const execRows = document.querySelector('[data-ui="queue-db-exec-rows"]');
-    const workerRows = document.querySelector('[data-ui="queue-db-worker-rows"]');
+    const jobRows     = document.querySelector('[data-ui="queue-db-job-rows"]');
+    const execRows    = document.querySelector('[data-ui="queue-db-exec-rows"]');
+    const workerRows  = document.querySelector('[data-ui="queue-db-worker-rows"]');
     const webhookRows = document.querySelector('[data-ui="queue-db-webhook-rows"]');
 
+    const findRows = (name) => {
+      const t = (database.tables || []).find(t => t.name === name);
+      return Number(t?.rows || 0).toLocaleString();
+    };
+
     if (totalRecords) totalRecords.textContent = Number(database.total_records || 0).toLocaleString();
-    if (fileSize) fileSize.textContent = `File size: ${database.file_size || '-'}`;
-    if (jobRows && database.tables?.[0]) jobRows.textContent = `${Number(database.tables[0].rows || 0).toLocaleString()} rows`;
-    if (execRows && database.tables?.[1]) execRows.textContent = `${Number(database.tables[1].rows || 0).toLocaleString()} rows`;
-    if (workerRows && database.tables?.[2]) workerRows.textContent = `${Number(database.tables[2].rows || 0).toLocaleString()} rows`;
-    if (webhookRows && database.tables?.[3]) webhookRows.textContent = `${Number(database.tables[3].rows || 0).toLocaleString()} rows`;
+    if (jobRows)     jobRows.textContent     = `${findRows('pipeline_runs')} rows`;
+    if (execRows)    execRows.textContent    = `${findRows('stage_executions')} rows`;
+    if (workerRows)  workerRows.textContent  = `${findRows('build_events')} rows`;
+    if (webhookRows) webhookRows.textContent = `${findRows('workers')} rows`;
   };
 
   const renderBackendPanel = (data) => {
@@ -541,6 +472,9 @@
       memory.innerHTML = `${formatBytes(used)} <span class="text-outline font-body-md text-body-md">/ ${formatBytes(total)}</span>`;
       if (memoryBar) memoryBar.style.setProperty('--bar-w', `${pct}%`);
     }
+
+    const cpu = document.querySelector('[data-ui="backend-cpu"]');
+    if (cpu) cpu.textContent = `${Math.round(backend.cpu_percent || 0)}%`;
 
     const buildEvents = data.build_events || [];
     const latest = buildEvents[0];
@@ -1329,15 +1263,16 @@
     }
   };
 
-  // ─── Webhooks page: copy URL, visibility toggle, reset, burst mode ───
+  // ─── Webhooks page: copy URL, visibility toggle ───
   const attachWebhookPageActions = () => {
-    const ngrokInput = document.querySelector('[data-ui="ngrok-url"]');
-    // Populate with the real public URL including the /github-webhook/ path
-    if (ngrokInput && ngrokInput.value.includes('[configure')) {
-      ngrokInput.value = window.location.origin + '/github-webhook/';
-    }
+    const webhookUrl = window.location.origin + '/github-webhook/';
+    document.querySelectorAll('[data-ui="ngrok-url"]').forEach((el) => {
+      const isInput = el.tagName === 'INPUT';
+      if (isInput && el.value.includes('[configure')) el.value = webhookUrl;
+      if (!isInput && el.textContent.includes('[configure')) el.textContent = webhookUrl;
+    });
+    const ngrokInput = document.querySelector('input[data-ui="ngrok-url"]');
 
-    // Populate the secret hint from backend config
     const whSecretInput = document.querySelector('input[type="password"]');
     if (whSecretInput && !whSecretInput.value) {
       fetch('/ui/webhook-config')
@@ -1364,44 +1299,13 @@
     }
 
     const secretInput = document.querySelector('input[type="password"]');
-    const visBtn = secretInput?.closest('div')?.querySelector('button');
+    const visBtn = secretInput?.closest('div')?.querySelector('button[type="button"]');
     if (visBtn && secretInput) {
       bindOnce(visBtn, () => {
         const isHidden = secretInput.type === 'password';
         secretInput.type = isHidden ? 'text' : 'password';
         const icon = visBtn.querySelector('.material-symbols-outlined');
         if (icon) icon.textContent = isHidden ? 'visibility_off' : 'visibility';
-      });
-    }
-
-    const resetBtn = Array.from(document.querySelectorAll('button')).find(b => normalize(b.textContent).includes('reset defaults'));
-    if (resetBtn) {
-      bindOnce(resetBtn, () => {
-        const branch = document.querySelector('[data-ui="wh-branch"]');
-        const sha = document.querySelector('[data-ui="wh-sha"]');
-        const author = document.querySelector('[data-ui="wh-author"]');
-        const repo = document.querySelector('[data-ui="wh-repo"]');
-        const eventType = document.querySelector('[data-ui="wh-event-type"]');
-        if (branch) branch.value = 'main';
-        if (sha) sha.value = '';
-        if (author) author.value = 'devops-bot';
-        if (repo) repo.selectedIndex = 0;
-        if (eventType) eventType.selectedIndex = 0;
-      });
-    }
-
-    const burstToggle = document.querySelector('[data-ui="burst-mode-toggle"]');
-    if (burstToggle) {
-      bindOnce(burstToggle, () => {
-        const active = burstToggle.dataset.burst === '1';
-        burstToggle.dataset.burst = active ? '5' : '1';
-        burstToggle.classList.toggle('bg-primary', !active);
-        burstToggle.classList.toggle('bg-outline-variant', active);
-        const dot = burstToggle.querySelector('div');
-        if (dot) {
-          dot.classList.toggle('left-[18px]', !active);
-          dot.classList.toggle('left-0.5', active);
-        }
       });
     }
   };
@@ -1514,7 +1418,7 @@
         tr.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
         const queuedAt = run.queued_at ? new Date(run.queued_at).toLocaleString() : '—';
         const duration = run.duration_s != null ? `${Math.floor(run.duration_s / 60)}m ${run.duration_s % 60}s` : '—';
-        const trigger = (run.triggered_by || 'api').replace('github-push', 'github').replace('random-arrival', 'scheduler');
+        const trigger = (run.triggered_by || 'api').replace('github-push', 'github');
         tr.innerHTML = `
           <td class="px-md py-sm font-code-sm text-code-sm text-primary">#${run.id}</td>
           <td class="px-md py-sm"><div class="font-medium">${run.repo || '—'}</div><div class="text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span>${run.branch || ''}</div></td>
@@ -1557,12 +1461,13 @@
   // ─── Settings page ───
   const populateSettings = async () => {
     try {
-      const [healthRes, bootstrapRes, workersRes] = await Promise.all([
-        fetch('/health'), fetch('/ui/bootstrap'), fetch('/api/workers'),
+      const [healthRes, bootstrapRes, workersRes, configRes] = await Promise.all([
+        fetch('/health'), fetch('/ui/bootstrap'), fetch('/api/workers'), fetch('/ui/config-status'),
       ]);
       const health = healthRes.ok ? await healthRes.json() : {};
       const bootstrap = bootstrapRes.ok ? await bootstrapRes.json() : {};
       const workersData = workersRes.ok ? await workersRes.json() : {};
+      const configStatus = configRes.ok ? (await configRes.json()).vars || {} : {};
 
       const set = (sel, v) => { const el = document.querySelector(sel); if (el) el.textContent = String(v ?? '—'); };
       set('[data-ui="st-version"]', health.version);
@@ -1598,16 +1503,16 @@
       // Env var status inference
       const envBody = document.querySelector('[data-ui="st-env-body"]');
       const envVars = [
-        { name: 'DATABASE_URL', inferred: bootstrap.backend?.status === 'RUNNING', desc: 'PostgreSQL connection string' },
-        { name: 'REDIS_URL', inferred: bootstrap.backend?.status === 'RUNNING', desc: 'Celery broker URL' },
-        { name: 'JENKINS_URL', inferred: false, desc: 'Jenkins base URL for log fetching' },
-        { name: 'JENKINS_USER', inferred: false, desc: 'Jenkins username' },
-        { name: 'JENKINS_TOKEN', inferred: false, desc: 'Jenkins API token' },
-        { name: 'GROQ_API_KEY', inferred: false, desc: 'Primary LLM (Groq)' },
-        { name: 'ANTHROPIC_API_KEY', inferred: false, desc: 'Secondary LLM fallback' },
-        { name: 'SLACK_BOT_TOKEN', inferred: false, desc: 'Slack alert delivery' },
-        { name: 'GITHUB_WEBHOOK_SECRET', inferred: false, desc: 'HMAC secret for GitHub webhooks' },
-        { name: 'NGROK_URL', inferred: false, desc: 'Public tunnel URL for webhooks' },
+        { name: 'DATABASE_URL',          inferred: configStatus['DATABASE_URL']          ?? (bootstrap.backend?.status === 'RUNNING'), desc: 'PostgreSQL connection string' },
+        { name: 'REDIS_URL',             inferred: configStatus['REDIS_URL']             ?? (bootstrap.backend?.status === 'RUNNING'), desc: 'Celery broker URL' },
+        { name: 'JENKINS_URL',           inferred: configStatus['JENKINS_URL']           ?? false, desc: 'Jenkins base URL for log fetching' },
+        { name: 'JENKINS_USER',          inferred: configStatus['JENKINS_USER']          ?? false, desc: 'Jenkins username' },
+        { name: 'JENKINS_TOKEN',         inferred: configStatus['JENKINS_TOKEN']         ?? false, desc: 'Jenkins API token' },
+        { name: 'GROQ_API_KEY',          inferred: configStatus['GROQ_API_KEY']          ?? false, desc: 'Primary LLM (Groq)' },
+        { name: 'ANTHROPIC_API_KEY',     inferred: configStatus['ANTHROPIC_API_KEY']     ?? false, desc: 'Secondary LLM fallback' },
+        { name: 'SLACK_BOT_TOKEN',       inferred: configStatus['SLACK_BOT_TOKEN']       ?? false, desc: 'Slack alert delivery' },
+        { name: 'GITHUB_WEBHOOK_SECRET', inferred: configStatus['GITHUB_WEBHOOK_SECRET'] ?? false, desc: 'HMAC secret for GitHub webhooks' },
+        { name: 'NGROK_URL',             inferred: configStatus['NGROK_URL']             ?? false, desc: 'Public tunnel URL for webhooks' },
       ];
       if (envBody) {
         envBody.innerHTML = envVars.map((v) => `
@@ -1663,7 +1568,6 @@
     attachHeaderIconButtons();
     if (currentPath().startsWith('/webhooks')) {
       attachWebhookPageActions();
-      attachWebhookTrigger();
     }
 
     if (currentPath().startsWith('/queue')) {
