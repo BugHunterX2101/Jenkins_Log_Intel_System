@@ -40,7 +40,7 @@ def test_notifier_importable():
 def test_webhook_failure_event_does_not_make_network_calls(client):
     """
     POST /webhook/jenkins with a FAILURE event must return 200 immediately.
-    The background task (process_build_failure) must NOT make real HTTP calls
+    The async background hook must NOT make real HTTP calls
     to Jenkins; it should be intercepted at the task level.
     """
     import json
@@ -49,7 +49,10 @@ def test_webhook_failure_event_does_not_make_network_calls(client):
         "build": {"phase": "FINALIZED", "status": "FAILURE",
                   "number": 1, "full_url": "http://jenkins.test/job/svc/1/"}
     }
-    with patch("app.tasks.process_build_failure") as mock_fn:
+    with patch(
+        "app.routers.webhook._schedule_failure_processing_async",
+        new_callable=AsyncMock,
+    ) as mock_fn:
         resp = client.post(
             "/webhook/jenkins",
             content=json.dumps(payload),
@@ -57,7 +60,7 @@ def test_webhook_failure_event_does_not_make_network_calls(client):
         )
     assert resp.status_code == 200
     assert resp.json()["received"] is True
-    # The background task function must have been called once
+    # The async background hook must have been scheduled once.
     mock_fn.assert_called_once_with(payload)
 
 
@@ -306,51 +309,34 @@ def test_get_run_uses_selectinload():
     )
 
 
-# ── Bug 7: simulate_execution fallback stages need DB rows ───────────────────
+# ── Bug 7: fallback stages need DB rows ───────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_simulate_execution_creates_stage_rows_for_fallback():
+async def test_schedule_pipeline_creates_stage_rows_for_fallback():
     """
-    When stage_names is empty, simulate_execution falls back to
+    When Jenkinsfile stage discovery returns nothing, schedule_pipeline falls back to
     ['Checkout','Build','Test','Deploy']. These stages have no StageExecution
     rows in the DB. The fix: create the rows before simulating.
 
-    We verify that StageExecution objects are added to the session when
-    stage_names is empty and run.stages is also empty.
+    We verify that StageExecution objects are added to the session when the
+    fallback path is used.
     """
-    from app.services.worker_pool import simulate_execution
-    from app.pipeline_models import StageExecution, StageStatus, RunStatus
+    from app.services.job_scheduler import schedule_pipeline
+    from app.pipeline_models import StageExecution
 
     added_objects = []
 
-    mock_run = MagicMock()
-    mock_run.stages = []  # no existing stages
-    mock_run.stage_names_csv = None
-
     mock_session = AsyncMock()
     mock_session.add = lambda obj: added_objects.append(obj)
+    mock_session.flush.side_effect = lambda: setattr(added_objects[0], "id", 1)
 
-    with patch("app.services.worker_pool.create_async_engine", return_value=AsyncMock()), \
-         patch("app.services.worker_pool.sessionmaker") as mock_sf, \
-         patch("app.services.worker_pool.on_stage_started", new_callable=AsyncMock), \
-         patch("app.services.worker_pool.on_stage_completed", new_callable=AsyncMock), \
-         patch("app.services.worker_pool.on_build_completed", new_callable=AsyncMock), \
-         patch("app.services.worker_pool.release_worker", new_callable=AsyncMock), \
-         patch("app.services.worker_pool.get_run", new_callable=AsyncMock, return_value=mock_run):
-
-        # Make sessionmaker return a context manager that yields mock_session
-        ctx = AsyncMock()
-        ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        ctx.__aexit__ = AsyncMock(return_value=False)
-        mock_sf.return_value.return_value = ctx
-
-        with patch("asyncio.sleep", new_callable=AsyncMock):
-            await simulate_execution(
-                run_id=1,
-                worker_id=1,
-                stage_names=[],   # empty → triggers the fallback path
-                db_url="postgresql+asyncpg://x:x@localhost/x",
-            )
+    with patch("app.services.job_scheduler.get_pipeline_stages", new_callable=AsyncMock, return_value=[]), \
+         patch("app.pipeline_tasks.trigger_jenkins_build.delay"):
+        await schedule_pipeline(
+            mock_session,
+            repo_url="https://github.com/acme/svc.git",
+            branch="main",
+        )
 
     # StageExecution objects should have been added for the fallback stages
     stage_objects = [o for o in added_objects if isinstance(o, StageExecution)]

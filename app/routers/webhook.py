@@ -31,10 +31,10 @@ def _verify_signature(body: bytes, signature_header: str | None) -> bool:
 
 
 async def _schedule_failure_processing_async(payload: dict) -> None:
-    """Run failure processing out-of-band so webhook ACK returns immediately."""
-    from app.tasks import process_build_failure
+    """Run failure processing in the same event loop — avoids asyncpg multi-loop conflict on Windows."""
+    from app.tasks import _process_async
     try:
-        await asyncio.to_thread(process_build_failure, payload)
+        await _process_async(payload)
     except Exception as exc:
         logger.exception("Jenkins failure processing crashed: %s", exc)
 

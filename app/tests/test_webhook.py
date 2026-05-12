@@ -3,7 +3,7 @@
 import hashlib
 import hmac
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import AsyncMock, patch
 import pytest
 
 
@@ -30,11 +30,12 @@ SUCCESS_PAYLOAD = {
 
 
 def test_webhook_accepts_failure_event(client):
-    # BUG FIX: The original test triggered the real background task which
-    # makes network calls to jenkins.test. We must mock process_build_failure
-    # so the test only verifies the endpoint's HTTP contract, not task execution.
-    # The import happens inside the handler, so we patch at the source module.
-    with patch("app.tasks.process_build_failure") as mock_task:
+    # BUG FIX: The route schedules async failure processing. Mock that hook so
+    # the test verifies the endpoint contract without fetching Jenkins logs.
+    with patch(
+        "app.routers.webhook._schedule_failure_processing_async",
+        new_callable=AsyncMock,
+    ):
         resp = client.post(
             "/webhook/jenkins",
             content=json.dumps(FAILURE_PAYLOAD),
