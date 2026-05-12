@@ -134,7 +134,7 @@
 <button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all p-2 rounded-full cursor-pointer active:opacity-80"><span class="material-symbols-outlined">health_and_safety</span></button>
 <button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all p-2 rounded-full cursor-pointer active:opacity-80"><span class="material-symbols-outlined">cloud_sync</span></button>
 <button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all p-2 rounded-full cursor-pointer active:opacity-80"><span class="material-symbols-outlined">settings</span></button>
-<img alt="User profile" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="Professional headshot of a person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlG8Pim3wbLASXLqp-CimY8vDZVM-ldh0tT8sTHh7IfK3mPGCaBHbKDO7NJIZTfgHw0PocOXA73_sKjaSTWhCi_ngSGaz8uGN8hdELyT7k2v767Whg0QuZt4r7sC57AKUklcMpfrVfy9gwWEQFPuqRY0BIOlzUlc_k5oVuUfwsm9QOzW42VTYz1zfj-CccbEuoazNl_xEkte09a1bSygQN5Cuy2VIQeInE1kCDOsEjhdR9wje7UMhpMKncoiQJtE5mMy7oWZ06BeU"/>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">account_circle</span></div>
 </div>
 </div>
 </nav>
@@ -175,11 +175,10 @@
 </div>
 </header>
 <!-- Configuration Bar -->
-<section class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md mb-lg ambient-shadow flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-<div class="flex-1 flex flex-col gap-sm w-full">
+<section class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md mb-lg ambient-shadow flex flex-col gap-sm">
 <label class="font-label-md text-label-md text-on-surface-variant flex justify-between">
-                    Endpoint URL (real webhook)
-                    <span class="text-primary-container flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-container"></span> CONNECTED</span>
+  Webhook Endpoint URL
+  <span class="flex items-center gap-1 text-primary"><span class="w-2 h-2 rounded-full bg-primary"></span> LISTENING</span>
 </label>
 <div class="flex flex-col sm:flex-row gap-sm w-full">
 <div class="relative flex-1">
@@ -188,21 +187,9 @@
 </div>
 <button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded font-label-md text-label-md text-on-surface flex items-center justify-center gap-2 transition-colors whitespace-nowrap">
 <span class="material-symbols-outlined text-[16px]">content_copy</span> Copy URL
-                    </button>
-</div>
-</div>
-<div class="flex-1 flex flex-col gap-sm w-full">
-<label class="font-label-md text-label-md text-on-surface-variant">Webhook Secret</label>
-<div class="flex gap-sm w-full">
-<div class="relative flex-1">
-<span class="absolute left-3 top-2.5 material-symbols-outlined text-outline text-[20px]">key</span>
-<input class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="password" placeholder="[set via GITHUB_WEBHOOK_SECRET env var]" value=""/>
-</div>
-<button class="px-3 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded text-on-surface transition-colors flex items-center justify-center">
-<span class="material-symbols-outlined text-[18px]">visibility</span>
 </button>
 </div>
-</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Configure this URL as the Payload URL in GitHub → Settings → Webhooks. Replace the hostname with your public ngrok URL when tunnelling.</p>
 </section>
 <!-- Accepted Events Info -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg mb-lg">

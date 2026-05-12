@@ -1016,6 +1016,14 @@
       const lastEl = document.querySelector('[data-ui="last-updated"]');
       if (lastEl) lastEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
 
+      // System health icon — green when ok, red otherwise
+      const healthIcon = document.querySelector('[data-ui="health-status-icon"]');
+      if (healthIcon) {
+        const ok = (data.health?.status === 'ok');
+        healthIcon.textContent = ok ? 'check_circle' : 'error';
+        healthIcon.className = `material-symbols-outlined ${ok ? 'text-green-600 bg-green-50' : 'text-error bg-error-container'} rounded-full p-1 text-[18px]`;
+      }
+
       // Queue counts — show active depth (QUEUED + IN_PROGRESS), not historical total
       const qDepth = document.querySelector('[data-ui="queue-depth"]');
       if (qDepth && data.queue) {
@@ -1450,7 +1458,11 @@
         tr.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
         const queuedAt = run.queued_at ? new Date(run.queued_at).toLocaleString() : '—';
         const duration = run.duration_s != null ? `${Math.floor(run.duration_s / 60)}m ${run.duration_s % 60}s` : '—';
-        const trigger = (run.triggered_by || 'api').replace('github-push', 'github');
+        const trigger = (run.triggered_by || 'api')
+          .replace('github-push', 'github')
+          .replace('github-pull_request', 'github-pr')
+          .replace('jenkins-push', 'jenkins')
+          .replace('manual-webhook', 'manual');
         tr.innerHTML = `
           <td class="px-md py-sm font-code-sm text-code-sm text-primary">#${run.id}</td>
           <td class="px-md py-sm"><div class="font-medium">${run.repo || '—'}</div><div class="text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span>${run.branch || ''}</div></td>
@@ -1530,7 +1542,7 @@
       }
 
       const ngrokInput = document.querySelector('[data-ui="st-ngrok-url"]');
-      if (ngrokInput) ngrokInput.value = window.location.origin;
+      if (ngrokInput) ngrokInput.value = window.location.origin + '/github-webhook/';
 
       // Env var status inference
       const envBody = document.querySelector('[data-ui="st-env-body"]');
@@ -1670,6 +1682,12 @@
 
     if (currentPath().startsWith('/backend')) {
       attachBackendButtons();
+      // Refresh backend console data every 5s (faster than the global 10s bootstrap poll)
+      const beInterval = setInterval(() => {
+        if (document.querySelector('[data-ui="backend-request-body"]')) populateBootstrapData();
+        else clearInterval(beInterval);
+      }, 5000);
+      _allPollingIntervals.push(beInterval);
     }
 
     if (currentPath().startsWith('/explorer')) {
