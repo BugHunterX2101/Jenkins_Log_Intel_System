@@ -70,6 +70,9 @@ def _get_priority(branch: str) -> str:
     return "p6 (normal)"
 
 
+from app.request_log import get_route_stats as _rlog_stats
+
+
 @router.get("/bootstrap", summary="Bootstrap payload for the frontend")
 async def bootstrap(request: Request, session: AsyncSession = Depends(get_session)) -> dict:
     workers: list = []
@@ -87,28 +90,17 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
         )
         metric = latest_metric.scalars().first()
 
-        if metric:
-            # Use stored metrics for process-level data (uptime, memory, cpu)
-            uptime_seconds = metric.uptime_seconds
-            memory_info_rss = metric.memory_used_bytes
-            memory_total = metric.memory_total_bytes
-            queue_total = metric.queue_total
-            busy_workers = metric.busy_workers
-            worker_total = metric.worker_total
-            cpu_percent = metric.cpu_percent
-        else:
-            # Fall back to live computation
-            process = psutil.Process()
-            memory_info = process.memory_info()
-            virtual_memory = psutil.virtual_memory()
-            uptime_seconds = int(time.time() - process.create_time())
-            memory_info_rss = memory_info.rss
-            memory_total = virtual_memory.total
-            cpu_percent = process.cpu_percent(interval=None)
-
-            queue_total = sum(len(items) for items in snapshot.values())
-            busy_workers = sum(1 for worker in workers if worker.status == WorkerStatus.BUSY)
-            worker_total = len(workers)
+        # Always read live system metrics — never use stale stored values for the bootstrap display
+        process = psutil.Process()
+        memory_info = process.memory_info()
+        virtual_memory = psutil.virtual_memory()
+        uptime_seconds = int(time.time() - process.create_time())
+        memory_info_rss = memory_info.rss
+        memory_total = virtual_memory.total
+        cpu_percent = process.cpu_percent(interval=None)
+        queue_total = sum(len(items) for items in snapshot.values())
+        busy_workers = sum(1 for worker in workers if worker.status == WorkerStatus.BUSY)
+        worker_total = len(workers)
     except Exception as exc:
         logger.warning("bootstrap: DB or snapshot error — returning minimal payload: %s", exc)
         # Fallback minimal payload when DB unavailable or snapshot fails
@@ -144,10 +136,8 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
     queue_depth_samples = [max(0, queue_total - index) for index, _ in enumerate(range(min(queue_total, 12)))]
 
     endpoint_rows = [
-        {"route": "/ui/bootstrap",    "status": "Healthy", "latency": "-", "rate": "-"},
-        {"route": "/ui/queue",        "status": "Healthy", "latency": "-", "rate": "-"},
-        {"route": "/ui/scheduler",    "status": "Healthy", "latency": "-", "rate": "-"},
-        {"route": "/ui/build_events", "status": "Healthy", "latency": "-", "rate": "-"},
+        {"route": r, "status": "Healthy", **_rlog_stats(r)}
+        for r in ("/ui/bootstrap", "/ui/queue", "/ui/scheduler", "/ui/build_events")
     ]
 
     try:
@@ -156,28 +146,9 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
     except Exception:
         build_events = []
 
-    request_feed = []
-    for run in latest_runs[:6]:
-        route = "/webhook/github" if "github" in (run.get("triggered_by") or "") else "/api/v1/jobs/sync"
-        request_feed.append(
-            {
-                "id": f"#run_{run.get('id')}",
-                "timestamp": run.get("queued_at"),
-                "method": "POST" if route.startswith("/webhook") else "GET",
-                "route": route,
-                "status": "200" if run.get("status") else "202",
-            }
-        )
-    for event in build_events[:4]:
-        request_feed.append(
-            {
-                "id": f"#evt_{event.id}",
-                "timestamp": event.processed_at.isoformat() if event.processed_at else None,
-                "method": "POST",
-                "route": "/webhook/jenkins",
-                "status": "200" if event.delivery_status else "202",
-            }
-        )
+    # Real HTTP request log populated by the middleware in main.py
+    from app.request_log import get_recent as _get_recent_requests
+    request_feed = _get_recent_requests(20)
 
     return {
         "health": {
@@ -326,8 +297,34 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
         queued_runs = []
         inprog_runs = []
     
+    # Compute real average job duration from recent completed runs
+    try:
+        completed_result = await session.execute(
+            select(PipelineRun)
+            .where(PipelineRun.status == RunStatus.COMPLETED, PipelineRun.duration_s.isnot(None))
+            .order_by(PipelineRun.completed_at.desc())
+            .limit(20)
+        )
+        completed_sample = completed_result.scalars().all()
+        avg_duration_s = (
+            sum(r.duration_s for r in completed_sample) / len(completed_sample)
+            if completed_sample else None
+        )
+    except Exception:
+        avg_duration_s = None
+
+    def _fmt_wait(seconds: float) -> str:
+        s = int(seconds)
+        if s < 60:
+            return f"{s}s"
+        return f"{s // 60}m {s % 60}s"
+
     scheduled_jobs = []
     for idx, run in enumerate(queued_runs[:20]):
+        if avg_duration_s is not None:
+            estimated_wait = _fmt_wait((len(queued_runs) - idx) * avg_duration_s)
+        else:
+            estimated_wait = "—"
         scheduled_jobs.append({
             "id": run.id,
             "repo": _repo_short_name(run.repo_url),
@@ -335,7 +332,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
             "author": run.author,
             "job_name": run.jenkins_job_name,
             "priority": _get_priority(run.branch),
-            "estimated_wait": f"{(len(queued_runs) - idx) * 2}m",
+            "estimated_wait": estimated_wait,
             "queued_at": run.queued_at.isoformat() if run.queued_at else None,
         })
     

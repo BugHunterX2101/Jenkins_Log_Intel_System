@@ -5,10 +5,11 @@ Jenkins Log Intelligence Engine — FastAPI application factory v1.2
 import asyncio
 import os
 import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -105,6 +106,20 @@ app = FastAPI(
     version="1.2.0",
     lifespan=lifespan,
 )
+
+@app.middleware("http")
+async def track_http_requests(request: Request, call_next):
+    """Capture real latency + status for every API call — powers Live Request Feed."""
+    from app.request_log import log_request
+    start = time.perf_counter()
+    response = await call_next(request)
+    latency_ms = (time.perf_counter() - start) * 1000
+    path = request.url.path
+    # Skip static assets and noisy health pings to keep the feed meaningful
+    if not path.startswith("/assets") and path not in ("/favicon.ico",):
+        log_request(request.method, path, response.status_code, latency_ms)
+    return response
+
 
 app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="frontend-assets")
 

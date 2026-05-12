@@ -555,19 +555,26 @@
 
     if (requestBody) {
       requestBody.innerHTML = '';
-      (data.backend_request_feed || []).forEach((request) => {
-        const tr = document.createElement('tr');
-        const statusColor = String(request.status || '').startsWith('5') ? 'text-error' : 'text-primary';
-        tr.className = 'hover:bg-surface-container-low transition-colors';
-        tr.innerHTML = `
-          <td class="py-2 px-md text-outline">${request.id || '-'}</td>
-          <td class="py-2 px-md text-on-surface-variant">${request.timestamp ? new Date(request.timestamp).toLocaleTimeString() : '-'}</td>
-          <td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">${request.method || 'GET'}</span></td>
-          <td class="py-2 px-md text-on-surface">${request.route || '-'}</td>
-          <td class="py-2 px-md text-right"><span class="${statusColor} font-bold">${request.status || '200'}</span></td>
-        `;
-        requestBody.appendChild(tr);
-      });
+      const feed = data.backend_request_feed || [];
+      if (!feed.length) {
+        requestBody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-on-surface-variant text-sm">No requests recorded yet — make any API call to start the feed</td></tr>';
+      } else {
+        feed.forEach((request) => {
+          const tr = document.createElement('tr');
+          const status = String(request.status || '200');
+          const statusColor = status.startsWith('5') ? 'text-error' : status.startsWith('4') ? 'text-tertiary' : 'text-primary';
+          const latency = request.latency_ms != null ? `${request.latency_ms}ms` : '-';
+          tr.className = 'hover:bg-surface-container-low transition-colors';
+          tr.innerHTML = `
+            <td class="py-2 px-md text-outline font-code-sm text-code-sm">${request.id || '-'}</td>
+            <td class="py-2 px-md text-on-surface-variant">${request.timestamp ? new Date(request.timestamp).toLocaleTimeString() : '-'}</td>
+            <td class="py-2 px-md"><span class="bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant">${request.method || 'GET'}</span></td>
+            <td class="py-2 px-md text-on-surface font-code-sm text-code-sm">${request.route || '-'}</td>
+            <td class="py-2 px-md text-right flex items-center justify-end gap-2"><span class="text-on-surface-variant text-xs">${latency}</span><span class="${statusColor} font-bold">${status}</span></td>
+          `;
+          requestBody.appendChild(tr);
+        });
+      }
     }
   };
 
