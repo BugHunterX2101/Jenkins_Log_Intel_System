@@ -184,13 +184,13 @@
 <div class="flex flex-col sm:flex-row gap-sm w-full">
 <div class="relative flex-1">
 <span class="absolute left-3 top-2.5 material-symbols-outlined text-outline text-[20px]">link</span>
-<input data-ui="ngrok-url" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="[configure ngrok — run: .start-ngrok.ps1]"/>
+<input data-ui="ngrok-url" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded font-code-sm text-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="text" placeholder="Detecting ngrok URL…"/>
 </div>
 <button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded font-label-md text-label-md text-on-surface flex items-center justify-center gap-2 transition-colors whitespace-nowrap">
 <span class="material-symbols-outlined text-[16px]">content_copy</span> Copy URL
 </button>
 </div>
-<p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Configure this URL as the Payload URL in GitHub → Settings → Webhooks. Replace the hostname with your public ngrok URL when tunnelling.</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Use this URL as the Payload URL when adding a GitHub webhook. Detected automatically from your running ngrok tunnel.</p>
 </section>
 <!-- Accepted Events Info -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg mb-lg">

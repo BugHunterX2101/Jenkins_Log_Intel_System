@@ -1318,15 +1318,32 @@
     }
   };
 
-  // ─── Webhooks page: copy URL, visibility toggle ───
+  // ─── Webhooks page: auto-detect ngrok URL, copy, visibility toggle ───
   const attachWebhookPageActions = () => {
-    const webhookUrl = window.location.origin + '/github-webhook/';
-    document.querySelectorAll('[data-ui="ngrok-url"]').forEach((el) => {
-      const isInput = el.tagName === 'INPUT';
-      if (isInput && el.value.includes('[configure')) el.value = webhookUrl;
-      if (!isInput && el.textContent.includes('[configure')) el.textContent = webhookUrl;
-    });
     const ngrokInput = document.querySelector('input[data-ui="ngrok-url"]');
+
+    // Auto-detect ngrok URL from the backend (queries localhost:4040/api/tunnels)
+    const _setNgrokUrl = (url) => {
+      document.querySelectorAll('[data-ui="ngrok-url"]').forEach((el) => {
+        if (el.tagName === 'INPUT') el.value = url;
+        else el.textContent = url;
+      });
+    };
+    fetch('/ui/ngrok-url')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d && d.active && d.url) {
+          _setNgrokUrl(d.url);
+          // Mark the LISTENING badge green
+          const badge = document.querySelector('.text-primary span.w-2');
+          if (badge) badge.classList.replace('bg-primary', 'bg-green-500');
+        } else {
+          // ngrok not running — show localhost fallback with a note
+          _setNgrokUrl(window.location.origin + '/github-webhook/');
+          if (ngrokInput) ngrokInput.placeholder = 'ngrok not detected — run: .\\start-ngrok.ps1';
+        }
+      })
+      .catch(() => _setNgrokUrl(window.location.origin + '/github-webhook/'));
 
     const whSecretInput = document.querySelector('input[type="password"]');
     if (whSecretInput && !whSecretInput.value) {

@@ -612,6 +612,25 @@ async def get_webhook_config(request: Request) -> dict:
     }
 
 
+@router.get("/ngrok-url", summary="Detect live ngrok public URL for this server")
+async def get_ngrok_url() -> dict:
+    """Queries ngrok's local management API to find the active public tunnel pointing at port 8000."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get("http://localhost:4040/api/tunnels")
+            if resp.status_code == 200:
+                tunnels = resp.json().get("tunnels", [])
+                for t in tunnels:
+                    addr = t.get("config", {}).get("addr", "")
+                    if t.get("proto") == "https" and ("8000" in addr or "localhost" in addr):
+                        public = t["public_url"].rstrip("/")
+                        return {"url": f"{public}/github-webhook/", "active": True}
+    except Exception:
+        pass
+    return {"url": None, "active": False}
+
+
 @router.get("/scheduler/mode", summary="Get current scheduler routing mode")
 async def get_scheduler_mode() -> dict:
     from app.scheduler import get_routing_mode
