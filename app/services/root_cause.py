@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 
 from app.config import settings
 from app.services.classifier import FailureTag
@@ -107,10 +108,8 @@ async def _call_groq(user_message: str, tag: FailureTag) -> dict | None:
             data = resp.json()
 
         raw = data["choices"][0]["message"]["content"].strip()
-        # Strip markdown code fences (``` or ```json) that some models add despite instructions
-        import re as _re
-        raw = _re.sub(r"^```(?:json)?\s*", "", raw, flags=_re.IGNORECASE).strip()
-        raw = _re.sub(r"\s*```$", "", raw).strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE).strip()
+        raw = re.sub(r"\s*```$", "", raw).strip()
         parsed = json.loads(raw)
         return {
             "summary_text":    parsed.get("summary", _fallback_summary(tag)),
@@ -141,9 +140,8 @@ async def _call_anthropic(user_message: str, tag: FailureTag) -> dict | None:
 
         loop = asyncio.get_running_loop()
         raw = await loop.run_in_executor(None, _sync_call)
-        import re as _re
-        raw = _re.sub(r"^```(?:json)?\s*", "", raw, flags=_re.IGNORECASE).strip()
-        raw = _re.sub(r"\s*```$", "", raw).strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE).strip()
+        raw = re.sub(r"\s*```$", "", raw).strip()
         parsed = json.loads(raw)
         return {
             "summary_text":    parsed.get("summary", _fallback_summary(tag)),

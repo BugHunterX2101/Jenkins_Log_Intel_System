@@ -52,7 +52,8 @@ async def find_similar(session: AsyncSession, error_text: str, top_k: int = 3) -
         vec    = TfidfVectorizer()
         matrix = vec.fit_transform(corpus + [q_norm])
         scores = cosine_similarity(matrix[-1], matrix[:-1])[0]
-    except Exception:
+    except Exception as exc:
+        logger.warning("TF-IDF similarity computation failed: %s", exc)
         return []
 
     matches = [

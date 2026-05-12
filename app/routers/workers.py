@@ -1,5 +1,5 @@
 """
-Workers Router — REST endpoints for the simulated worker pool.
+Workers Router — REST endpoints for the CI worker pool.
 """
 from __future__ import annotations
 

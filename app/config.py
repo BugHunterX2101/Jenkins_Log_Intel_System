@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     # Email notifications (optional)
     SENDER_EMAIL: str = ""
 
+    # Scheduler: max pipeline execution threads running concurrently inside FastAPI process
+    MAX_CONCURRENT_EXECUTIONS: int = 6
+
     # Webhook HMAC secrets — omit or leave blank to disable signature verification
     JENKINS_WEBHOOK_SECRET: str = ""
     GITHUB_WEBHOOK_SECRET: str = ""

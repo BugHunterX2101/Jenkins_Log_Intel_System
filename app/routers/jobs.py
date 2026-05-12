@@ -6,11 +6,15 @@ from __future__ import annotations
 
 from typing import Optional
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
+
+logger = logging.getLogger(__name__)
 from app.services.job_scheduler import (
     get_dashboard_snapshot,
     get_run,
@@ -62,33 +66,25 @@ async def trigger_pipeline(
     }
 
 
+_EMPTY_SNAPSHOT = {"QUEUED": [], "IN_PROGRESS": [], "COMPLETED": [], "FAILED": [], "ABORTED": []}
+
+
 @router.get("", summary="Dashboard snapshot")
 async def dashboard(session: AsyncSession = Depends(get_session)) -> dict:
     try:
         return await get_dashboard_snapshot(session)
-    except Exception:
-        # Return an empty snapshot on DB errors to keep the API stable for tests
-        return {
-            "QUEUED": [],
-            "IN_PROGRESS": [],
-            "COMPLETED": [],
-            "FAILED": [],
-            "ABORTED": [],
-        }
+    except Exception as exc:
+        logger.error("get_dashboard_snapshot failed: %s", exc, exc_info=True)
+        return _EMPTY_SNAPSHOT
 
 
 @router.get("/dashboard", summary="Dashboard snapshot (alias)", include_in_schema=False)
 async def dashboard_alias(session: AsyncSession = Depends(get_session)) -> dict:
     try:
         return await get_dashboard_snapshot(session)
-    except Exception:
-        return {
-            "QUEUED": [],
-            "IN_PROGRESS": [],
-            "COMPLETED": [],
-            "FAILED": [],
-            "ABORTED": [],
-        }
+    except Exception as exc:
+        logger.error("get_dashboard_snapshot (alias) failed: %s", exc, exc_info=True)
+        return _EMPTY_SNAPSHOT
 
 
 @router.get("/{run_id:int}", summary="Single run detail")
@@ -103,9 +99,9 @@ async def run_detail(
         return serialise_run(run)
     except HTTPException:
         raise
-    except Exception:
-        # If DB errors occur, surface 404 to the test harness rather than 500
-        raise HTTPException(status_code=404, detail=f"PipelineRun {run_id} not found")
+    except Exception as exc:
+        logger.error("Failed to retrieve run %d: %s", run_id, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Database error retrieving pipeline run")
 
 
 @router.post("/{run_id:int}/stage-event", summary="Receive stage progress event")

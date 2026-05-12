@@ -214,12 +214,11 @@ async def _sync_stages(run_id: int, job_name: str, build_number: int) -> bool:
                             f"{settings.JENKINS_URL}/job/{encoded_job}/{build_number}"
                             f"/execution/node/{js.get('id', '')}/wfapi/log"
                         )
-                        # FIX: client is still open here (within the outer async with)
                         log_resp = await client.get(log_url, auth=auth)
                         if log_resp.status_code == 200:
                             log_excerpt = log_resp.json().get("text", "")[-1000:]
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("Could not fetch stage log for '%s': %s", name, exc)
 
                     await _on_sc(
                         session, run_id, name,

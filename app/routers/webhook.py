@@ -49,7 +49,10 @@ async def jenkins_webhook(
     if not _verify_signature(body, x_jenkins_signature):
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
-    payload: dict = json.loads(body)
+    try:
+        payload: dict = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"Malformed JSON payload: {exc}") from exc
     build = payload.get("build", {})
 
     if build.get("phase") == "FINALIZED" and build.get("status") == "FAILURE":

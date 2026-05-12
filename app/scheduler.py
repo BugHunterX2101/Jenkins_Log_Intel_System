@@ -71,7 +71,7 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
         active_exec = sum(
             1 for t in threading.enumerate() if t.name.startswith("exec-run-")
         )
-        if active_exec >= 6:          # allow at most 6 concurrent executions
+        if active_exec >= settings.MAX_CONCURRENT_EXECUTIONS:
             logger.debug("Scheduler: %d exec threads active — skipping dispatch", active_exec)
             return {"queued_processed": 0, "assigned": 0, "skipped": True}
 
