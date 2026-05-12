@@ -115,20 +115,8 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
         build_event_count = 0
         stage_exec_count = 0
 
-    # Always compute chaos from the live snapshot so it reflects current pressure,
-    # not a stale historical total that causes the dial to be permanently pegged at 100.
-    active_queue = len(snapshot.get("QUEUED", [])) + len(snapshot.get("IN_PROGRESS", []))
-    failed_capped = min(len(snapshot.get("FAILED", [])), 5)
-    queue_pressure = active_queue + busy_workers * 2 + failed_capped
-    chaos_intensity = max(0, min(100, int(queue_pressure * 2)))
-    if chaos_intensity >= 75:
-        chaos_level = "Critical"
-    elif chaos_intensity >= 45:
-        chaos_level = "High Volatility"
-    elif chaos_intensity >= 20:
-        chaos_level = "Elevated"
-    else:
-        chaos_level = "Normal"
+    from app.utils import compute_chaos
+    chaos_intensity, chaos_level = compute_chaos(snapshot, busy_workers)
 
     from datetime import datetime, timezone
     latest_runs = [run for bucket in snapshot.values() for run in bucket]
@@ -516,18 +504,9 @@ async def get_live_metrics(session: AsyncSession = Depends(get_session)) -> dict
     busy_workers = sum(1 for w in workers if w.status == WorkerStatus.BUSY)
     worker_total = len(workers)
 
-    active_queue    = len(snapshot.get("QUEUED", [])) + len(snapshot.get("IN_PROGRESS", []))
-    failed_capped   = min(len(snapshot.get("FAILED", [])), 5)
-    queue_pressure  = active_queue + busy_workers * 2 + failed_capped
-    chaos_intensity = max(0, min(100, int(queue_pressure * 2)))
-    if chaos_intensity >= 75:
-        chaos_level = "Critical"
-    elif chaos_intensity >= 45:
-        chaos_level = "High Volatility"
-    elif chaos_intensity >= 20:
-        chaos_level = "Elevated"
-    else:
-        chaos_level = "Normal"
+    from app.utils import compute_chaos
+    chaos_intensity, chaos_level = compute_chaos(snapshot, busy_workers)
+    queue_pressure = len(snapshot.get("QUEUED", [])) + len(snapshot.get("IN_PROGRESS", [])) + busy_workers * 2 + min(len(snapshot.get("FAILED", [])), 5)
 
     # Persist snapshot at most every 30 s to avoid write contention when
     # multiple browser tabs each poll this endpoint every 5 s.

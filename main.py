@@ -185,5 +185,11 @@ app.include_router(ui.router)
 
 @app.get("/health")
 async def health() -> dict:
-    """Liveness probe."""
-    return {"status": "ok", "version": "1.2.0"}
+    """Liveness probe — checks real DB connectivity."""
+    from app.utils import check_db_health
+    db_ok = await check_db_health()
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "version": "1.2.0",
+        "db": "ok" if db_ok else "error",
+    }

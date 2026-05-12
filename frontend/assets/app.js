@@ -1031,6 +1031,14 @@
         healthIcon.className = `material-symbols-outlined ${ok ? 'text-green-600 bg-green-50' : 'text-error bg-error-container'} rounded-full p-1 text-[18px]`;
       }
 
+      // Topology dots — green only when system actually has real activity or workers online
+      const triggersDot = document.querySelector('[data-ui="topology-triggers-dot"]');
+      const workersDot  = document.querySelector('[data-ui="topology-workers-dot"]');
+      const hasActivity = ((data.queue?.queued || 0) + (data.queue?.in_progress || 0)) > 0;
+      const hasWorkers  = (data.workers?.total || 0) > 0;
+      if (triggersDot) triggersDot.className = `absolute -top-1 -right-1 w-3 h-3 border-2 border-white rounded-full ${hasActivity ? 'bg-green-500' : 'bg-outline-variant'}`;
+      if (workersDot)  workersDot.className  = `absolute -top-1 -right-1 w-3 h-3 border-2 border-white rounded-full ${hasWorkers  ? 'bg-green-500' : 'bg-outline-variant'}`;
+
       // Queue counts — show active depth (QUEUED + IN_PROGRESS), not historical total
       const qDepth = document.querySelector('[data-ui="queue-depth"]');
       if (qDepth && data.queue) {

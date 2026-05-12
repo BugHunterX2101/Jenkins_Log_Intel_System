@@ -248,21 +248,9 @@ async def _collect_metrics_async() -> dict:
         busy_workers = sum(1 for w in workers if w.status == WorkerStatus.BUSY)
         worker_total = len(workers)
 
-        # Calculate metrics — use active queue (QUEUED + IN_PROGRESS) not historical total
+        from app.utils import compute_chaos
         queue_total = sum(len(items) for items in snapshot.values())
-        active_queue  = len(snapshot.get("QUEUED", [])) + len(snapshot.get("IN_PROGRESS", []))
-        failed_capped = min(len(snapshot.get("FAILED", [])), 5)
-        queue_pressure = active_queue + busy_workers * 2 + failed_capped
-        chaos_intensity = max(0, min(100, int(queue_pressure * 2)))
-
-        if chaos_intensity >= 75:
-            chaos_level = "Critical"
-        elif chaos_intensity >= 45:
-            chaos_level = "High Volatility"
-        elif chaos_intensity >= 20:
-            chaos_level = "Elevated"
-        else:
-            chaos_level = "Normal"
+        chaos_intensity, chaos_level = compute_chaos(snapshot, busy_workers)
 
         # Store metric
         metric = SystemMetrics(
