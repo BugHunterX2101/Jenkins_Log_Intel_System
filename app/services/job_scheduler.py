@@ -73,7 +73,7 @@ async def schedule_pipeline(
     return run
 
 
-async def get_dashboard_snapshot(session: AsyncSession) -> dict:
+async def get_dashboard_snapshot(session: AsyncSession, limit: int = 200) -> dict:
     """
     Return all PipelineRuns grouped by status for the dashboard.
 
@@ -85,6 +85,7 @@ async def get_dashboard_snapshot(session: AsyncSession) -> dict:
         select(PipelineRun)
         .options(selectinload(PipelineRun.stages))
         .order_by(PipelineRun.queued_at.desc())
+        .limit(limit)
     )
     runs = result.scalars().unique().all()
 

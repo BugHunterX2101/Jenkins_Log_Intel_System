@@ -81,13 +81,13 @@ async def test_schedule_pipeline_celery_failure_does_not_propagate():
     mock_run.id = 42
     mock_run.status = RunStatus.QUEUED
     mock_run.stage_names = []
+    mock_session.add = MagicMock()
 
     with patch("app.services.job_scheduler.get_pipeline_stages", return_value=[]), \
          patch("app.services.job_scheduler._derive_job_name", return_value="org/repo/main"), \
          patch.object(mock_session, "flush", new_callable=AsyncMock), \
          patch.object(mock_session, "commit", new_callable=AsyncMock), \
          patch.object(mock_session, "refresh", new_callable=AsyncMock), \
-         patch.object(mock_session, "add"), \
          patch("app.pipeline_tasks.trigger_jenkins_build") as mock_task:
 
         # Simulate the Celery task raising (broker unavailable)

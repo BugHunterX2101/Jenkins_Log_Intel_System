@@ -12,8 +12,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.config import settings
 
-# Global engine - created once at module import time
-_engine = create_async_engine(settings.DATABASE_URL, echo=False)
+# Global engine - created once at module import time.
+# Keep the pool bounded so browser polling and webhook bursts cannot exhaust DB connections.
+_engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+    pool_recycle=1800,
+)
 
 # Global session factory
 _SessionFactory = async_sessionmaker(_engine, expire_on_commit=False)

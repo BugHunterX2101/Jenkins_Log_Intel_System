@@ -24,6 +24,7 @@ router = APIRouter(prefix="/ui", tags=["ui"])
 logger = logging.getLogger(__name__)
 
 _metrics_last_persisted: float | None = None
+UI_RUN_LIMIT = 500
 
 
 def _repo_short_name(url: str) -> str:
@@ -77,7 +78,14 @@ from app.request_log import get_route_stats as _rlog_stats
 async def bootstrap(request: Request, session: AsyncSession = Depends(get_session)) -> dict:
     workers: list = []
     try:
-        snapshot = await get_dashboard_snapshot(session)
+        snapshot = await get_dashboard_snapshot(session, limit=200)
+        status_counts_result = await session.execute(
+            select(PipelineRun.status, func.count(PipelineRun.id)).group_by(PipelineRun.status)
+        )
+        status_counts = {
+            (status.value if hasattr(status, "value") else str(status)): int(count)
+            for status, count in status_counts_result.all()
+        }
 
         worker_result = await session.execute(select(Worker).order_by(Worker.id))
         workers = list(worker_result.scalars().all())
@@ -112,6 +120,7 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
         busy_workers = 0
         worker_total = 0
         snapshot = {"QUEUED": [], "IN_PROGRESS": [], "COMPLETED": [], "FAILED": [], "ABORTED": []}
+        status_counts = {status.value: 0 for status in RunStatus}
         build_event_count = 0
         stage_exec_count = 0
 
@@ -121,8 +130,6 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
     from datetime import datetime, timezone
     latest_runs = [run for bucket in snapshot.values() for run in bucket]
     latest_runs.sort(key=lambda run: run.get("queued_at") or "", reverse=True)
-    queue_depth_samples = [max(0, queue_total - index) for index, _ in enumerate(range(min(queue_total, 12)))]
-
     endpoint_rows = [
         {"route": r, "status": "Healthy", **_rlog_stats(r)}
         for r in ("/ui/bootstrap", "/ui/queue", "/ui/scheduler", "/ui/build_events")
@@ -155,12 +162,12 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
             "cpu_percent": cpu_percent,
         },
         "queue": {
-            "queued": len(snapshot.get("QUEUED", [])),
-            "in_progress": len(snapshot.get("IN_PROGRESS", [])),
-            "completed": len(snapshot.get("COMPLETED", [])),
-            "failed": len(snapshot.get("FAILED", [])),
-            "aborted": len(snapshot.get("ABORTED", [])),
-            "total": queue_total,
+            "queued": status_counts.get("QUEUED", 0),
+            "in_progress": status_counts.get("IN_PROGRESS", 0),
+            "completed": status_counts.get("COMPLETED", 0),
+            "failed": status_counts.get("FAILED", 0),
+            "aborted": status_counts.get("ABORTED", 0),
+            "total": sum(status_counts.values()),
             "avg_wait_seconds": round(
                 sum(
                     max(0, (datetime.now(timezone.utc) - datetime.fromisoformat(run["queued_at"])).total_seconds())
@@ -171,9 +178,9 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
             ) if any(r.get("status") == "QUEUED" for r in latest_runs) else 0.0,
             "latest_runs": latest_runs[:12],
             "database": {
-                "total_records": queue_total + int(stage_exec_count) + int(build_event_count) + worker_total,
+                "total_records": sum(status_counts.values()) + int(stage_exec_count) + int(build_event_count) + worker_total,
                 "tables": [
-                    {"name": "pipeline_runs",    "rows": int(queue_total)},
+                    {"name": "pipeline_runs",    "rows": int(sum(status_counts.values()))},
                     {"name": "stage_executions", "rows": int(stage_exec_count)},
                     {"name": "build_events",     "rows": int(build_event_count)},
                     {"name": "workers",          "rows": int(worker_total)},
@@ -223,8 +230,11 @@ async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
     from app.pipeline_models import RunStatus
     
     try:
-        runs_result = await session.execute(select(PipelineRun).order_by(PipelineRun.queued_at.desc()))
+        runs_result = await session.execute(
+            select(PipelineRun).order_by(PipelineRun.queued_at.desc()).limit(UI_RUN_LIMIT)
+        )
         all_runs = runs_result.scalars().all()
+        total_runs = await session.scalar(select(func.count(PipelineRun.id))) or 0
 
         # Organize by status
         by_status = {}
@@ -251,7 +261,7 @@ async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
                     "duration_s": run.duration_s,
                 })
 
-        return {"runs_by_status": by_status, "total": len(all_runs)}
+        return {"runs_by_status": by_status, "total": int(total_runs), "returned": len(all_runs)}
     except Exception as exc:
         logger.warning("get_queue_data: DB error — returning empty runs: %s", exc)
         by_status = {status.value: [] for status in RunStatus}
@@ -492,7 +502,7 @@ async def get_live_metrics(session: AsyncSession = Depends(get_session)) -> dict
     now = datetime.now(timezone.utc)
 
     try:
-        snapshot = await get_dashboard_snapshot(session)
+        snapshot = await get_dashboard_snapshot(session, limit=200)
         worker_result = await session.execute(select(Worker).order_by(Worker.id))
         workers = worker_result.scalars().all()
     except Exception as exc:
@@ -556,13 +566,18 @@ async def get_live_metrics(session: AsyncSession = Depends(get_session)) -> dict
 
 
 @router.get("/metrics/history", summary="Historical system metrics (last N minutes)")
-async def get_metrics_history(session: AsyncSession = Depends(get_session), minutes: int = 60) -> dict:
+async def get_metrics_history(
+    session: AsyncSession = Depends(get_session),
+    minutes: int = 60,
+    period_minutes: int | None = None,
+) -> dict:
     """
     Returns historical system metrics for trend analysis and graphs.
     Samples every 5 seconds by default.
     """
     from datetime import datetime, timezone, timedelta
     
+    minutes = period_minutes or minutes
     cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     
     try:

@@ -57,10 +57,10 @@ def scheduler_tick() -> dict:
 
 
 async def _scheduler_tick_async(use_celery: bool = False) -> dict:
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-    from sqlalchemy import select, update, func as sa_func
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy import select, update
+    from app.db import get_session_factory
     from app.pipeline_models import PipelineRun, RunStatus, branch_priority_expr
-    from app.worker_models import Worker, WorkerStatus
     from app.services.worker_pool import assign_worker, detect_language
 
     # ── Hard cap on concurrent in-process execution threads ─────────────────
@@ -75,9 +75,18 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
             logger.debug("Scheduler: %d exec threads active — skipping dispatch", active_exec)
             return {"queued_processed": 0, "assigned": 0, "skipped": True}
 
-    engine  = create_async_engine(settings.DATABASE_URL, echo=False,
-                                   pool_size=3, max_overflow=2)
-    Session = async_sessionmaker(engine, expire_on_commit=False)
+    engine = None
+    if use_celery:
+        engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=False,
+            pool_pre_ping=True,
+            pool_size=3,
+            max_overflow=2,
+        )
+        Session = async_sessionmaker(engine, expire_on_commit=False)
+    else:
+        Session = get_session_factory()
 
     assigned_count = 0
 
@@ -93,6 +102,7 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
             select(PipelineRun)
             .where(PipelineRun.status == RunStatus.QUEUED)
             .order_by(*ordering)
+            .limit(settings.MAX_CONCURRENT_EXECUTIONS)
         )
         queued_runs = result.scalars().all()
 
@@ -175,7 +185,8 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
                 await session.commit()
             logger.debug("Scheduler: no idle worker for run %d — reverting to QUEUED", run.id)
 
-    await engine.dispose()
+    if engine is not None:
+        await engine.dispose()
     return {"queued_processed": len(queued_runs), "assigned": assigned_count}
 
 
@@ -205,7 +216,13 @@ async def _run_execution(run_id: int, worker_id: int, stage_names: list[str]) ->
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from app.services.worker_pool import release_worker
 
-    engine = create_async_engine(settings.DATABASE_URL, echo=False, pool_size=1, max_overflow=1)
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True,
+        pool_size=1,
+        max_overflow=1,
+    )
     Session = async_sessionmaker(engine, expire_on_commit=False)
 
     async with Session() as session:
