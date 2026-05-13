@@ -64,6 +64,21 @@ def _get_priority(branch: str) -> str:
     return calculate_pipeline_priority("", branch).label.lower()
 
 
+def _activity_event_label(run: dict) -> str:
+    repo = _repo_short_name(run.get("repo_url", ""))
+    branch = run.get("branch", "unknown")
+    commit = run.get("commit_sha") or ""
+    suffix = f" ({commit[:7]})" if commit else ""
+    trigger = run.get("triggered_by", "")
+    if trigger == "github-tag":
+        return f"Tag {branch.removeprefix('tag/')} - {repo}{suffix}"
+    if trigger == "github-release":
+        return f"Release on {branch} - {repo}{suffix}"
+    if trigger == "github-pull_request":
+        return f"Pull request on {branch} - {repo}{suffix}"
+    return f"Push to {branch} - {repo}{suffix}"
+
+
 from app.request_log import get_route_stats as _rlog_stats
 
 
@@ -205,11 +220,7 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
             {
                 "timestamp": run.get("queued_at"),
                 "source": run.get("author") or _clean_trigger(run.get("triggered_by", "system")),
-                "event": (
-                    f"Push to {run.get('branch', 'unknown')} — "
-                    f"{_repo_short_name(run.get('repo_url', ''))}"
-                    + (f" ({(run.get('commit_sha') or '')[:7]})" if run.get('commit_sha') else "")
-                ),
+                "event": _activity_event_label(run),
                 "status": run.get("status", "QUEUED"),
             }
             for run in latest_runs[:15]

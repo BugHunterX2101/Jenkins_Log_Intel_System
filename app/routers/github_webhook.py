@@ -13,6 +13,7 @@ import hashlib
 import hmac
 import json
 import logging
+import re
 
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 from app.config import settings
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/webhook", tags=["webhooks"])
 github_alias_router = APIRouter(prefix="", tags=["webhooks"])
 
 _GH_SECRET: str = settings.GITHUB_WEBHOOK_SECRET
+_FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 
 
 def _verify_github_sig(body: bytes, sig_header: str | None) -> bool:
@@ -67,10 +69,18 @@ async def _handle_github_event(
     repo_name = repo_obj.get("full_name", "unknown")
 
     branch: str | None = None
+    tag_name: str | None = None
+    release_name: str | None = None
+    event_kind = event
     if event == "push":
         ref = payload.get("ref", "")
         if ref.startswith("refs/heads/"):
             branch = ref[len("refs/heads/"):]
+            event_kind = "push"
+        elif ref.startswith("refs/tags/"):
+            tag_name = ref[len("refs/tags/"):]
+            branch = f"tag/{tag_name}"
+            event_kind = "tag"
         else:
             # Tag push or non-branch ref — skip
             logger.info("GitHub push: non-branch ref %s — skipping", ref)
@@ -81,6 +91,17 @@ async def _handle_github_event(
         if action not in ("opened", "synchronize", "reopened"):
             return {"received": True, "skipped": True, "reason": f"PR action '{action}' ignored"}
         branch = payload.get("pull_request", {}).get("head", {}).get("ref", "")
+        event_kind = "pull_request"
+
+    elif event == "release":
+        action = payload.get("action", "")
+        if action not in ("created", "published", "released", "prereleased"):
+            return {"received": True, "skipped": True, "reason": f"Release action '{action}' ignored"}
+        release = payload.get("release", {}) or {}
+        tag_name = release.get("tag_name")
+        release_name = release.get("name") or tag_name
+        branch = release.get("target_commitish") or repo_obj.get("default_branch") or "main"
+        event_kind = "release"
 
     elif event == "ping":
         # GitHub sends a ping when a webhook is first configured — acknowledge it
@@ -107,10 +128,15 @@ async def _handle_github_event(
         or payload.get("head_commit", {}).get("id")
         or payload.get("pull_request", {}).get("head", {}).get("sha")
     )
+    if event_kind == "release":
+        target = (payload.get("release", {}) or {}).get("target_commitish")
+        commit_sha = target if target and _FULL_SHA_RE.match(target) else None
+
     author: str | None = (
         payload.get("pusher", {}).get("name")
         or payload.get("sender", {}).get("login")
         or payload.get("pull_request", {}).get("user", {}).get("login")
+        or (payload.get("release", {}).get("author", {}) or {}).get("login")
     )
     changed_files = sorted({
         path
@@ -124,11 +150,11 @@ async def _handle_github_event(
     })
 
     logger.info(
-        "REAL GitHub webhook: event=%s repo=%s branch=%s author=%s commit=%s",
-        event, repo_name, branch, author, (commit_sha or "")[:8]
+        "REAL GitHub webhook: event=%s repo=%s branch=%s tag=%s author=%s commit=%s",
+        event_kind, repo_name, branch, tag_name, author, (commit_sha or "")[:8]
     )
 
-    bg.add_task(_enqueue_run, repo_url, branch, commit_sha, author, f"github-{event}", changed_files)
+    bg.add_task(_enqueue_run, repo_url, branch, commit_sha, author, f"github-{event_kind}", changed_files)
     return {
         "received": True,
         "real": True,
@@ -137,7 +163,9 @@ async def _handle_github_event(
         "branch": branch,
         "author": author,
         "commit": (commit_sha or "")[:8],
-        "event": event,
+        "event": event_kind,
+        "tag": tag_name,
+        "release": release_name,
         "changed_files": len(changed_files),
     }
 
