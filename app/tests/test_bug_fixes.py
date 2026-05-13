@@ -83,7 +83,7 @@ async def test_schedule_pipeline_celery_failure_does_not_propagate():
     mock_run.stage_names = []
     mock_session.add = MagicMock()
 
-    with patch("app.services.job_scheduler.get_pipeline_stages", return_value=[]), \
+    with patch("app.services.job_scheduler.get_pipeline_stages", return_value=["Build"]), \
          patch("app.services.job_scheduler._derive_job_name", return_value="org/repo/main"), \
          patch.object(mock_session, "flush", new_callable=AsyncMock), \
          patch.object(mock_session, "commit", new_callable=AsyncMock), \
@@ -309,17 +309,14 @@ def test_get_run_uses_selectinload():
     )
 
 
-# ── Bug 7: fallback stages need DB rows ───────────────────────────────────────
+# ── Bug 7: synthetic fallback stages are explicit opt-in ──────────────────────
 
 @pytest.mark.asyncio
-async def test_schedule_pipeline_creates_stage_rows_for_fallback():
+async def test_schedule_pipeline_creates_stage_rows_for_opt_in_synthetic_fallback():
     """
-    When Jenkinsfile stage discovery returns nothing, schedule_pipeline falls back to
-    ['Checkout','Build','Test','Deploy']. These stages have no StageExecution
-    rows in the DB. The fix: create the rows before simulating.
-
-    We verify that StageExecution objects are added to the session when the
-    fallback path is used.
+    Synthetic default stages are not used by default in real-time mode. When the
+    development fallback is explicitly enabled, StageExecution rows are still
+    created for the synthetic stages.
     """
     from app.services.job_scheduler import schedule_pipeline
     from app.pipeline_models import StageExecution
@@ -331,6 +328,7 @@ async def test_schedule_pipeline_creates_stage_rows_for_fallback():
     mock_session.flush.side_effect = lambda: setattr(added_objects[0], "id", 1)
 
     with patch("app.services.job_scheduler.get_pipeline_stages", new_callable=AsyncMock, return_value=[]), \
+         patch("app.services.job_scheduler.settings.ALLOW_SYNTHETIC_PIPELINE_STAGES", True), \
          patch("app.pipeline_tasks.trigger_jenkins_build.delay"):
         await schedule_pipeline(
             mock_session,
@@ -345,6 +343,23 @@ async def test_schedule_pipeline_creates_stage_rows_for_fallback():
     )
     stage_names_created = [s.name for s in stage_objects]
     assert stage_names_created == ["Checkout", "Build", "Test", "Deploy"]
+
+
+@pytest.mark.asyncio
+async def test_schedule_pipeline_rejects_synthetic_fallback_by_default():
+    """Real-time mode must not create placeholder stages when discovery fails."""
+    from app.services.job_scheduler import schedule_pipeline
+
+    mock_session = AsyncMock()
+
+    with patch("app.services.job_scheduler.get_pipeline_stages", new_callable=AsyncMock, return_value=[]), \
+         patch("app.services.job_scheduler.settings.ALLOW_SYNTHETIC_PIPELINE_STAGES", False):
+        with pytest.raises(ValueError, match="No Jenkinsfile stages found"):
+            await schedule_pipeline(
+                mock_session,
+                repo_url="https://github.com/acme/svc.git",
+                branch="main",
+            )
 
 
 # ── Bug 8: Scheduler race condition ───────────────────────────────────────────

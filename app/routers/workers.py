@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db import get_session
 from app.worker_models import Worker, WorkerAssignment, WorkerStatus
 from app.services.worker_pool import seed_workers, serialise_worker
@@ -94,5 +95,10 @@ async def set_online(
 
 @router.post("/seed", summary="Seed default workers")
 async def seed(session: AsyncSession = Depends(get_session)) -> dict:
+    if not settings.AUTO_SEED_WORKERS:
+        raise HTTPException(
+            status_code=403,
+            detail="Default worker seeding is disabled so dashboards only show configured workers.",
+        )
     await seed_workers(session)
     return {"seeded": True}

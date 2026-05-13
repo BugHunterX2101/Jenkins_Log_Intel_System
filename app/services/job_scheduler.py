@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import inspect
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -18,6 +19,7 @@ from app.pipeline_models import PipelineRun, RunStatus, StageExecution, StageSta
 from app.worker_models import AssignmentStatus
 from app.services.jenkinsfile_parser import get_pipeline_stages
 from app.services.priority import calculate_pipeline_priority
+from app.services.realtime_data import real_pipeline_run_clause
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,14 @@ async def schedule_pipeline(
     stages = await get_pipeline_stages(
         repo_url, branch,
         token=git_token or getattr(settings, "GITHUB_TOKEN", None),
-    ) or ["Checkout", "Build", "Test", "Deploy"]
+    )
+    if not stages:
+        if not settings.ALLOW_SYNTHETIC_PIPELINE_STAGES:
+            raise ValueError(
+                "No Jenkinsfile stages found for this repository/branch. "
+                "Refusing to create synthetic pipeline stages while real-time data mode is enabled."
+            )
+        stages = ["Checkout", "Build", "Test", "Deploy"]
 
     job_name = _derive_job_name(repo_url, branch)
     priority = calculate_pipeline_priority(repo_url, branch, changed_files)
@@ -99,6 +108,7 @@ async def get_dashboard_snapshot(session: AsyncSession, limit: int = 200) -> dic
     result = await session.execute(
         select(PipelineRun)
         .options(selectinload(PipelineRun.stages))
+        .where(real_pipeline_run_clause())
         .order_by(PipelineRun.queued_at.desc())
         .limit(limit)
     )
@@ -157,6 +167,8 @@ async def on_build_started(
         )
     )
     assignment = assignment_result.scalar_one_or_none()
+    if inspect.isawaitable(assignment):
+        assignment = await assignment
     if assignment:
         assignment.status = AssignmentStatus.RUNNING
         assignment.started_at = datetime.now(timezone.utc)
@@ -253,12 +265,15 @@ async def on_build_completed(
         )
     )
     assignment = assignment_result.scalar_one_or_none()
-    if assignment:
+    if inspect.isawaitable(assignment):
+        assignment = await assignment
+    if isinstance(assignment, WorkerAssignment):
+        worker_id = assignment.worker_id
         success = (result == "SUCCESS")
-        await release_worker(session, assignment.worker_id, run_id, success=success)
+        await release_worker(session, worker_id, run_id, success=success)
         logger.info(
             "Released worker %d after build %s for run %d",
-            assignment.worker_id, result, run_id
+            worker_id, result, run_id
         )
     else:
         logger.warning("No worker assignment found for run %d", run_id)

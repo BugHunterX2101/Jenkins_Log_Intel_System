@@ -39,6 +39,56 @@ async def _schedule_failure_processing_async(payload: dict) -> None:
         logger.exception("Jenkins failure processing crashed: %s", exc)
 
 
+async def _handle_build_completion(payload: dict) -> None:
+    """Mark the pipeline run as completed when Jenkins build finishes."""
+    from app.db import get_session_factory
+    from app.services.job_scheduler import on_build_completed
+    from app.pipeline_models import PipelineRun
+    from sqlalchemy import select
+    
+    build = payload.get("build", {})
+    job_name = payload.get("name", "")
+    build_number = build.get("number")
+    result = build.get("status", "")  # SUCCESS, FAILURE, UNSTABLE, ABORTED
+    
+    if not job_name or not build_number or not result:
+        logger.warning("Incomplete build completion payload: name=%s, number=%s, status=%s", 
+                       job_name, build_number, result)
+        return
+    
+    try:
+        session_factory = get_session_factory()
+        async with session_factory() as session:
+            # Find the PipelineRun that matches this Jenkins build
+            result_query = await session.execute(
+                select(PipelineRun).where(
+                    PipelineRun.jenkins_job_name == job_name,
+                    PipelineRun.jenkins_build_number == build_number,
+                )
+            )
+            run = result_query.scalar_one_or_none()
+            
+            if not run:
+                logger.warning(
+                    "No PipelineRun found for job=%s, build=%s",
+                    job_name, build_number
+                )
+                return
+            
+            # Mark the run as completed with the Jenkins result
+            await on_build_completed(session, run_id=run.id, result=result)
+            await session.commit()
+            logger.info(
+                "Marked run %d as %s (Jenkins job=%s #%s)",
+                run.id, result, job_name, build_number
+            )
+    except Exception as exc:
+        logger.exception(
+            "Failed to handle build completion for job=%s, build=%s: %s",
+            job_name, build_number, exc
+        )
+
+
 @router.post("/jenkins", summary="Receive Jenkins post-build webhook")
 async def jenkins_webhook(
     request: Request,
@@ -55,8 +105,14 @@ async def jenkins_webhook(
         raise HTTPException(status_code=400, detail=f"Malformed JSON payload: {exc}") from exc
     build = payload.get("build", {})
 
-    if build.get("phase") == "FINALIZED" and build.get("status") == "FAILURE":
-        asyncio.create_task(_schedule_failure_processing_async(payload))
+    # Handle all FINALIZED builds (SUCCESS, FAILURE, ABORTED, UNSTABLE)
+    if build.get("phase") == "FINALIZED":
+        # Always mark the run as completed
+        asyncio.create_task(_handle_build_completion(payload))
+        
+        # For failures, also trigger failure analysis and notifications
+        if build.get("status") == "FAILURE":
+            asyncio.create_task(_schedule_failure_processing_async(payload))
 
     return {"received": True}
 

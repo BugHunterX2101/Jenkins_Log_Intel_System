@@ -49,16 +49,19 @@ async def trigger_pipeline(
     body: TriggerRequest,
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    run = await schedule_pipeline(
-        session=session,
-        repo_url=body.repo_url,
-        branch=body.branch,
-        commit_sha=body.commit_sha,
-        author=body.author,
-        triggered_by=body.triggered_by,
-        git_token=body.git_token,
-        changed_files=body.changed_files,
-    )
+    try:
+        run = await schedule_pipeline(
+            session=session,
+            repo_url=body.repo_url,
+            branch=body.branch,
+            commit_sha=body.commit_sha,
+            author=body.author,
+            triggered_by=body.triggered_by,
+            git_token=body.git_token,
+            changed_files=body.changed_files,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {
         "run_id": run.id,
         "status": run.status.value,

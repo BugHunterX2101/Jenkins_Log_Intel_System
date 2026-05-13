@@ -206,15 +206,22 @@ async def _enqueue_run(
 
     session_factory = get_session_factory()
     async with session_factory() as session:
-        run = await schedule_pipeline(
-            session=session,
-            repo_url=repo_url,
-            branch=branch,
-            commit_sha=commit_sha,
-            author=author,
-            triggered_by=triggered_by,
-            changed_files=changed_files,
-        )
+        try:
+            run = await schedule_pipeline(
+                session=session,
+                repo_url=repo_url,
+                branch=branch,
+                commit_sha=commit_sha,
+                author=author,
+                triggered_by=triggered_by,
+                changed_files=changed_files,
+            )
+        except ValueError as exc:
+            logger.warning(
+                "GitHub webhook skipped run for %s@%s: %s",
+                repo_url, branch, exc,
+            )
+            return
         logger.info(
             "Enqueued PipelineRun id=%s for %s@%s (triggered_by=%s)",
             getattr(run, 'id', '?'), repo_url, branch, triggered_by

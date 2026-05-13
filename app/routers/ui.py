@@ -17,6 +17,7 @@ from app.models import BuildEvent, SystemMetrics
 from app.pipeline_models import PipelineRun, RunStatus, StageExecution, branch_priority_expr
 from app.services.job_scheduler import get_dashboard_snapshot
 from app.services.priority import calculate_pipeline_priority, priority_label
+from app.services.realtime_data import real_build_event_clause, real_pipeline_run_clause
 from app.services.worker_pool import serialise_worker
 from app.worker_models import Worker, WorkerStatus
 
@@ -88,7 +89,9 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
     try:
         snapshot = await get_dashboard_snapshot(session, limit=200)
         status_counts_result = await session.execute(
-            select(PipelineRun.status, func.count(PipelineRun.id)).group_by(PipelineRun.status)
+            select(PipelineRun.status, func.count(PipelineRun.id))
+            .where(real_pipeline_run_clause())
+            .group_by(PipelineRun.status)
         )
         status_counts = {
             (status.value if hasattr(status, "value") else str(status)): int(count)
@@ -97,8 +100,15 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
 
         worker_result = await session.execute(select(Worker).order_by(Worker.id))
         workers = list(worker_result.scalars().all())
-        build_event_count = await session.scalar(select(func.count(BuildEvent.id))) or 0
-        stage_exec_count = await session.scalar(select(func.count(StageExecution.id))) or 0
+        build_event_count = await session.scalar(
+            select(func.count(BuildEvent.id)).where(real_build_event_clause())
+        ) or 0
+        stage_exec_count = await session.scalar(
+            select(func.count(StageExecution.id))
+            .select_from(StageExecution)
+            .join(PipelineRun, PipelineRun.id == StageExecution.run_id)
+            .where(real_pipeline_run_clause())
+        ) or 0
 
         # Try to fetch latest stored metrics; fall back to live computation if unavailable
         latest_metric = await session.execute(
@@ -144,7 +154,12 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
     ]
 
     try:
-        latest_events = await session.execute(select(BuildEvent).order_by(BuildEvent.processed_at.desc()).limit(8))
+        latest_events = await session.execute(
+            select(BuildEvent)
+            .where(real_build_event_clause())
+            .order_by(BuildEvent.processed_at.desc())
+            .limit(8)
+        )
         build_events = latest_events.scalars().all()
     except Exception:
         build_events = []
@@ -235,12 +250,19 @@ async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
     
     try:
         runs_result = await session.execute(
-            select(PipelineRun).order_by(PipelineRun.queued_at.desc()).limit(UI_RUN_LIMIT)
+            select(PipelineRun)
+            .where(real_pipeline_run_clause())
+            .order_by(PipelineRun.queued_at.desc())
+            .limit(UI_RUN_LIMIT)
         )
         all_runs = runs_result.scalars().all()
-        total_runs = await session.scalar(select(func.count(PipelineRun.id))) or 0
+        total_runs = await session.scalar(
+            select(func.count(PipelineRun.id)).where(real_pipeline_run_clause())
+        ) or 0
         counts_result = await session.execute(
-            select(PipelineRun.status, func.count(PipelineRun.id)).group_by(PipelineRun.status)
+            select(PipelineRun.status, func.count(PipelineRun.id))
+            .where(real_pipeline_run_clause())
+            .group_by(PipelineRun.status)
         )
         counts_by_status = {
             status.value if hasattr(status, "value") else str(status): int(count)
@@ -299,7 +321,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
         # Jobs in the exact order the scheduler will dispatch them.
         queued_result = await session.execute(
             select(PipelineRun)
-            .where(PipelineRun.status == RunStatus.QUEUED)
+            .where(PipelineRun.status == RunStatus.QUEUED, real_pipeline_run_clause())
             .order_by(branch_priority_expr(), PipelineRun.queued_at.asc())
             .limit(50)
         )
@@ -309,7 +331,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
         # from the scheduled dispatch order shown in the next column.
         arrivals_result = await session.execute(
             select(PipelineRun)
-            .where(PipelineRun.status == RunStatus.QUEUED)
+            .where(PipelineRun.status == RunStatus.QUEUED, real_pipeline_run_clause())
             .order_by(PipelineRun.queued_at.desc())
             .limit(20)
         )
@@ -318,7 +340,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
         # Get in-progress jobs
         inprog_result = await session.execute(
             select(PipelineRun)
-            .where(PipelineRun.status == RunStatus.IN_PROGRESS)
+            .where(PipelineRun.status == RunStatus.IN_PROGRESS, real_pipeline_run_clause())
             .order_by(PipelineRun.started_at.desc())
         )
         inprog_runs = inprog_result.scalars().all()
@@ -332,7 +354,11 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     try:
         completed_result = await session.execute(
             select(PipelineRun)
-            .where(PipelineRun.status == RunStatus.COMPLETED, PipelineRun.duration_s.isnot(None))
+            .where(
+                PipelineRun.status == RunStatus.COMPLETED,
+                PipelineRun.duration_s.isnot(None),
+                real_pipeline_run_clause(),
+            )
             .order_by(PipelineRun.completed_at.desc())
             .limit(20)
         )
@@ -421,7 +447,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     # Recently completed jobs for kanban completed column
     completed_result = await session.execute(
         select(PipelineRun)
-        .where(PipelineRun.status == RunStatus.COMPLETED)
+        .where(PipelineRun.status == RunStatus.COMPLETED, real_pipeline_run_clause())
         .order_by(PipelineRun.completed_at.desc())
         .limit(10)
     )
@@ -496,7 +522,12 @@ async def get_build_events(session: AsyncSession = Depends(get_session), limit: 
     from app.models import BuildEvent
 
     try:
-        result = await session.execute(select(BuildEvent).order_by(BuildEvent.processed_at.desc()).limit(limit))
+        result = await session.execute(
+            select(BuildEvent)
+            .where(real_build_event_clause())
+            .order_by(BuildEvent.processed_at.desc())
+            .limit(limit)
+        )
         events = result.scalars().all()
     except Exception as exc:
         logger.warning("get_build_events: DB error — returning empty list: %s", exc)
@@ -743,6 +774,7 @@ async def get_repositories(session: AsyncSession = Depends(get_session)) -> dict
                 PipelineRun.status,
                 func.count(PipelineRun.id).label("cnt"),
             )
+            .where(real_pipeline_run_clause())
             .group_by(PipelineRun.repo_url, PipelineRun.branch, PipelineRun.status)
             .order_by(PipelineRun.repo_url)
         )
@@ -808,7 +840,7 @@ async def get_priority_queue(session: AsyncSession = Depends(get_session)) -> di
 
         result = await session.execute(
             select(PipelineRun)
-            .where(PipelineRun.status == RunStatus.QUEUED)
+            .where(PipelineRun.status == RunStatus.QUEUED, real_pipeline_run_clause())
             .order_by(*ordering)
             .limit(50)
         )

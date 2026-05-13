@@ -61,6 +61,7 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
     from sqlalchemy import select, update
     from app.db import get_session_factory
     from app.pipeline_models import PipelineRun, RunStatus, branch_priority_expr
+    from app.services.realtime_data import real_pipeline_run_clause
     from app.services.worker_pool import assign_worker, detect_language
 
     # ── Hard cap on concurrent in-process execution threads ─────────────────
@@ -100,7 +101,7 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
     async with Session() as session:
         result = await session.execute(
             select(PipelineRun)
-            .where(PipelineRun.status == RunStatus.QUEUED)
+            .where(PipelineRun.status == RunStatus.QUEUED, real_pipeline_run_clause())
             .order_by(*ordering)
             .limit(settings.MAX_CONCURRENT_EXECUTIONS)
         )

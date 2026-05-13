@@ -13,6 +13,7 @@ from fastapi import FastAPI, Depends, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.config import settings
 from app.db import get_engine, get_session_factory
 from app.routers import webhook
 from app.routers import jobs
@@ -100,8 +101,9 @@ async def lifespan(_app: FastAPI):
             except Exception as alter_err:
                 import logging
                 logging.getLogger(__name__).warning("ALTER TABLE skipped: %s", alter_err)
-        async with session_factory() as session:
-            await seed_workers(session)
+        if getattr(settings, "AUTO_SEED_WORKERS", False):
+            async with session_factory() as session:
+                await seed_workers(session)
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Worker seed skipped: %s", e)

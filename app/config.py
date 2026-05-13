@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     # Scheduler: max pipeline execution threads running concurrently inside FastAPI process
     MAX_CONCURRENT_EXECUTIONS: int = 6
 
+    # Real-time data policy. Development/demo data must be explicitly enabled.
+    AUTO_SEED_WORKERS: bool = False
+    ALLOW_SYNTHETIC_PIPELINE_STAGES: bool = False
+
     # Webhook HMAC secrets — omit or leave blank to disable signature verification
     JENKINS_WEBHOOK_SECRET: str = ""
     GITHUB_WEBHOOK_SECRET: str = ""

@@ -35,6 +35,9 @@ def test_webhook_accepts_failure_event(client):
     with patch(
         "app.routers.webhook._schedule_failure_processing_async",
         new_callable=AsyncMock,
+    ), patch(
+        "app.routers.webhook._handle_build_completion",
+        new_callable=AsyncMock,
     ):
         resp = client.post(
             "/webhook/jenkins",
@@ -46,11 +49,15 @@ def test_webhook_accepts_failure_event(client):
 
 
 def test_webhook_accepts_success_event(client):
-    resp = client.post(
-        "/webhook/jenkins",
-        content=json.dumps(SUCCESS_PAYLOAD),
-        headers={"Content-Type": "application/json"},
-    )
+    with patch(
+        "app.routers.webhook._handle_build_completion",
+        new_callable=AsyncMock,
+    ):
+        resp = client.post(
+            "/webhook/jenkins",
+            content=json.dumps(SUCCESS_PAYLOAD),
+            headers={"Content-Type": "application/json"},
+        )
     assert resp.status_code == 200
     assert resp.json()["received"] is True
 
