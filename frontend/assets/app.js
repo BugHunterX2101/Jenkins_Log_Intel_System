@@ -1732,9 +1732,21 @@
       if (document.querySelector('[data-ui="workers-list"]')) {
         populateWorkers();
         attachWorkerControls();
+        // Poll workers every 5 seconds for real-time updates
         const wInterval = setInterval(() => {
-          if (document.querySelector('[data-ui="workers-list"]')) populateWorkers();
-          else clearInterval(wInterval);
+          if (document.querySelector('[data-ui="workers-list"]')) {
+            populateWorkers();
+            // Add visual feedback that data is being refreshed
+            const refreshBtn = document.querySelector('button:has(.material-symbols-outlined[data-icon="refresh"])');
+            if (refreshBtn) {
+              refreshBtn.style.opacity = '1';
+              refreshBtn.style.transform = 'rotate(360deg)';
+              setTimeout(() => {
+                refreshBtn.style.opacity = '0.6';
+                refreshBtn.style.transform = 'rotate(0deg)';
+              }, 300);
+            }
+          } else clearInterval(wInterval);
         }, 5000);
         _allPollingIntervals.push(wInterval);
       }

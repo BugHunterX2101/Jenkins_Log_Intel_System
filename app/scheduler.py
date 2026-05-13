@@ -213,23 +213,10 @@ def execute_pipeline_run(
 
 
 async def _run_execution(run_id: int, worker_id: int, stage_names: list[str]) -> bool:
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-    from app.services.worker_pool import release_worker
-
-    engine = create_async_engine(
-        settings.DATABASE_URL,
-        echo=False,
-        pool_pre_ping=True,
-        pool_size=1,
-        max_overflow=1,
-    )
-    Session = async_sessionmaker(engine, expire_on_commit=False)
-
-    async with Session() as session:
-        await release_worker(session, worker_id, run_id, success=True)
-
-    await engine.dispose()
-    logger.info("Run %d dispatched — worker %d released, awaiting Jenkins callbacks", run_id, worker_id)
+    # Worker will be released when on_build_completed() is called,
+    # which occurs when the Jenkins build finishes. The worker remains
+    # BUSY and reserved until then.
+    logger.info("Run %d dispatched to worker %d, awaiting build completion", run_id, worker_id)
     return True
 
 

@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.pipeline_models import PipelineRun, RunStatus, StageExecution, StageStatus
+from app.worker_models import AssignmentStatus
 from app.services.jenkinsfile_parser import get_pipeline_stages
 from app.services.priority import calculate_pipeline_priority
 
@@ -137,6 +138,10 @@ async def on_build_started(
     jenkins_build_number: int,
     jenkins_build_url: str,
 ) -> None:
+    """Mark the run and worker assignment as started when Jenkins build begins."""
+    from app.worker_models import WorkerAssignment
+    from sqlalchemy import select
+
     run = await get_run(session, run_id)
     if not run:
         return
@@ -144,6 +149,18 @@ async def on_build_started(
     run.jenkins_build_number = jenkins_build_number
     run.jenkins_build_url = jenkins_build_url
     run.started_at = datetime.now(timezone.utc)
+    
+    # Also mark the worker assignment as RUNNING to track when actual execution begins
+    assignment_result = await session.execute(
+        select(WorkerAssignment).where(
+            WorkerAssignment.run_id == run_id
+        )
+    )
+    assignment = assignment_result.scalar_one_or_none()
+    if assignment:
+        assignment.status = AssignmentStatus.RUNNING
+        assignment.started_at = datetime.now(timezone.utc)
+    
     await session.commit()
 
 
@@ -196,15 +213,22 @@ async def on_build_completed(
 ) -> None:
     """
     Finalise the run when Jenkins reports FINALIZED.
+    
+    FIXED: Now also releases the worker when the build completes, so workers
+    transition from BUSY → IDLE after Jenkins build finishes (not immediately
+    after dispatch). This ensures real-time worker metrics show accurate status.
 
-    FIX: Map UNSTABLE -> FAILED (not ABORTED). Jenkins UNSTABLE means tests
+    Maps UNSTABLE -> FAILED (not ABORTED). Jenkins UNSTABLE means tests
     passed but with warnings — it is a build failure variant, not an abort.
-    The original catch-all mapped it to ABORTED which is semantically wrong
-    and misleading on the dashboard.
     """
+    from app.worker_models import WorkerAssignment
+    from app.services.worker_pool import release_worker
+    from sqlalchemy import select
+
     run = await get_run(session, run_id)
     if not run:
         return
+    
     now = datetime.now(timezone.utc)
     run.result = result
     run.completed_at = now
@@ -221,7 +245,23 @@ async def on_build_completed(
         if stage.status in (StageStatus.PENDING, StageStatus.RUNNING):
             stage.status = StageStatus.SKIPPED
 
-    await session.commit()
+    # FIX: Release the worker now that the build is complete
+    # Find the WorkerAssignment for this run
+    assignment_result = await session.execute(
+        select(WorkerAssignment).where(
+            WorkerAssignment.run_id == run_id
+        )
+    )
+    assignment = assignment_result.scalar_one_or_none()
+    if assignment:
+        success = (result == "SUCCESS")
+        await release_worker(session, assignment.worker_id, run_id, success=success)
+        logger.info(
+            "Released worker %d after build %s for run %d",
+            assignment.worker_id, result, run_id
+        )
+    else:
+        logger.warning("No worker assignment found for run %d", run_id)
 
 
 def _derive_job_name(repo_url: str, branch: str) -> str:
