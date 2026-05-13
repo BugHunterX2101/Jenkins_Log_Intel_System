@@ -58,6 +58,9 @@ class PipelineRun(Base):
 
     stage_names_csv: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    scheduling_priority: Mapped[int] = mapped_column(Integer, nullable=False, default=6)
+    priority_reason: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
+
     result:       Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     duration_s:   Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
@@ -95,6 +98,7 @@ class StageExecution(Base):
 def branch_priority_expr():
     """CASE expression mapping branch names to priority integers (1=highest, 6=lowest)."""
     return case(
+        (PipelineRun.scheduling_priority.isnot(None), PipelineRun.scheduling_priority),
         (PipelineRun.branch.like("hotfix/%"), 1),
         (PipelineRun.branch == "main", 2),
         (PipelineRun.branch == "master", 2),

@@ -66,6 +66,24 @@ async def lifespan(_app: FastAPI):
                     await conn.execute(text(
                         "ALTER TABLE workers ADD COLUMN IF NOT EXISTS current_job VARCHAR(256)"
                     ))
+                    await conn.execute(text(
+                        "ALTER TABLE pipeline_runs ADD COLUMN IF NOT EXISTS scheduling_priority INTEGER NOT NULL DEFAULT 6"
+                    ))
+                    await conn.execute(text(
+                        "ALTER TABLE pipeline_runs ADD COLUMN IF NOT EXISTS priority_reason VARCHAR(256)"
+                    ))
+                    await conn.execute(text("""
+                        UPDATE pipeline_runs
+                        SET scheduling_priority = CASE
+                            WHEN branch LIKE 'hotfix/%' THEN 1
+                            WHEN branch IN ('main', 'master') THEN 2
+                            WHEN branch LIKE 'release/%' THEN 3
+                            WHEN branch = 'develop' THEN 4
+                            WHEN branch LIKE 'feature/%' THEN 5
+                            ELSE 6
+                        END,
+                        priority_reason = COALESCE(priority_reason, 'legacy branch priority')
+                    """))
                     # Backfill current_job for workers that were BUSY before the column existed
                     await conn.execute(text("""
                         UPDATE workers w

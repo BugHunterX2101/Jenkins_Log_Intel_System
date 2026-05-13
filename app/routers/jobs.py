@@ -35,6 +35,7 @@ class TriggerRequest(BaseModel):
     author:       Optional[str] = Field(None, description="Who authored the commit")
     triggered_by: str          = Field("api", description="System/user that initiated the trigger")
     git_token:    Optional[str] = Field(None, description="Git token for private repo Jenkinsfile fetch")
+    changed_files: list[str]   = Field(default_factory=list, description="Files changed by the push")
 
 
 class StageEventRequest(BaseModel):
@@ -56,12 +57,15 @@ async def trigger_pipeline(
         author=body.author,
         triggered_by=body.triggered_by,
         git_token=body.git_token,
+        changed_files=body.changed_files,
     )
     return {
         "run_id": run.id,
         "status": run.status.value,
         "jenkins_job_name": run.jenkins_job_name,
         "stages": run.stage_names,
+        "scheduling_priority": run.scheduling_priority,
+        "priority_reason": run.priority_reason,
         "message": "Pipeline queued successfully",
     }
 

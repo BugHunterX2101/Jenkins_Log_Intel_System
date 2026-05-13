@@ -16,6 +16,7 @@ from app.db import get_session
 from app.models import BuildEvent, SystemMetrics
 from app.pipeline_models import PipelineRun, RunStatus, StageExecution, branch_priority_expr
 from app.services.job_scheduler import get_dashboard_snapshot
+from app.services.priority import calculate_pipeline_priority, priority_label
 from app.services.worker_pool import serialise_worker
 from app.worker_models import Worker, WorkerStatus
 
@@ -30,6 +31,10 @@ UI_RUN_LIMIT = 500
 def _repo_short_name(url: str) -> str:
     name = (url or "").rstrip("/").rstrip(".git").rstrip("/")
     return name.split("/")[-1] if name else "unknown"
+
+
+def _repo_canonical_url(url: str) -> str:
+    return (url or "").rstrip("/").removesuffix(".git")
 
 
 def _clean_trigger(t: str) -> str:
@@ -56,19 +61,7 @@ def _format_duration(seconds: int) -> str:
 
 
 def _get_priority(branch: str) -> str:
-    if not branch:
-        return "p6 (normal)"
-    if branch.startswith("hotfix/"):
-        return "p1 (hotfix)"
-    if branch in ("main", "master"):
-        return "p2 (main)"
-    if branch.startswith("release/"):
-        return "p3 (release)"
-    if branch == "develop":
-        return "p4 (develop)"
-    if branch.startswith("feature/"):
-        return "p5 (feature)"
-    return "p6 (normal)"
+    return calculate_pipeline_priority("", branch).label.lower()
 
 
 from app.request_log import get_route_stats as _rlog_stats
@@ -262,6 +255,9 @@ async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
                     "author": run.author,
                     "triggered_by": run.triggered_by,
                     "job_name": run.jenkins_job_name,
+                    "scheduling_priority": run.scheduling_priority,
+                    "priority_label": priority_label(run.scheduling_priority or _branch_priority(run.branch or "")),
+                    "priority_reason": run.priority_reason or "legacy branch priority",
                     "status": run.status.value if hasattr(run.status, 'value') else str(run.status),
                     "queued_at": run.queued_at.isoformat() if run.queued_at else None,
                     "started_at": run.started_at.isoformat() if run.started_at else None,
@@ -289,14 +285,24 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     from app.pipeline_models import RunStatus
     
     try:
-        # Get upcoming queued jobs ordered by branch priority then arrival time
+        # Jobs in the exact order the scheduler will dispatch them.
         queued_result = await session.execute(
             select(PipelineRun)
             .where(PipelineRun.status == RunStatus.QUEUED)
             .order_by(branch_priority_expr(), PipelineRun.queued_at.asc())
             .limit(50)
         )
-        queued_runs = queued_result.scalars().all()
+        scheduled_runs = queued_result.scalars().all()
+
+        # Fresh arrivals for the QUEUED column; this is intentionally separate
+        # from the scheduled dispatch order shown in the next column.
+        arrivals_result = await session.execute(
+            select(PipelineRun)
+            .where(PipelineRun.status == RunStatus.QUEUED)
+            .order_by(PipelineRun.queued_at.desc())
+            .limit(20)
+        )
+        queued_runs = arrivals_result.scalars().all()
 
         # Get in-progress jobs
         inprog_result = await session.execute(
@@ -308,6 +314,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     except Exception as exc:
         logger.warning("get_scheduler_data: DB error — returning empty scheduler data: %s", exc)
         queued_runs = []
+        scheduled_runs = []
         inprog_runs = []
     
     # Compute real average job duration from recent completed runs
@@ -332,22 +339,38 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
             return f"{s}s"
         return f"{s // 60}m {s % 60}s"
 
-    scheduled_jobs = []
-    for idx, run in enumerate(queued_runs[:20]):
-        if avg_duration_s is not None:
-            estimated_wait = _fmt_wait((len(queued_runs) - idx) * avg_duration_s)
-        else:
-            estimated_wait = "—"
-        scheduled_jobs.append({
+    def _run_priority_payload(run: PipelineRun) -> dict:
+        prio = run.scheduling_priority or _branch_priority(run.branch or "")
+        return {
+            "priority": prio,
+            "priority_label": priority_label(prio),
+            "priority_reason": run.priority_reason or "legacy branch priority",
+        }
+
+    def _run_card(run: PipelineRun, estimated_wait: str | None = None) -> dict:
+        card = {
             "id": run.id,
             "repo": _repo_short_name(run.repo_url),
             "branch": run.branch,
             "author": run.author,
             "job_name": run.jenkins_job_name,
-            "priority": _get_priority(run.branch),
-            "estimated_wait": estimated_wait,
+            "estimated_wait": estimated_wait or "—",
             "queued_at": run.queued_at.isoformat() if run.queued_at else None,
-        })
+        }
+        card.update(_run_priority_payload(run))
+        card["summary"] = f"{card.get('job_name') or 'job'} / {card.get('branch') or 'main'}"
+        card["description"] = f"{card.get('repo', '')} triggered by {card.get('author') or 'system'}"
+        return card
+
+    queued_jobs = [_run_card(run) for run in queued_runs]
+
+    scheduled_jobs = []
+    for idx, run in enumerate(scheduled_runs[:20]):
+        if avg_duration_s is not None:
+            estimated_wait = _fmt_wait(idx * avg_duration_s)
+        else:
+            estimated_wait = "—"
+        scheduled_jobs.append(_run_card(run, estimated_wait))
     
     active_jobs = []
     for run in inprog_runs[:10]:
@@ -381,12 +404,8 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
             "started": run.started_at.isoformat() if run.started_at else None,
             "duration_s": elapsed,
             "summary": f"{run.jenkins_job_name or 'job'} / {run.branch or 'main'}",
-            "priority": _get_priority(run.branch),
+            **_run_priority_payload(run),
         })
-
-    for job in scheduled_jobs:
-        job["summary"] = f"{job.get('job_name') or 'job'} / {job.get('branch') or 'main'}"
-        job["description"] = f"{job.get('repo', '')} triggered by {job.get('author', 'system')}"
 
     # Recently completed jobs for kanban completed column
     completed_result = await session.execute(
@@ -405,17 +424,14 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
             "completed": run.completed_at.isoformat() if run.completed_at else None,
             "duration_s": run.duration_s or 0,
             "summary": f"{run.jenkins_job_name or 'job'} / {run.branch or 'main'}",
-            "priority": _get_priority(run.branch),
+            **_run_priority_payload(run),
         }
         for run in completed_runs_list
     ]
 
-    # "queued"    = newest arrivals (just came in, desc order)
-    # "scheduled" = FIFO order — oldest first = next to run
-    fifo_jobs = list(reversed(scheduled_jobs))
     return {
-        "queued": scheduled_jobs,
-        "scheduled": fifo_jobs,
+        "queued": queued_jobs,
+        "scheduled": scheduled_jobs,
         "running": running_jobs,
         "completed": completed_jobs,
         "active": running_jobs,
@@ -699,19 +715,7 @@ _PRIORITY_COLORS = {
 
 
 def _branch_priority(branch: str) -> int:
-    if not branch:
-        return 6
-    if branch.startswith("hotfix/"):
-        return 1
-    if branch in ("main", "master"):
-        return 2
-    if branch.startswith("release/"):
-        return 3
-    if branch == "develop":
-        return 4
-    if branch.startswith("feature/"):
-        return 5
-    return 6
+    return calculate_pipeline_priority("", branch).value
 
 
 @router.get("/repositories", summary="Live repository and branch status aggregation")
@@ -736,15 +740,16 @@ async def get_repositories(session: AsyncSession = Depends(get_session)) -> dict
         logger.warning("get_repositories: DB error — %s", exc)
         return {"repositories": []}
 
-    # Aggregate: {repo_url: {branch: {status: count}}}
+    # Aggregate by canonical URL so clone_url/html_url variants do not split
+    # one real GitHub repository into multiple dashboard cards.
     repo_map: dict = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
     for repo_url, branch, status, cnt in rows:
         status_key = status.value if hasattr(status, "value") else str(status)
-        repo_map[repo_url][branch or "unknown"][status_key] += cnt
+        repo_map[_repo_canonical_url(repo_url)][branch or "unknown"][status_key] += cnt
 
     repos = []
     for repo_url, branches in sorted(repo_map.items()):
-        repo_name = repo_url.rstrip("/").rstrip(".git").split("/")[-1] if repo_url else "unknown"
+        repo_name = _repo_short_name(repo_url)
         branch_list = []
         for branch, status_counts in sorted(branches.items()):
             prio = _branch_priority(branch)
@@ -752,7 +757,7 @@ async def get_repositories(session: AsyncSession = Depends(get_session)) -> dict
             branch_list.append({
                 "branch": branch,
                 "priority": prio,
-                "priority_label": _PRIORITY_LABELS.get(prio, "P6 — Normal"),
+                "priority_label": priority_label(prio),
                 "priority_color": _PRIORITY_COLORS.get(prio, "bg-slate-400 text-white"),
                 "counts": {
                     "QUEUED": status_counts.get("QUEUED", 0),
@@ -804,7 +809,7 @@ async def get_priority_queue(session: AsyncSession = Depends(get_session)) -> di
     now = datetime.now(timezone.utc)
     jobs = []
     for rank, run in enumerate(runs, start=1):
-        prio = _branch_priority(run.branch or "")
+        prio = run.scheduling_priority or _branch_priority(run.branch or "")
         wait_s = 0
         if run.queued_at:
             wait_s = max(0, int((now - run.queued_at).total_seconds()))
@@ -816,7 +821,8 @@ async def get_priority_queue(session: AsyncSession = Depends(get_session)) -> di
             "branch": run.branch or "",
             "author": run.author or "system",
             "priority": prio,
-            "priority_label": _PRIORITY_LABELS.get(prio, "P6 — Normal"),
+            "priority_label": priority_label(prio),
+            "priority_reason": run.priority_reason or "legacy branch priority",
             "priority_color": _PRIORITY_COLORS.get(prio, "bg-slate-400 text-white"),
             "wait_seconds": wait_s,
             "queued_at": run.queued_at.isoformat() if run.queued_at else None,

@@ -2,6 +2,14 @@
   const normalize = (value = "") =>
     value.replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
 
+  const escapeHtml = (value = "") =>
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
   const currentPath = () => window.location.pathname.replace(/\/$/, "") || "/";
 
   const resolveLinkTarget = (text) => {
@@ -194,9 +202,15 @@
       if (totalEl) totalEl.textContent = String(data.active_total ?? ((counts.QUEUED || 0) + (counts.IN_PROGRESS || 0)) ?? active.length);
 
       const now = Date.now();
-      const waitTimes = active
-        .filter(r => r.queued_at)
-        .map(r => Math.max(0, Math.floor((now - new Date(r.queued_at).getTime()) / 1000)));
+      const elapsedWait = (run) => {
+        if (!run.queued_at) return null;
+        const queuedAt = new Date(run.queued_at).getTime();
+        const endAt = run.started_at ? new Date(run.started_at).getTime() : now;
+        if (!Number.isFinite(queuedAt) || !Number.isFinite(endAt)) return null;
+        return Math.max(0, Math.floor((endAt - queuedAt) / 1000));
+      };
+      const waitTimes = active.map(elapsedWait).filter(v => v !== null);
+      const queuedWaitTimes = queued.map(elapsedWait).filter(v => v !== null);
 
       const avgWaitEl = document.querySelector('[data-ui="avg-wait-queue"]');
       if (avgWaitEl) {
@@ -210,8 +224,8 @@
 
       const longestEl = document.querySelector('[data-ui="longest-wait"]');
       if (longestEl) {
-        if (waitTimes.length) {
-          const max = Math.max(...waitTimes);
+        if (queuedWaitTimes.length) {
+          const max = Math.max(...queuedWaitTimes);
           longestEl.innerHTML = `${max}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
         } else {
           longestEl.innerHTML = `0<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
@@ -248,22 +262,26 @@
           const row = document.createElement('tr');
           const waitSeconds = run.queued_at ? Math.max(0, Math.floor((Date.now() - new Date(run.queued_at).getTime()) / 1000)) : null;
           row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors group';
-          // F5: derive priority from branch — 'priority' field not in API response
-          const br = run.branch || '';
-          let priority = 'P6 (Normal)';
-          let priorityClass = 'bg-surface-container-highest text-on-surface-variant';
-          if (br.startsWith('hotfix/')) { priority = 'P1 (Hotfix)'; priorityClass = 'bg-error text-on-error font-bold'; }
-          else if (br === 'main' || br === 'master') { priority = 'P2 (Main)'; priorityClass = 'bg-primary-fixed text-on-primary-fixed font-bold'; }
-          else if (br.startsWith('release/')) { priority = 'P3 (Release)'; priorityClass = 'bg-primary text-on-primary'; }
-          else if (br === 'develop') { priority = 'P4 (Develop)'; priorityClass = 'bg-tertiary text-on-tertiary'; }
-          else if (br.startsWith('feature/')) { priority = 'P5 (Feature)'; priorityClass = 'bg-secondary text-on-secondary'; }
+          const priority = run.priority_label || `P${run.scheduling_priority || 6}`;
+          const priorityReason = run.priority_reason || 'priority assigned by scheduler';
+          const priorityClass = {
+            1: 'bg-error text-on-error font-bold',
+            2: 'bg-primary-fixed text-on-primary-fixed font-bold',
+            3: 'bg-primary text-on-primary',
+            4: 'bg-tertiary text-on-tertiary',
+            5: 'bg-secondary text-on-secondary',
+            6: 'bg-surface-container-highest text-on-surface-variant',
+          }[Number(run.scheduling_priority || 6)] || 'bg-surface-container-highest text-on-surface-variant';
           row.innerHTML = `
             <td class="px-md py-sm"><span class="text-code-sm font-code-sm text-surface-tint">#J-${run.id || ''}</span></td>
-            <td class="px-md py-sm"><span class="${priorityClass} text-label-md px-2 py-0.5 rounded-full">${priority}</span></td>
+            <td class="px-md py-sm">
+              <span class="${priorityClass} text-label-md px-2 py-0.5 rounded-full">${escapeHtml(priority)}</span>
+              <div class="mt-1 text-[10px] text-outline font-code-sm">${escapeHtml(priorityReason)}</div>
+            </td>
             <td class="px-md py-sm"><span class="material-symbols-outlined text-[20px]">code</span></td>
-            <td class="px-md py-sm"><div class="flex flex-col"><span class="font-medium">${run.repo || ''}</span><span class="text-label-md text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span> ${run.branch || ''}</span></div></td>
+            <td class="px-md py-sm"><div class="flex flex-col"><span class="font-medium">${escapeHtml(run.repo || '')}</span><span class="text-label-md text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span> ${escapeHtml(run.branch || '')}</span></div></td>
             <td class="px-md py-sm font-code-sm">${waitSeconds !== null ? waitSeconds + 's' : '-'}</td>
-            <td class="px-md py-sm"><span class="flex items-center gap-1.5 text-secondary"><span class="material-symbols-outlined text-[16px]">sync</span> ${run.status || ''}</span></td>
+            <td class="px-md py-sm"><span class="flex items-center gap-1.5 text-secondary"><span class="material-symbols-outlined text-[16px]">sync</span> ${escapeHtml(run.status || '')}</span></td>
             <td class="px-md py-sm text-right opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-outline hover:text-error transition-colors p-1" title="Cancel Job"><span class="material-symbols-outlined text-[18px]">cancel</span></button></td>
           `;
           tableBody.appendChild(row);
@@ -314,6 +332,9 @@
         const el = document.createElement('div');
         const isRunning = variant === 'running';
         const isCompleted = variant === 'completed';
+        const priorityText = job.priority_label || (job.priority ? `P${job.priority}` : 'Priority unknown');
+        const priorityReason = job.priority_reason || job.estimated_wait || '';
+        const summary = job.summary || job.description || `${job.repo || ''}/${job.branch || 'main'}`;
         el.className = isCompleted
           ? 'bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm border-l-4 border-l-[#10B981]'
           : isRunning
@@ -327,9 +348,10 @@
               ? '<span class="material-symbols-outlined text-[#10B981] text-[18px]">check_circle</span>'
               : '<span class="material-symbols-outlined text-outline text-[16px]">more_horiz</span>'}
           </div>
-          <div class="font-body-md text-[13px] text-on-surface-variant mb-3 line-clamp-2">${job.summary || job.description || `${job.repo || ''}/${job.branch || 'main'}`}</div>
+          <div class="font-body-md text-[13px] text-on-surface-variant mb-2 line-clamp-2">${escapeHtml(summary)}</div>
+          <div class="font-code-sm text-[10px] text-outline mb-3 line-clamp-1">${escapeHtml(priorityReason)}</div>
           <div class="flex items-center justify-between mt-auto border-t border-outline-variant/50 pt-2">
-            <span class="font-label-md text-[10px] text-outline">PRIORITY: ${(job.priority || 'normal').toUpperCase()}</span>
+            <span class="font-label-md text-[10px] text-outline">PRIORITY: ${escapeHtml(priorityText)}</span>
             ${isRunning || isCompleted ? `<span class="font-code-sm text-[11px] text-outline">${durationLabel}</span>` : ''}
           </div>
         `;
@@ -393,15 +415,15 @@
               ? new Date(job.queued_at).toLocaleTimeString()
               : '—';
             const label = type === 'assigned'
-              ? `<span class="font-semibold text-primary">Job #${job.id}</span> running — ${job.repo || ''}/${job.branch || 'main'}`
+              ? `<span class="font-semibold text-primary">Job #${escapeHtml(job.id)}</span> running — ${escapeHtml(job.repo || '')}/${escapeHtml(job.branch || 'main')}`
               : type === 'completed'
-              ? `<span class="font-semibold text-[#10B981]">Job #${job.id} COMPLETED</span> — ${job.repo || ''}/${job.branch || 'main'}`
-              : `<span class="font-semibold">Job #${job.id}</span> queued, awaiting capacity`;
+              ? `<span class="font-semibold text-[#10B981]">Job #${escapeHtml(job.id)} COMPLETED</span> — ${escapeHtml(job.repo || '')}/${escapeHtml(job.branch || 'main')}`
+              : `<span class="font-semibold">Job #${escapeHtml(job.id)}</span> queued, ${escapeHtml(job.priority_reason || 'awaiting capacity')}`;
             li.innerHTML = `
               <div class="w-2 h-2 mt-1.5 rounded-full ${dotColor} flex-shrink-0"></div>
               <div>
                 <div class="font-code-sm text-[12px] text-on-surface mb-1">${label}</div>
-                <div class="font-code-sm text-[10px] text-outline">${ts} • ${job.job_name || 'pipeline'}</div>
+                <div class="font-code-sm text-[10px] text-outline">${escapeHtml(ts)} • ${escapeHtml(job.job_name || 'pipeline')}</div>
               </div>
             `;
             decisionLog.appendChild(li);
@@ -661,7 +683,7 @@
         let capsList = [];
         try { capsList = JSON.parse(merged.capabilities || '[]'); } catch (_e) { capsList = []; }
         const capsHtml = capsList.length
-          ? `<div class="flex flex-wrap gap-xs mt-xs">${capsList.map(c => `<span class="bg-surface-container-high px-1.5 py-0.5 rounded text-[9px] font-label-md text-on-surface-variant">${c}</span>`).join('')}</div>`
+          ? `<div class="flex flex-wrap gap-xs mt-xs">${capsList.map(c => `<span class="bg-surface-container-high px-1.5 py-0.5 rounded text-[9px] font-label-md text-on-surface-variant">${escapeHtml(c)}</span>`).join('')}</div>`
           : '';
         const statusBadge = isBusy
           ? `<span class="bg-primary-container text-on-primary-container px-2 py-1 rounded text-[10px] font-label-md flex items-center gap-1"><span class="material-symbols-outlined text-[12px] animate-pulse">sync</span> BUSY</span>`
@@ -669,14 +691,14 @@
           ? `<span class="bg-error-container text-on-error-container px-2 py-1 rounded text-[10px] font-label-md flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">power_off</span> OFFLINE</span>`
           : `<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded text-[10px] font-label-md flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">pause</span> IDLE</span>`;
         const currentJobRow = currentJob
-          ? `<div class="mt-xs"><span class="font-label-md text-[10px] text-on-surface-variant">JOB: </span><span class="font-code-sm text-code-sm text-primary truncate">${currentJob}</span></div>`
+          ? `<div class="mt-xs"><span class="font-label-md text-[10px] text-on-surface-variant">JOB: </span><span class="font-code-sm text-code-sm text-primary truncate">${escapeHtml(currentJob)}</span></div>`
           : '';
         card.innerHTML = `
           <div class="flex justify-between items-start">
             <div>
-              <h3 class="font-headline-sm text-headline-sm text-on-surface">${merged.name || 'worker'}</h3>
+              <h3 class="font-headline-sm text-headline-sm text-on-surface">${escapeHtml(merged.name || 'worker')}</h3>
               <div class="flex gap-xs mt-xs">
-                <span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md text-on-surface-variant">${merged.language || ''}</span>
+                <span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md text-on-surface-variant">${escapeHtml(merged.language || '')}</span>
               </div>
               ${capsHtml}
               ${currentJobRow}
@@ -715,8 +737,8 @@
             const row = document.createElement('tr');
             row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
             row.innerHTML = `
-              <td class="py-2 px-md font-code-sm text-code-sm">${statusDot}lang=${w.language || 'any'}</td>
-              <td class="py-2 px-md"><span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md">${tag}</span></td>
+              <td class="py-2 px-md font-code-sm text-code-sm">${statusDot}lang=${escapeHtml(w.language || 'any')}</td>
+              <td class="py-2 px-md"><span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-label-md">${escapeHtml(tag)}</span></td>
               <td class="py-2 px-md text-on-surface-variant font-code-sm">${w.jobs_run ?? 0}</td>
             `;
             assignmentBody.appendChild(row);
@@ -734,10 +756,10 @@
           const load = Math.max(0, Math.min(100, Math.round((w.load || 0) * 100)));
           const isBusy = w.status === 'BUSY';
           row.innerHTML = `
-            <div class="w-32 flex-shrink-0 font-code-sm text-code-sm text-on-surface-variant truncate">${w.name || 'worker'}</div>
+            <div class="w-32 flex-shrink-0 font-code-sm text-code-sm text-on-surface-variant truncate">${escapeHtml(w.name || 'worker')}</div>
             <div class="flex-1 relative h-full bg-surface-container-low rounded overflow-hidden">
               <div class="absolute left-0 top-0 h-full bg-secondary-fixed-dim rounded opacity-80 bar-fill" style="--bar-w:${Math.max(5, 100 - load)}%" title="Idle"></div>
-              ${isBusy ? `<div class="absolute right-0 top-0 h-full bg-primary rounded bar-fill" style="--bar-w:${load}%" title="${w.current_job || 'running'}"></div>` : ''}
+              ${isBusy ? `<div class="absolute right-0 top-0 h-full bg-primary rounded bar-fill" style="--bar-w:${load}%" title="${escapeHtml(w.current_job || 'running')}"></div>` : ''}
             </div>
             <div class="ml-2 w-10 text-right font-code-sm text-[11px] text-on-surface-variant">${load}%</div>
           `;
@@ -753,6 +775,7 @@
   let _allPollingIntervals = [];
   let _autoArriveInterval = null;
   let _schedulerKanbanInterval = null;
+  let _schedulerPriorityInterval = null;
   let _activityLastTimestamp = null;
 
   // ─── Repositories Overview (dashboard) ───────────────────────────────────────
@@ -797,10 +820,10 @@
           return `
             <div class="flex items-center justify-between py-1.5 border-b border-outline-variant/40 last:border-0">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="inline-block px-1.5 py-0.5 ${badgeCls} font-label-md text-[9px] rounded flex-shrink-0">${b.priority_label}</span>
+                <span class="inline-block px-1.5 py-0.5 ${badgeCls} font-label-md text-[9px] rounded flex-shrink-0">${escapeHtml(b.priority_label)}</span>
                 <span class="font-code-sm text-code-sm text-on-surface truncate flex items-center gap-1">
                   <span class="material-symbols-outlined text-[12px] text-outline">call_split</span>
-                  ${b.branch}
+                  ${escapeHtml(b.branch)}
                 </span>
               </div>
               <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
@@ -820,11 +843,11 @@
                 <span class="material-symbols-outlined text-[16px]">folder_code</span>
               </span>
               <div>
-                <div class="font-headline-sm text-[14px] text-on-surface font-semibold">${repo.repo_name}</div>
-                <div class="font-code-sm text-[10px] text-outline truncate max-w-[180px]">${repo.repo_url}</div>
+                <div class="font-headline-sm text-[14px] text-on-surface font-semibold">${escapeHtml(repo.repo_name)}</div>
+                <div class="font-code-sm text-[10px] text-outline truncate max-w-[180px]">${escapeHtml(repo.repo_url)}</div>
               </div>
             </div>
-            <span class="bg-surface-container text-on-surface-variant font-code-sm text-[11px] px-2 py-0.5 rounded-full flex-shrink-0">${repo.total_runs} runs</span>
+            <span class="bg-surface-container text-on-surface-variant font-code-sm text-[11px] px-2 py-0.5 rounded-full flex-shrink-0">${Number(repo.total_runs || 0)} runs</span>
           </div>
           <div class="flex flex-col gap-0">
             ${branchRows || '<div class="text-on-surface-variant text-xs py-2">No branches</div>'}
@@ -870,15 +893,18 @@
           : `${job.wait_seconds}s`;
         tr.innerHTML = `
           <td class="py-2 px-md font-bold text-on-surface-variant">#${job.rank}</td>
-          <td class="py-2 px-md"><span class="px-2 py-0.5 ${job.priority_color} font-label-md text-[10px] rounded">${job.priority_label}</span></td>
-          <td class="py-2 px-md font-code-sm text-code-sm text-on-surface">${job.repo}</td>
+          <td class="py-2 px-md">
+            <span class="px-2 py-0.5 ${job.priority_color} font-label-md text-[10px] rounded">${escapeHtml(job.priority_label)}</span>
+            <div class="mt-1 text-[10px] text-outline font-code-sm">${escapeHtml(job.priority_reason || '')}</div>
+          </td>
+          <td class="py-2 px-md font-code-sm text-code-sm text-on-surface">${escapeHtml(job.repo)}</td>
           <td class="py-2 px-md">
             <span class="flex items-center gap-1 font-code-sm text-code-sm">
               <span class="material-symbols-outlined text-[12px] text-outline">call_split</span>
-              ${job.branch}
+              ${escapeHtml(job.branch)}
             </span>
           </td>
-          <td class="py-2 px-md text-on-surface-variant font-code-sm">${job.author}</td>
+          <td class="py-2 px-md text-on-surface-variant font-code-sm">${escapeHtml(job.author)}</td>
           <td class="py-2 px-md text-right font-code-sm text-on-surface-variant">${waitLabel}</td>
         `;
         tbody.appendChild(tr);
@@ -1229,13 +1255,17 @@
         _setActiveModeButton(modeButtons, mode);
         localStorage.setItem('schedulerMode', mode);
         try {
-          await fetch('/ui/scheduler/mode', {
+          const response = await fetch('/ui/scheduler/mode', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mode }),
           });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          populateSchedulerKanban();
+          populatePriorityQueue();
         } catch (e) {
           console.warn('Failed to set scheduler mode:', e);
+          showToast('Unable to update scheduler mode', true, 2500);
         }
       });
     });
@@ -1266,6 +1296,7 @@
       masterSwitch.addEventListener('change', () => {
         if (!masterSwitch.checked) {
           if (_schedulerKanbanInterval) clearInterval(_schedulerKanbanInterval);
+          if (_schedulerPriorityInterval) clearInterval(_schedulerPriorityInterval);
           if (kanbanSection) kanbanSection.classList.add('opacity-40');
         } else {
           const ms = Number(localStorage.getItem('schedulerPollMs') || 5000);
@@ -1274,8 +1305,14 @@
             else clearInterval(_schedulerKanbanInterval);
           }, ms);
           _allPollingIntervals.push(_schedulerKanbanInterval);
+          _schedulerPriorityInterval = setInterval(() => {
+            if (document.querySelector('[data-ui="priority-queue-list"]')) populatePriorityQueue();
+            else clearInterval(_schedulerPriorityInterval);
+          }, 5000);
+          _allPollingIntervals.push(_schedulerPriorityInterval);
           if (kanbanSection) kanbanSection.classList.remove('opacity-40');
           populateSchedulerKanban();
+          populatePriorityQueue();
         }
       });
     }
@@ -1684,11 +1721,11 @@
       }
       // Priority queue panel — always present on scheduler page
       populatePriorityQueue();
-      const pqInterval = setInterval(() => {
+      _schedulerPriorityInterval = setInterval(() => {
         if (document.querySelector('[data-ui="priority-queue-list"]')) populatePriorityQueue();
-        else clearInterval(pqInterval);
+        else clearInterval(_schedulerPriorityInterval);
       }, 5000);
-      _allPollingIntervals.push(pqInterval);
+      _allPollingIntervals.push(_schedulerPriorityInterval);
     }
 
     if (currentPath().startsWith('/workers')) {

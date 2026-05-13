@@ -49,7 +49,7 @@ async def fetch_jenkinsfile(
     repo_url: str,
     branch: str,
     token: str | None = None,
-    timeout: int = 15,
+    timeout: int = 4,
 ) -> str | None:
     raw_url = _raw_url(repo_url, branch)
     if not raw_url:

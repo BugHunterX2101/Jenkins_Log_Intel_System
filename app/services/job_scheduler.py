@@ -6,6 +6,7 @@ and manages the lifecycle of PipelineRun records.
 from __future__ import annotations
 
 import logging
+import threading
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -15,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.pipeline_models import PipelineRun, RunStatus, StageExecution, StageStatus
 from app.services.jenkinsfile_parser import get_pipeline_stages
+from app.services.priority import calculate_pipeline_priority
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,7 @@ async def schedule_pipeline(
     author: str | None = None,
     triggered_by: str = "api",
     git_token: str | None = None,
+    changed_files: list[str] | None = None,
 ) -> PipelineRun:
     stages = await get_pipeline_stages(
         repo_url, branch,
@@ -34,6 +37,7 @@ async def schedule_pipeline(
     ) or ["Checkout", "Build", "Test", "Deploy"]
 
     job_name = _derive_job_name(repo_url, branch)
+    priority = calculate_pipeline_priority(repo_url, branch, changed_files)
 
     run = PipelineRun(
         repo_url=repo_url,
@@ -44,6 +48,8 @@ async def schedule_pipeline(
         jenkins_job_name=job_name,
         status=RunStatus.QUEUED,
         stage_names_csv=",".join(stages) if stages else None,
+        scheduling_priority=priority.value,
+        priority_reason=priority.reason,
     )
     session.add(run)
     await session.flush()
@@ -63,12 +69,20 @@ async def schedule_pipeline(
 
     logger.info("Scheduled PipelineRun id=%d for %s@%s", run.id, repo_url, branch)
 
-    # FIX: Wrap Celery dispatch so missing broker doesn't abort the whole request
-    try:
-        from app.pipeline_tasks import trigger_jenkins_build
-        trigger_jenkins_build.delay(run.id, job_name, branch, commit_sha)  # type: ignore[attr-defined]
-    except Exception as exc:
-        logger.warning("Could not dispatch Celery task: %s", exc)
+    # Dispatch outside the request path. Celery can block while reconnecting to
+    # Redis; queueing a run must stay fast so the live UI remains responsive.
+    def _dispatch_to_celery() -> None:
+        try:
+            from app.pipeline_tasks import trigger_jenkins_build
+            trigger_jenkins_build.delay(run.id, job_name, branch, commit_sha)  # type: ignore[attr-defined]
+        except Exception as exc:
+            logger.warning("Could not dispatch Celery task: %s", exc)
+
+    threading.Thread(
+        target=_dispatch_to_celery,
+        daemon=True,
+        name=f"celery-dispatch-run-{run.id}",
+    ).start()
 
     return run
 
@@ -223,6 +237,8 @@ def _derive_job_name(repo_url: str, branch: str) -> str:
 
 
 def serialise_run(run: PipelineRun) -> dict:
+    scheduling_priority = getattr(run, "scheduling_priority", 6)
+    priority_reason = getattr(run, "priority_reason", None)
     return {
         "id": run.id,
         "repo_url": run.repo_url,
@@ -239,6 +255,12 @@ def serialise_run(run: PipelineRun) -> dict:
         "started_at": run.started_at.isoformat() if run.started_at else None,
         "completed_at": run.completed_at.isoformat() if run.completed_at else None,
         "duration_s": run.duration_s,
+        "scheduling_priority": scheduling_priority,
+        "priority_label": (
+            f"P{scheduling_priority}" if not priority_reason
+            else f"P{scheduling_priority} - {priority_reason}"
+        ),
+        "priority_reason": priority_reason,
         "stages": [_serialise_stage(s) for s in (run.stages or [])],
     }
 

@@ -112,13 +112,23 @@ async def _handle_github_event(
         or payload.get("sender", {}).get("login")
         or payload.get("pull_request", {}).get("user", {}).get("login")
     )
+    changed_files = sorted({
+        path
+        for commit in payload.get("commits", []) or []
+        for path in (
+            commit.get("added", [])
+            + commit.get("modified", [])
+            + commit.get("removed", [])
+        )
+        if path
+    })
 
     logger.info(
         "REAL GitHub webhook: event=%s repo=%s branch=%s author=%s commit=%s",
         event, repo_name, branch, author, (commit_sha or "")[:8]
     )
 
-    bg.add_task(_enqueue_run, repo_url, branch, commit_sha, author, f"github-{event}")
+    bg.add_task(_enqueue_run, repo_url, branch, commit_sha, author, f"github-{event}", changed_files)
     return {
         "received": True,
         "real": True,
@@ -128,6 +138,7 @@ async def _handle_github_event(
         "author": author,
         "commit": (commit_sha or "")[:8],
         "event": event,
+        "changed_files": len(changed_files),
     }
 
 
@@ -160,6 +171,7 @@ async def _enqueue_run(
     commit_sha: str | None,
     author: str | None,
     triggered_by: str,
+    changed_files: list[str] | None = None,
 ) -> None:
     from app.db import get_session_factory
     from app.services.job_scheduler import schedule_pipeline
@@ -173,6 +185,7 @@ async def _enqueue_run(
             commit_sha=commit_sha,
             author=author,
             triggered_by=triggered_by,
+            changed_files=changed_files,
         )
         logger.info(
             "Enqueued PipelineRun id=%s for %s@%s (triggered_by=%s)",
