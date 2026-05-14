@@ -1514,7 +1514,62 @@
   };
 
   // ─── Explorer page ───
+  const EXPLORER_PAGE_SIZE = 25;
   let _explorerFilter = { text: '', status: '' };
+  let _explorerPage = 1;
+  let _explorerFiltered = [];
+
+  const renderExplorerRows = () => {
+    const tbody = document.querySelector('[data-ui="explorer-table-body"]');
+    const loadMoreBar = document.querySelector('[data-ui="exp-load-more-bar"]');
+    const countLabel = document.querySelector('[data-ui="exp-count-label"]');
+    const showingEl = document.querySelector('[data-ui="exp-showing"]');
+    if (!tbody) return;
+
+    const badge = (s) => {
+      const map = { COMPLETED: 'bg-green-100 text-green-800', IN_PROGRESS: 'bg-amber-100 text-amber-800', FAILED: 'bg-red-100 text-red-800', ABORTED: 'bg-slate-100 text-slate-600', QUEUED: 'bg-blue-100 text-blue-800' };
+      return map[s] || 'bg-surface-container text-on-surface';
+    };
+
+    tbody.innerHTML = '';
+    if (!_explorerFiltered.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-on-surface-variant">No pipeline runs match the current filter</td></tr>';
+      if (loadMoreBar) loadMoreBar.classList.add('hidden');
+      return;
+    }
+
+    const visible = _explorerFiltered.slice(0, EXPLORER_PAGE_SIZE * _explorerPage);
+    visible.forEach((run) => {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
+      const queuedAt = run.queued_at ? new Date(run.queued_at).toLocaleString() : '—';
+      const duration = run.duration_s != null ? `${Math.floor(run.duration_s / 60)}m ${run.duration_s % 60}s` : '—';
+      const trigger = (run.triggered_by || 'api')
+        .replace('github-push', 'github')
+        .replace('github-pull_request', 'github-pr')
+        .replace('jenkins-push', 'jenkins')
+        .replace('manual-webhook', 'manual');
+      tr.innerHTML = `
+        <td class="px-md py-sm font-code-sm text-code-sm text-primary">#${run.id}</td>
+        <td class="px-md py-sm"><div class="font-medium">${run.repo || '—'}</div><div class="text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span>${run.branch || ''}</div></td>
+        <td class="px-md py-sm text-on-surface-variant">${run.author || '—'}</td>
+        <td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs">${trigger}</span></td>
+        <td class="px-md py-sm"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badge(run.status)}">${run.status}</span></td>
+        <td class="px-md py-sm text-on-surface-variant text-xs">${queuedAt}</td>
+        <td class="px-md py-sm font-code-sm text-xs">${duration}</td>
+        <td class="px-md py-sm text-right"><span class="font-code-sm text-xs text-outline">${(run.commit_sha || '').slice(0, 7) || '—'}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const hasMore = visible.length < _explorerFiltered.length;
+    const remaining = _explorerFiltered.length - visible.length;
+    if (loadMoreBar) loadMoreBar.classList.toggle('hidden', !hasMore);
+    if (countLabel) countLabel.textContent = hasMore ? `Showing ${visible.length} of ${_explorerFiltered.length}` : `All ${_explorerFiltered.length} runs shown`;
+    if (showingEl) showingEl.textContent = hasMore ? `Showing ${visible.length} of ${_explorerFiltered.length}` : `${_explorerFiltered.length} runs`;
+    const loadMoreBtn = document.querySelector('[data-ui="exp-load-more"]');
+    if (loadMoreBtn) loadMoreBtn.innerHTML = `<span class="material-symbols-outlined text-[16px]">expand_more</span> Load ${Math.min(remaining, EXPLORER_PAGE_SIZE)} More`;
+  };
 
   const populateExplorer = async () => {
     const tbody = document.querySelector('[data-ui="explorer-table-body"]');
@@ -1526,58 +1581,21 @@
       const byStatus = data.runs_by_status || {};
       const all = Object.values(byStatus).flat().sort((a, b) => (b.queued_at || '').localeCompare(a.queued_at || ''));
 
-      // Update stat cards
-      const total = all.length;
-      const completed = (byStatus.COMPLETED || []).length;
-      const failed = (byStatus.FAILED || []).length + (byStatus.ABORTED || []).length;
-      const inProgress = (byStatus.IN_PROGRESS || []).length;
       const setEl = (sel, v) => { const el = document.querySelector(sel); if (el) el.textContent = String(v); };
-      setEl('[data-ui="exp-total"]', total);
-      setEl('[data-ui="exp-completed"]', completed);
-      setEl('[data-ui="exp-failed"]', failed);
-      setEl('[data-ui="exp-inprogress"]', inProgress);
+      setEl('[data-ui="exp-total"]', all.length);
+      setEl('[data-ui="exp-completed"]', (byStatus.COMPLETED || []).length);
+      setEl('[data-ui="exp-failed"]', (byStatus.FAILED || []).length + (byStatus.ABORTED || []).length);
+      setEl('[data-ui="exp-inprogress"]', (byStatus.IN_PROGRESS || []).length);
 
-      // Apply filters
       const { text, status } = _explorerFilter;
-      const filtered = all.filter((r) => {
+      _explorerFiltered = all.filter((r) => {
         const matchText = !text || [r.repo, r.branch, r.author, String(r.id)].join(' ').toLowerCase().includes(text);
         const matchStatus = !status || String(r.status || '').toUpperCase() === status;
         return matchText && matchStatus;
       });
 
-      // Badge colours
-      const badge = (s) => {
-        const map = { COMPLETED: 'bg-green-100 text-green-800', IN_PROGRESS: 'bg-amber-100 text-amber-800', FAILED: 'bg-red-100 text-red-800', ABORTED: 'bg-slate-100 text-slate-600', QUEUED: 'bg-blue-100 text-blue-800' };
-        return map[s] || 'bg-surface-container text-on-surface';
-      };
-
-      tbody.innerHTML = '';
-      if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-on-surface-variant">No pipeline runs match the current filter</td></tr>';
-        return;
-      }
-      filtered.forEach((run) => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors';
-        const queuedAt = run.queued_at ? new Date(run.queued_at).toLocaleString() : '—';
-        const duration = run.duration_s != null ? `${Math.floor(run.duration_s / 60)}m ${run.duration_s % 60}s` : '—';
-        const trigger = (run.triggered_by || 'api')
-          .replace('github-push', 'github')
-          .replace('github-pull_request', 'github-pr')
-          .replace('jenkins-push', 'jenkins')
-          .replace('manual-webhook', 'manual');
-        tr.innerHTML = `
-          <td class="px-md py-sm font-code-sm text-code-sm text-primary">#${run.id}</td>
-          <td class="px-md py-sm"><div class="font-medium">${run.repo || '—'}</div><div class="text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span>${run.branch || ''}</div></td>
-          <td class="px-md py-sm text-on-surface-variant">${run.author || '—'}</td>
-          <td class="px-md py-sm"><span class="bg-surface-container px-2 py-0.5 rounded text-xs">${trigger}</span></td>
-          <td class="px-md py-sm"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badge(run.status)}">${run.status}</span></td>
-          <td class="px-md py-sm text-on-surface-variant text-xs">${queuedAt}</td>
-          <td class="px-md py-sm font-code-sm text-xs">${duration}</td>
-          <td class="px-md py-sm text-right"><span class="font-code-sm text-xs text-outline">${(run.commit_sha || '').slice(0, 7) || '—'}</span></td>
-        `;
-        tbody.appendChild(tr);
-      });
+      _explorerPage = 1;
+      renderExplorerRows();
     } catch (e) {
       console.error('populateExplorer failed', e);
     }
@@ -1587,6 +1605,7 @@
     const searchInput = document.querySelector('[data-ui="exp-search"]');
     const statusSelect = document.querySelector('[data-ui="exp-status-filter"]');
     const clearBtn = document.querySelector('[data-ui="exp-clear"]');
+    const loadMoreBtn = document.querySelector('[data-ui="exp-load-more"]');
     if (searchInput && !searchInput.dataset.bound) {
       searchInput.dataset.bound = 'true';
       searchInput.addEventListener('input', () => { _explorerFilter.text = searchInput.value.toLowerCase(); populateExplorer(); });
@@ -1602,6 +1621,9 @@
         if (statusSelect) statusSelect.value = '';
         populateExplorer();
       });
+    }
+    if (loadMoreBtn) {
+      bindOnce(loadMoreBtn, () => { _explorerPage += 1; renderExplorerRows(); });
     }
   };
 

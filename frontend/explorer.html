@@ -238,14 +238,14 @@
 </button>
 </div>
 <!-- Runs Table -->
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_4px_6px_rgba(0,0,0,0.02)] overflow-hidden">
-<div class="px-md py-sm border-b border-outline-variant bg-surface-bright flex items-center justify-between">
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_4px_6px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col">
+<div class="px-md py-sm border-b border-outline-variant bg-surface-bright flex items-center justify-between flex-shrink-0">
 <h2 class="font-label-md text-label-md text-on-surface-variant uppercase">All Pipeline Runs</h2>
-<span class="font-label-md text-label-md text-on-surface-variant">Sorted by most recent</span>
+<span data-ui="exp-showing" class="font-label-md text-label-md text-on-surface-variant">Sorted by most recent</span>
 </div>
-<div class="overflow-x-auto">
+<div class="overflow-x-auto overflow-y-auto max-h-[calc(100vh-390px)]">
 <table class="w-full text-left border-collapse">
-<thead>
+<thead class="sticky top-0 z-10">
 <tr class="bg-surface-container-low border-b border-outline-variant text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
 <th class="px-md py-sm font-semibold">Run ID</th>
 <th class="px-md py-sm font-semibold">Repo / Branch</th>
@@ -261,6 +261,12 @@
 <tr><td colspan="8" class="py-8 text-center text-on-surface-variant">Loading pipeline runs…</td></tr>
 </tbody>
 </table>
+</div>
+<div data-ui="exp-load-more-bar" class="hidden flex-shrink-0 border-t border-outline-variant bg-surface-bright px-md py-sm flex items-center justify-between gap-md">
+<span data-ui="exp-count-label" class="font-label-md text-label-md text-on-surface-variant"></span>
+<button type="button" data-ui="exp-load-more" class="flex items-center gap-2 px-4 py-1.5 bg-primary text-on-primary font-label-md text-label-md rounded hover:bg-opacity-90 transition-all">
+<span class="material-symbols-outlined text-[16px]">expand_more</span> Load More
+</button>
 </div>
 </section>
 </div>
