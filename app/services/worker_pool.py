@@ -110,7 +110,7 @@ async def assign_worker(
         run_id=run_id,
         worker_id=chosen.id,
         status=AssignmentStatus.ASSIGNED,
-        started_at=datetime.now(timezone.utc),
+        started_at=None,
     )
     session.add(assignment)
     await session.commit()

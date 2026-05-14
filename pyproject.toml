@@ -39,3 +39,6 @@ include = ["app*"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths    = ["app/tests"]
+filterwarnings = [
+    "ignore:coroutine '.*_execute_mock_call' was never awaited:RuntimeWarning",
+]

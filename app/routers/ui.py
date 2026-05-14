@@ -30,7 +30,7 @@ UI_RUN_LIMIT = 500
 
 
 def _repo_short_name(url: str) -> str:
-    name = (url or "").rstrip("/").rstrip(".git").rstrip("/")
+    name = (url or "").rstrip("/").removesuffix(".git").rstrip("/")
     return name.split("/")[-1] if name else "unknown"
 
 
@@ -49,7 +49,7 @@ def _clean_trigger(t: str) -> str:
 def _format_duration(seconds: int) -> str:
     days, remainder = divmod(max(0, int(seconds)), 86400)
     hours, remainder = divmod(remainder, 3600)
-    minutes, seconds = divmod(remainder, 60)
+    minutes, secs = divmod(remainder, 60)
     parts = []
     if days:
         parts.append(f"{days}d")
@@ -57,7 +57,7 @@ def _format_duration(seconds: int) -> str:
         parts.append(f"{hours:02d}h")
     parts.append(f"{minutes:02d}m")
     if not days:
-        parts.append(f"{seconds:02d}s")
+        parts.append(f"{secs:02d}s")
     return " ".join(parts)
 
 
@@ -130,7 +130,11 @@ async def bootstrap(request: Request, session: AsyncSession = Depends(get_sessio
     except Exception as exc:
         logger.warning("bootstrap: DB or snapshot error — returning minimal payload: %s", exc)
         # Fallback minimal payload when DB unavailable or snapshot fails
-        uptime_seconds = int(time.time())
+        try:
+            _fallback_proc = psutil.Process()
+            uptime_seconds = int(time.time() - _fallback_proc.create_time())
+        except Exception:
+            uptime_seconds = 0
         memory_info_rss = 0
         memory_total = 0
         cpu_percent = 0
@@ -426,18 +430,6 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
             estimated_wait = "—"
         scheduled_jobs.append(_run_card(run, estimated_wait))
     
-    active_jobs = []
-    for run in inprog_runs[:10]:
-        duration = (run.duration_s or 0) if run.started_at else 0
-        active_jobs.append({
-            "id": run.id,
-            "repo": _repo_short_name(run.repo_url),
-            "branch": run.branch,
-            "job_name": run.jenkins_job_name,
-            "started": run.started_at.isoformat() if run.started_at else None,
-            "duration_s": duration,
-        })
-
     # in_progress = worker assigned, Jenkins build not yet started (ASSIGNED status)
     from datetime import datetime, timezone as _tz
     _now = datetime.now(_tz.utc)
@@ -477,13 +469,17 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
         })
 
     # Recently completed jobs for kanban completed column
-    completed_result = await session.execute(
-        select(PipelineRun)
-        .where(PipelineRun.status == RunStatus.COMPLETED, real_pipeline_run_clause())
-        .order_by(PipelineRun.completed_at.desc())
-        .limit(10)
-    )
-    completed_runs_list = completed_result.scalars().all()
+    try:
+        completed_result = await session.execute(
+            select(PipelineRun)
+            .where(PipelineRun.status == RunStatus.COMPLETED, real_pipeline_run_clause())
+            .order_by(PipelineRun.completed_at.desc())
+            .limit(10)
+        )
+        completed_runs_list = completed_result.scalars().all()
+    except Exception as exc:
+        logger.warning("get_scheduler_data: DB error fetching completed jobs — %s", exc)
+        completed_runs_list = []
     completed_jobs = [
         {
             "id": run.id,
@@ -521,12 +517,19 @@ async def cancel_run(run_id: int, session: AsyncSession = Depends(get_session)) 
         if run_status not in (RunStatus.QUEUED, RunStatus.IN_PROGRESS):
             raise HTTPException(status_code=400, detail=f"Run {run_id} is not active (status: {run_status.value})")
 
-        await session.execute(
-            update(PipelineRun)
-            .where(PipelineRun.id == run_id)
-            .values(status=RunStatus.ABORTED)
-        )
-        await session.commit()
+        if run_status == RunStatus.IN_PROGRESS:
+            # Properly finalize via on_build_completed: releases the assigned worker,
+            # marks pending/running stages as SKIPPED, and commits.
+            from app.services.job_scheduler import on_build_completed
+            await on_build_completed(session, run_id=run_id, result="ABORTED")
+        else:
+            # QUEUED runs have no worker assignment — simple status update.
+            await session.execute(
+                update(PipelineRun)
+                .where(PipelineRun.id == run_id)
+                .values(status=RunStatus.ABORTED)
+            )
+            await session.commit()
         return {"cancelled": run_id, "status": "ABORTED"}
     except HTTPException:
         raise
@@ -542,6 +545,8 @@ async def flush_queue(session: AsyncSession = Depends(get_session)) -> dict:
     run_ids = [run.id for run in runs]
 
     if run_ids:
+        from app.worker_models import WorkerAssignment
+        await session.execute(delete(WorkerAssignment).where(WorkerAssignment.run_id.in_(run_ids)))
         await session.execute(delete(StageExecution).where(StageExecution.run_id.in_(run_ids)))
         await session.execute(delete(PipelineRun).where(PipelineRun.id.in_(run_ids)))
         await session.commit()
@@ -903,7 +908,7 @@ async def get_priority_queue(session: AsyncSession = Depends(get_session)) -> di
             "rank": rank,
             "id": run.id,
             "repo_url": run.repo_url or "",
-            "repo": (run.repo_url or "").rstrip("/").rstrip(".git").split("/")[-1],
+            "repo": (run.repo_url or "").rstrip("/").removesuffix(".git").split("/")[-1],
             "branch": run.branch or "",
             "author": run.author or "system",
             "priority": prio,

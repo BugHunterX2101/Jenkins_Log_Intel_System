@@ -258,6 +258,7 @@ async def on_build_completed(
         )
     else:
         logger.warning("No worker assignment found for run %d", run_id)
+        await session.commit()
 
 
 def _derive_job_name(repo_url: str, branch: str) -> str:
@@ -265,7 +266,7 @@ def _derive_job_name(repo_url: str, branch: str) -> str:
     Build a Jenkins multibranch job name from the repo URL.
     Convention: <org>/<repo>/<branch>  (Jenkins multibranch pipeline format).
     """
-    path = repo_url.rstrip("/").rstrip(".git")
+    path = repo_url.rstrip("/").removesuffix(".git")
     parts = [p for p in path.split("/") if p]
     if len(parts) >= 2:
         return f"{parts[-2]}/{parts[-1]}/{branch}"

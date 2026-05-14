@@ -29,6 +29,20 @@ def test_derive_job_name_short_url():
     assert "main" in name
 
 
+def test_derive_job_name_repo_ending_in_t_not_mangled():
+    # rstrip(".git") strips individual chars {'.','g','i','t'} from the right,
+    # which corrupts repos whose names end in those characters (e.g. "big-project" → "big-projec").
+    # removesuffix(".git") only removes the literal ".git" suffix.
+    name = _derive_job_name("https://github.com/acme/big-project", "main")
+    assert "big-project" in name, f"repo name mangled: got {name!r}"
+
+
+def test_derive_job_name_repo_ending_in_git_suffix_stripped():
+    name = _derive_job_name("https://github.com/acme/my-service.git", "main")
+    assert "my-service" in name
+    assert "my-service.git" not in name
+
+
 def _make_stage(**kwargs):
     defaults = dict(
         id=1, run_id=1, order=0, name="Test",
@@ -74,6 +88,7 @@ def _make_run(**kwargs):
         queued_at=datetime.now(timezone.utc),
         started_at=datetime.now(timezone.utc),
         completed_at=None, duration_s=None,
+        scheduling_priority=6, priority_reason=None,
         stages=[],
     )
     defaults.update(kwargs)
@@ -104,3 +119,21 @@ def testserialise_run_queued_at_iso():
     run = _make_run()
     d = serialise_run(run)
     assert "T" in d["queued_at"]
+
+
+# ── _repo_short_name rstrip(".git") regressions ───────────────────────────────
+
+def test_repo_short_name_no_git_suffix():
+    from app.routers.ui import _repo_short_name
+    assert _repo_short_name("https://github.com/acme/big-project") == "big-project"
+
+
+def test_repo_short_name_with_git_suffix():
+    from app.routers.ui import _repo_short_name
+    assert _repo_short_name("https://github.com/acme/my-service.git") == "my-service"
+
+
+def test_repo_short_name_repo_ending_in_t_not_mangled():
+    from app.routers.ui import _repo_short_name
+    name = _repo_short_name("https://github.com/acme/big-project")
+    assert name == "big-project", f"repo name mangled: got {name!r}"

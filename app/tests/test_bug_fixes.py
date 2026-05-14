@@ -411,6 +411,35 @@ def test_scheduler_reverts_run_when_no_worker_available():
 
 # ── Integration: all status mappings reachable from _sync_stages ─────────────
 
+# ── Bug 9: poll_pipeline_stages Celery retry double-counting ─────────────────
+
+def test_poll_pipeline_stages_not_done_retry_is_outside_except_handler():
+    """
+    When _sync_stages returns False (build still running), poll_pipeline_stages
+    must raise self.retry() OUTSIDE the try/except block.
+
+    If raise self.retry() sits inside the try block, celery.exceptions.Retry
+    (a subclass of Exception) is caught by the except handler, which then calls
+    self.retry() a second time — burning two retries per polling cycle and
+    halving the effective polling window (30 cycles instead of 60).
+    """
+    import inspect
+    from app import pipeline_tasks
+
+    src = inspect.getsource(pipeline_tasks.poll_pipeline_stages)
+
+    # The "not done" retry and the exception-handling retry must be separate
+    # code paths.  The simplest structural check: the "if not done" branch must
+    # appear AFTER (i.e. at a higher line number than) the "except Exception"
+    # block close, which means it is outside the try/except.
+    not_done_pos = src.find("if not done:")
+    except_pos   = src.find("except Exception as exc:")
+    assert not_done_pos > except_pos, (
+        "raise self.retry() for the 'not done' path must be outside the "
+        "try/except(Exception) block to avoid double-counting retries"
+    )
+
+
 def test_sync_stages_calls_on_build_completed_for_all_terminal_states():
     """
     _sync_stages must call on_build_completed for SUCCESS, FAILURE, ABORTED,

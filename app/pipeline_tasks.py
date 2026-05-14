@@ -207,11 +207,12 @@ def poll_pipeline_stages(
     build_number: int,
     build_url: str | None = None,
 ) -> dict:
+    # _sync_stages errors are handled separately from the normal "not done yet"
+    # retry path. Placing `raise self.retry()` inside a try/except(Exception)
+    # causes the Retry exception to be caught by that same handler, which
+    # double-increments the retry counter and burns retries at 2× the expected rate.
     try:
         done = asyncio.run(_sync_stages(run_id, job_name, build_number, build_url))
-        if not done:
-            raise self.retry(countdown=10)
-        return {"run_id": run_id, "done": True}
     except Exception as exc:
         if self.request.retries >= self.max_retries:
             logger.error("Stage poll exhausted retries for run %d", run_id)
@@ -231,6 +232,9 @@ def poll_pipeline_stages(
                 "finalized_as": fallback_result,
             }
         raise self.retry(exc=exc, countdown=10)
+    if not done:
+        raise self.retry(countdown=10)
+    return {"run_id": run_id, "done": True}
 
 
 async def _finalize_exhausted_poll(run_id: int, fallback_result: str) -> None:
