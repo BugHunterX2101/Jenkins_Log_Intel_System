@@ -1666,8 +1666,28 @@
         `).join('') || '<tr><td colspan="3" class="py-4 text-center text-on-surface-variant">No workers</td></tr>';
       }
 
+      const [ngrokRes, whConfigRes] = await Promise.all([
+        fetch('/ui/ngrok-url').catch(() => null),
+        fetch('/ui/webhook-config').catch(() => null),
+      ]);
+      const ngrokData = ngrokRes && ngrokRes.ok ? await ngrokRes.json() : null;
+      const whConfig = whConfigRes && whConfigRes.ok ? await whConfigRes.json() : null;
+
       const ngrokInput = document.querySelector('[data-ui="st-ngrok-url"]');
-      if (ngrokInput) ngrokInput.value = window.location.origin + '/github-webhook/';
+      if (ngrokInput) {
+        ngrokInput.value = (ngrokData && ngrokData.active && ngrokData.url)
+          ? ngrokData.url
+          : window.location.origin + '/github-webhook/';
+      }
+
+      const secretEl = document.querySelector('[data-ui="st-webhook-secret"]');
+      if (secretEl && whConfig) {
+        if (whConfig.secret_configured && whConfig.secret_hint) {
+          secretEl.innerHTML = `<span class="text-green-700 font-semibold">&#x2713; Configured</span> &mdash; hint: <span class="text-primary font-semibold">${whConfig.secret_hint}</span>`;
+        } else {
+          secretEl.innerHTML = `<span class="text-amber-600 font-semibold">&#x26A0; Not set</span> &mdash; set <span class="text-primary font-semibold">GITHUB_WEBHOOK_SECRET</span> in .env`;
+        }
+      }
 
       // Env var status inference
       const envBody = document.querySelector('[data-ui="st-env-body"]');

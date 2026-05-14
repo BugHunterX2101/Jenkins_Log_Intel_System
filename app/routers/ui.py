@@ -728,7 +728,8 @@ async def get_webhook_config(request: Request) -> dict:
     """Returns the webhook endpoint URL and a masked secret hint for GitHub configuration."""
     secret = settings.GITHUB_WEBHOOK_SECRET or ""
     hint = (secret[:4] + "*" * (len(secret) - 4)) if secret else ""
-    base = str(request.base_url).rstrip("/")
+    ngrok = await _detect_ngrok_public_url()
+    base = ngrok or str(request.base_url).rstrip("/")
     return {
         "webhook_url": f"{base}/github-webhook/",
         "secret_configured": bool(secret),
@@ -738,22 +739,28 @@ async def get_webhook_config(request: Request) -> dict:
     }
 
 
-@router.get("/ngrok-url", summary="Detect live ngrok public URL for this server")
-async def get_ngrok_url() -> dict:
-    """Queries ngrok's local management API to find the active public tunnel pointing at port 8000."""
+async def _detect_ngrok_public_url() -> str | None:
+    """Returns the active ngrok HTTPS base URL for port 8000, or None."""
     import httpx
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
             resp = await client.get(f"{settings.NGROK_API_URL}/api/tunnels")
             if resp.status_code == 200:
-                tunnels = resp.json().get("tunnels", [])
-                for t in tunnels:
+                for t in resp.json().get("tunnels", []):
                     addr = t.get("config", {}).get("addr", "")
                     if t.get("proto") == "https" and ("8000" in addr or "localhost" in addr):
-                        public = t["public_url"].rstrip("/")
-                        return {"url": f"{public}/github-webhook/", "active": True}
+                        return t["public_url"].rstrip("/")
     except Exception:
         pass
+    return None
+
+
+@router.get("/ngrok-url", summary="Detect live ngrok public URL for this server")
+async def get_ngrok_url() -> dict:
+    """Queries ngrok's local management API to find the active public tunnel pointing at port 8000."""
+    url = await _detect_ngrok_public_url()
+    if url:
+        return {"url": f"{url}/github-webhook/", "active": True}
     return {"url": None, "active": False}
 
 
@@ -761,18 +768,19 @@ async def get_ngrok_url() -> dict:
 async def get_config_status() -> dict:
     """Returns a map of env-var name → bool indicating whether each optional
     integration is configured.  Values are True/False only — no secrets leaked."""
+    ngrok_active = bool(await _detect_ngrok_public_url())
     return {
         "vars": {
             "DATABASE_URL":          bool(settings.DATABASE_URL),
             "REDIS_URL":             bool(settings.REDIS_URL),
-            "JENKINS_URL":           bool(settings.JENKINS_URL and settings.JENKINS_URL != "http://localhost:8080"),
-            "JENKINS_USER":          bool(settings.JENKINS_USER and settings.JENKINS_USER != "admin"),
+            "JENKINS_URL":           bool(settings.JENKINS_URL),
+            "JENKINS_USER":          bool(settings.JENKINS_USER),
             "JENKINS_TOKEN":         bool(settings.JENKINS_TOKEN),
             "GROQ_API_KEY":          bool(settings.GROQ_API_KEY),
             "ANTHROPIC_API_KEY":     bool(settings.ANTHROPIC_API_KEY),
             "SLACK_BOT_TOKEN":       bool(settings.SLACK_BOT_TOKEN),
             "GITHUB_WEBHOOK_SECRET": bool(settings.GITHUB_WEBHOOK_SECRET),
-            "NGROK_URL":             bool(settings.NGROK_API_URL and settings.NGROK_API_URL != "http://localhost:4040"),
+            "NGROK_URL":             ngrok_active,
             "SMTP_HOST":             bool(settings.SMTP_HOST and settings.SMTP_HOST != "localhost"),
         }
     }
