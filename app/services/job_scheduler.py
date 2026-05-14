@@ -153,7 +153,8 @@ async def on_build_started(
     # Also mark the worker assignment as RUNNING to track when actual execution begins
     assignment_result = await session.execute(
         select(WorkerAssignment).where(
-            WorkerAssignment.run_id == run_id
+            WorkerAssignment.run_id == run_id,
+            WorkerAssignment.completed_at.is_(None),
         )
     )
     assignment = assignment_result.scalar_one_or_none()
@@ -241,10 +242,11 @@ async def on_build_completed(
         if stage.status in (StageStatus.PENDING, StageStatus.RUNNING):
             stage.status = StageStatus.SKIPPED
 
-    # Release the worker by finding the WorkerAssignment for this run
+    # Release the worker by finding the active (not yet completed) assignment for this run
     assignment_result = await session.execute(
         select(WorkerAssignment).where(
-            WorkerAssignment.run_id == run_id
+            WorkerAssignment.run_id == run_id,
+            WorkerAssignment.completed_at.is_(None),
         )
     )
     assignment = assignment_result.scalar_one_or_none()

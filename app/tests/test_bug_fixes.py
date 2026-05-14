@@ -454,3 +454,39 @@ def test_sync_stages_calls_on_build_completed_for_all_terminal_states():
         assert state in src, (
             f"_sync_stages must handle terminal state '{state}'"
         )
+
+
+# ── Bug 9: scalar_one_or_none MultipleResultsFound when run has multiple ──────
+#    WorkerAssignment rows (e.g. after reset/reassign). Both on_build_started
+#    and on_build_completed must filter to completed_at IS NULL.
+
+def test_on_build_started_filters_active_assignment_only():
+    """
+    on_build_started must include `completed_at IS NULL` in the
+    WorkerAssignment query so that scalar_one_or_none() cannot raise
+    MultipleResultsFound when a run has been reset/reassigned multiple times.
+    """
+    import inspect
+    from app.services import job_scheduler
+
+    src = inspect.getsource(job_scheduler.on_build_started)
+    assert "completed_at" in src and "is_(None)" in src, (
+        "on_build_started must filter WorkerAssignment by completed_at IS NULL "
+        "to prevent MultipleResultsFound when multiple assignments exist for the same run"
+    )
+
+
+def test_on_build_completed_filters_active_assignment_only():
+    """
+    on_build_completed must include `completed_at IS NULL` in the
+    WorkerAssignment query so that scalar_one_or_none() cannot raise
+    MultipleResultsFound when a run has been reset/reassigned multiple times.
+    """
+    import inspect
+    from app.services import job_scheduler
+
+    src = inspect.getsource(job_scheduler.on_build_completed)
+    assert "completed_at" in src and "is_(None)" in src, (
+        "on_build_completed must filter WorkerAssignment by completed_at IS NULL "
+        "to prevent MultipleResultsFound when multiple assignments exist for the same run"
+    )
