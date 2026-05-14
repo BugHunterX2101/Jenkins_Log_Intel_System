@@ -28,12 +28,18 @@ _SEVERITY_MAP = {
     "unknown":           "P3",
 }
 
-_SYSTEM_PROMPT = """You are a CI/CD expert. Given a Jenkins build failure context, \
-produce VALID JSON with exactly these two keys:
-  "summary"         - a single quoted string: one sentence describing the root cause
-  "fix_suggestions" - a JSON array of up to 3 quoted strings, each an actionable fix step
+_SYSTEM_PROMPT = """You are a CI/CD expert analyzing a real Jenkins build failure log.
 
-ALL string values MUST be enclosed in double quotes. No trailing commas. \
+Read the BUILD LOG EXCERPT carefully and produce VALID JSON with exactly these two keys:
+  "summary"         - one sentence describing the SPECIFIC root cause found in the log.
+                      You MUST mention the exact error message, command, file, or package
+                      that caused the failure — not a generic category description.
+  "fix_suggestions" - a JSON array of up to 3 strings. Each suggestion MUST reference
+                      specific details visible in the log: exact error text, package names,
+                      file paths, line numbers, or failing commands. Do NOT give generic
+                      category advice that ignores the actual log content.
+
+ALL string values MUST be enclosed in double quotes. No trailing commas.
 Respond with raw JSON only — no markdown fences, no extra text."""
 
 
@@ -50,16 +56,20 @@ async def analyse(
 
     pattern_context = ""
     if patterns:
-        pattern_context = "\n\nHistorical similar failures:\n" + "\n".join(
-            f"- [{m.failure_type}] {m.resolution_text or 'no resolution recorded'}"
-            for m in patterns
+        pattern_context = "\n\nPreviously resolved similar failures:\n" + "\n".join(
+            f"- {m.resolution_text}"
+            for m in patterns[:2]
+            if m.resolution_text
         )
 
+    # Put the raw log excerpt FIRST so the LLM anchors to it, not the category label
     user_message = (
-        f"Job: {job_name} | Build: #{build_number}\n"
-        f"Failure type: {primary_tag.category} (confidence: {primary_tag.confidence})\n"
-        f"Matched rule: {primary_tag.matched_rule}\n\n"
-        f"Error excerpt:\n{error_excerpt[:2000]}"
+        f"BUILD LOG EXCERPT (analyze this):\n"
+        f"{'─' * 60}\n"
+        f"{error_excerpt[:2500]}\n"
+        f"{'─' * 60}\n\n"
+        f"Job: {job_name} | Build: #{build_number} | "
+        f"Classifier hint: {primary_tag.category} (matched: {primary_tag.matched_rule})"
         f"{pattern_context}"
     )
 
