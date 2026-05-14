@@ -69,7 +69,14 @@
       "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\);e=d.get\\('events',[]\\);print\\('build_events OK:',len\\(e\\),'events, first keys:',list\\(e[0].keys\\(\\)\\) if e else 'none'\\)\")",
       "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('workers OK:',len\\(d.get\\('workers',[]\\)\\),'workers'\\)\")",
       "Bash(curl -s http://localhost:8000/ui/metrics/live)",
-      "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\);data=d.get\\('data',{}\\);print\\('metrics OK, chaos:',data.get\\('chaos_intensity'\\),'uptime:',data.get\\('uptime_formatted'\\)\\)\")"
+      "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\);data=d.get\\('data',{}\\);print\\('metrics OK, chaos:',data.get\\('chaos_intensity'\\),'uptime:',data.get\\('uptime_formatted'\\)\\)\")",
+      "Bash(python -m pytest app/tests/ -q)",
+      "Bash(gh repo *)",
+      "Bash(gh api *)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/BugHunterX2101/Jenkins_Log_Intel_System/main/Jenkinsfile\")",
+      "Bash(curl -s -X POST http://localhost:8000/jobs/trigger -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(curl -s http://localhost:8000/jobs/1475)",
+      "Bash(curl -s -X POST http://localhost:8000/webhook/jenkins -H 'Content-Type: application/json' -d '{ *)"
     ]
   }
 }
