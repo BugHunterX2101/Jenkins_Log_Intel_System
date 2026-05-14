@@ -337,18 +337,35 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
         )
         queued_runs = arrivals_result.scalars().all()
 
-        # Get in-progress jobs
+        # Get in-progress jobs — split by WorkerAssignment.status:
+        # ASSIGNED = worker picked the job, Jenkins not yet started (IN_PROGRESS column)
+        # RUNNING  = Jenkins actively executing stages (RUNNING column)
+        from app.worker_models import WorkerAssignment, AssignmentStatus
+
         inprog_result = await session.execute(
             select(PipelineRun)
             .where(PipelineRun.status == RunStatus.IN_PROGRESS, real_pipeline_run_clause())
             .order_by(PipelineRun.started_at.desc())
         )
         inprog_runs = inprog_result.scalars().all()
+
+        # Find which run_ids have a RUNNING assignment (Jenkins actively executing)
+        running_ids_result = await session.execute(
+            select(WorkerAssignment.run_id)
+            .where(WorkerAssignment.status == AssignmentStatus.RUNNING)
+        )
+        running_run_ids = {row[0] for row in running_ids_result.all()}
+
+        # Split: truly running vs just assigned/dispatched
+        inprog_assigned_runs = [r for r in inprog_runs if r.id not in running_run_ids]
+        inprog_running_runs  = [r for r in inprog_runs if r.id in running_run_ids]
     except Exception as exc:
         logger.warning("get_scheduler_data: DB error — returning empty scheduler data: %s", exc)
         queued_runs = []
         scheduled_runs = []
         inprog_runs = []
+        inprog_assigned_runs = []
+        inprog_running_runs = []
     
     # Compute real average job duration from recent completed runs
     try:
@@ -420,12 +437,27 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
             "started": run.started_at.isoformat() if run.started_at else None,
             "duration_s": duration,
         })
-    
-    # running = in-progress jobs (kanban uses 'running' key)
+
+    # in_progress = worker assigned, Jenkins build not yet started (ASSIGNED status)
     from datetime import datetime, timezone as _tz
     _now = datetime.now(_tz.utc)
+    in_progress_jobs = []
+    for run in inprog_assigned_runs[:10]:
+        elapsed = int((_now - run.started_at).total_seconds()) if run.started_at else 0
+        in_progress_jobs.append({
+            "id": run.id,
+            "repo": _repo_short_name(run.repo_url),
+            "branch": run.branch,
+            "job_name": run.jenkins_job_name,
+            "started": run.started_at.isoformat() if run.started_at else None,
+            "duration_s": elapsed,
+            "summary": f"{run.jenkins_job_name or 'job'} / {run.branch or 'main'}",
+            **_run_priority_payload(run),
+        })
+
+    # running = Jenkins actively executing stages (RUNNING assignment status)
     running_jobs = []
-    for run in inprog_runs[:10]:
+    for run in inprog_running_runs[:10]:
         # duration_s is None while the job is still running; compute elapsed from started_at
         if run.duration_s is not None:
             elapsed = run.duration_s
@@ -469,6 +501,7 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     return {
         "queued": queued_jobs,
         "scheduled": scheduled_jobs,
+        "in_progress": in_progress_jobs,
         "running": running_jobs,
         "completed": completed_jobs,
         "active": running_jobs,

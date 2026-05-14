@@ -321,22 +321,23 @@
       if (!response.ok) throw new Error('Failed to fetch scheduler data');
       const data = await response.json();
 
-      const queuedCountEl = document.querySelector('[data-ui="kanban-queued-count"]');
-      const scheduledCountEl = document.querySelector('[data-ui="kanban-scheduled-count"]');
-      const runningCountEl = document.querySelector('[data-ui="kanban-running-count"]');
-      if (queuedCountEl) queuedCountEl.textContent = String((data.queued || []).length);
-      if (scheduledCountEl) scheduledCountEl.textContent = String((data.scheduled || []).length);
-      if (runningCountEl) runningCountEl.textContent = String((data.running || []).length);
+      const queuedCountEl    = document.querySelector('[data-ui="kanban-queued-count"]');
+      const inprogressCountEl = document.querySelector('[data-ui="kanban-inprogress-count"]');
+      const runningCountEl   = document.querySelector('[data-ui="kanban-running-count"]');
+      if (queuedCountEl)     queuedCountEl.textContent    = String((data.queued || []).length);
+      if (inprogressCountEl) inprogressCountEl.textContent = String((data.in_progress || []).length);
+      if (runningCountEl)    runningCountEl.textContent   = String((data.running || []).length);
 
-      const queuedList = document.querySelector('[data-ui="kanban-queued-list"]');
-      const scheduledList = document.querySelector('[data-ui="kanban-scheduled-list"]');
-      const runningList = document.querySelector('[data-ui="kanban-running-list"]');
-      const completedList = document.querySelector('[data-ui="kanban-completed-list"]');
+      const queuedList     = document.querySelector('[data-ui="kanban-queued-list"]');
+      const inprogressList = document.querySelector('[data-ui="kanban-inprogress-list"]');
+      const runningList    = document.querySelector('[data-ui="kanban-running-list"]');
+      const completedList  = document.querySelector('[data-ui="kanban-completed-list"]');
       const completedCountEl = document.querySelector('[data-ui="kanban-completed-count"]');
 
       const renderJobCard = (job, variant) => {
         const el = document.createElement('div');
         const isRunning = variant === 'running';
+        const isInProgress = variant === 'inprogress';
         const isCompleted = variant === 'completed';
         const priorityText = job.priority_label || (job.priority ? `P${job.priority}` : 'Priority unknown');
         const priorityReason = job.priority_reason || job.estimated_wait || '';
@@ -345,6 +346,8 @@
           ? 'bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm border-l-4 border-l-[#10B981]'
           : isRunning
           ? 'bg-surface-container-lowest border border-primary/40 rounded p-sm shadow-sm relative overflow-hidden'
+          : isInProgress
+          ? 'bg-surface-container-lowest border border-amber-300 rounded p-sm shadow-sm relative overflow-hidden border-l-4 border-l-amber-400'
           : 'bg-surface-container-lowest border border-outline-variant rounded p-sm shadow-sm hover:shadow-[0px_10px_15px_rgba(0,0,0,0.05)] transition-shadow cursor-grab';
         const durationLabel = job.duration_s ? `${Math.floor(job.duration_s / 60)}m ${job.duration_s % 60}s` : (job.started ? new Date(job.started).toLocaleTimeString() : '—');
         el.innerHTML = `
@@ -352,13 +355,17 @@
             <span class="font-code-sm text-code-sm font-semibold text-on-surface ${isCompleted ? 'line-through text-outline' : ''}">#${job.id || 'JOB'}</span>
             ${isCompleted
               ? '<span class="material-symbols-outlined text-[#10B981] text-[18px]">check_circle</span>'
+              : isInProgress
+              ? '<span class="material-symbols-outlined text-amber-500 text-[16px] animate-pulse">pending</span>'
+              : isRunning
+              ? '<span class="material-symbols-outlined text-primary text-[16px] animate-spin" style="animation-duration:2s">refresh</span>'
               : '<span class="material-symbols-outlined text-outline text-[16px]">more_horiz</span>'}
           </div>
           <div class="font-body-md text-[13px] text-on-surface-variant mb-2 line-clamp-2">${escapeHtml(summary)}</div>
           <div class="font-code-sm text-[10px] text-outline mb-3 line-clamp-1">${escapeHtml(priorityReason)}</div>
           <div class="flex items-center justify-between mt-auto border-t border-outline-variant/50 pt-2">
             <span class="font-label-md text-[10px] text-outline">PRIORITY: ${escapeHtml(priorityText)}</span>
-            ${isRunning || isCompleted ? `<span class="font-code-sm text-[11px] text-outline">${durationLabel}</span>` : ''}
+            ${isRunning || isInProgress || isCompleted ? `<span class="font-code-sm text-[11px] text-outline">${durationLabel}</span>` : ''}
           </div>
         `;
         return el;
@@ -376,11 +383,10 @@
         const queued = data.queued || [];
         queued.length ? queued.forEach((j) => queuedList.appendChild(renderJobCard(j, 'queued'))) : queuedList.appendChild(_emptyCard('No jobs queued'));
       }
-      if (scheduledList) {
-        scheduledList.innerHTML = '';
-        // "scheduled" is FIFO-ordered (oldest first = next to run) — no dedup needed
-        const scheduled = data.scheduled || [];
-        scheduled.length ? scheduled.forEach((j) => scheduledList.appendChild(renderJobCard(j, 'scheduled'))) : scheduledList.appendChild(_emptyCard('No scheduled jobs'));
+      if (inprogressList) {
+        inprogressList.innerHTML = '';
+        const inprogress = data.in_progress || [];
+        inprogress.length ? inprogress.forEach((j) => inprogressList.appendChild(renderJobCard(j, 'inprogress'))) : inprogressList.appendChild(_emptyCard('No jobs in progress'));
       }
       if (runningList) {
         runningList.innerHTML = '';
@@ -399,10 +405,12 @@
       if (decisionLog) {
         decisionLog.innerHTML = '';
         const running = data.running || [];
+        const inprogress = data.in_progress || [];
         const queued = data.queued || [];
         const completed = (data.completed || []).slice(0, 3);
         const entries = [];
-        running.forEach((j) => entries.push({ type: 'assigned', job: j }));
+        running.forEach((j) => entries.push({ type: 'running', job: j }));
+        inprogress.forEach((j) => entries.push({ type: 'assigned', job: j }));
         queued.slice(0, 4).forEach((j) => entries.push({ type: 'queued', job: j }));
         completed.forEach((j) => entries.push({ type: 'completed', job: j }));
 
@@ -412,7 +420,7 @@
           entries.forEach(({ type, job }) => {
             const li = document.createElement('li');
             li.className = 'p-sm px-md hover:bg-surface-container-lowest transition-colors flex gap-3 items-start';
-            const dotColor = type === 'assigned' ? 'bg-primary' : type === 'completed' ? 'bg-[#10B981]' : 'bg-secondary';
+            const dotColor = type === 'running' ? 'bg-primary' : type === 'assigned' ? 'bg-amber-500' : type === 'completed' ? 'bg-[#10B981]' : 'bg-secondary';
             const ts = job.started
               ? new Date(job.started).toLocaleTimeString()
               : job.completed
@@ -420,8 +428,10 @@
               : job.queued_at
               ? new Date(job.queued_at).toLocaleTimeString()
               : '—';
-            const label = type === 'assigned'
+            const label = type === 'running'
               ? `<span class="font-semibold text-primary">Job #${escapeHtml(job.id)}</span> running — ${escapeHtml(job.repo || '')}/${escapeHtml(job.branch || 'main')}`
+              : type === 'assigned'
+              ? `<span class="font-semibold text-amber-600">Job #${escapeHtml(job.id)}</span> in progress — worker assigned, awaiting execution`
               : type === 'completed'
               ? `<span class="font-semibold text-[#10B981]">Job #${escapeHtml(job.id)} COMPLETED</span> — ${escapeHtml(job.repo || '')}/${escapeHtml(job.branch || 'main')}`
               : `<span class="font-semibold">Job #${escapeHtml(job.id)}</span> queued, ${escapeHtml(job.priority_reason || 'awaiting capacity')}`;
@@ -1330,7 +1340,7 @@
       bindOnce(filterBtn, () => {
         runningOnly = !runningOnly;
         filterBtn.classList.toggle('text-primary', runningOnly);
-        ['[data-ui="kanban-queued-list"]', '[data-ui="kanban-scheduled-list"]'].forEach((sel) => {
+        ['[data-ui="kanban-queued-list"]', '[data-ui="kanban-inprogress-list"]'].forEach((sel) => {
           const el = document.querySelector(sel);
           if (el) el.closest('.flex-col')?.classList.toggle('hidden', runningOnly);
         });

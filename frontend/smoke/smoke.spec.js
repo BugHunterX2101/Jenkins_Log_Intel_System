@@ -27,12 +27,20 @@ for (const p of pages) {
     // for pages that should show structured content, check the expected primary container
     if (['queue','webhooks','scheduler','backend'].includes(p.name)) {
       if (p.name === 'scheduler') {
-        const hasKanban = await page.$$('[data-ui="kanban-queued-list"], [data-ui="kanban-scheduled-list"], [data-ui="kanban-running-list"]');
+        const hasKanban = await page.$$('[data-ui="kanban-queued-list"], [data-ui="kanban-inprogress-list"], [data-ui="kanban-running-list"]');
         expect(hasKanban.length).toBeGreaterThan(0);
       } else {
         const hasTable = await page.$('table');
         expect(!!hasTable).toBeTruthy();
       }
+    }
+
+    // Overview page: repos-grid must exist so repo changes appear after webhook ingestion
+    if (p.name === 'index') {
+      const reposGrid = await page.$('[data-ui="repos-grid"]');
+      expect(!!reposGrid, 'repos-grid container missing from overview page').toBeTruthy();
+      const reposCount = await page.$('[data-ui="repos-count"]');
+      expect(!!reposCount, 'repos-count badge missing from overview page').toBeTruthy();
     }
   });
 }

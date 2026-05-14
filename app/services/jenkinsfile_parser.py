@@ -68,6 +68,11 @@ async def fetch_jenkinsfile(
             resp = await client.get(raw_url, headers=headers, follow_redirects=True)
             if resp.status_code == 200:
                 return resp.text
+            # Token may be expired/invalid — retry without auth for public repos
+            if resp.status_code == 404 and headers:
+                resp2 = await client.get(raw_url, follow_redirects=True)
+                if resp2.status_code == 200:
+                    return resp2.text
             logger.warning(
                 "Jenkinsfile fetch returned HTTP %d for %s@%s",
                 resp.status_code, repo_url, branch,
