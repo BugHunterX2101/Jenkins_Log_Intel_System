@@ -10,6 +10,7 @@ import asyncio
 import logging
 import time
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 import httpx
 from celery import Celery
@@ -56,12 +57,28 @@ def trigger_jenkins_build(
         )
         asyncio.run(_mark_started(run_id, build_number, build_url))
         poll_pipeline_stages.apply_async(  # type: ignore[attr-defined]
-            args=[run_id, job_name, build_number],
+            args=[run_id, job_name, build_number, build_url],
             countdown=10,
         )
         return {"run_id": run_id, "build_number": build_number}
     except Exception as exc:
         logger.error("Failed to trigger Jenkins build for run %d: %s", run_id, exc)
+        if self.request.retries >= self.max_retries:
+            fallback_result = "ABORTED"
+            try:
+                asyncio.run(_finalize_exhausted_poll(run_id, fallback_result))
+            except Exception as finalize_exc:
+                logger.error(
+                    "Failed to finalize trigger exhaustion for run %d: %s",
+                    run_id,
+                    finalize_exc,
+                )
+            return {
+                "run_id": run_id,
+                "done": False,
+                "error": str(exc),
+                "finalized_as": fallback_result,
+            }
         raise self.retry(exc=exc)
 
 
@@ -70,8 +87,7 @@ async def _trigger_jenkins(
     branch: str,
     commit_sha: str | None,
 ) -> tuple[int, str]:
-    encoded_job = job_name.replace("/", "/job/")
-    url = f"{settings.JENKINS_URL}/job/{encoded_job}/buildWithParameters"
+    url_candidates = _build_trigger_url_candidates(job_name, branch)
     auth = (settings.JENKINS_USER, settings.JENKINS_TOKEN)
 
     params: dict = {}
@@ -79,16 +95,72 @@ async def _trigger_jenkins(
         params["GIT_COMMIT"] = commit_sha
     params["BRANCH"] = branch
 
-    async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.post(url, auth=auth, params=params)
-        if resp.status_code not in (200, 201):
-            raise RuntimeError(
-                f"Jenkins trigger returned {resp.status_code}: {resp.text[:200]}"
-            )
-        queue_url = resp.headers.get("Location", "")
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+        queue_url = ""
+        last_error = ""
+        for url in url_candidates:
+            # Try parameterized build first, then plain build for jobs that
+            # don't expose buildWithParameters.
+            for endpoint in ("buildWithParameters", "build"):
+                trigger_url = f"{url}/{endpoint}"
+                request_params = params if endpoint == "buildWithParameters" else None
+                resp = await client.post(trigger_url, auth=auth, params=request_params)
+                if resp.status_code in (200, 201, 202):
+                    queue_url = resp.headers.get("Location", "")
+                    break
+                last_error = f"{resp.status_code}: {resp.text[:200]}"
+                if resp.status_code == 404:
+                    continue
+            if queue_url:
+                break
+
+        if not queue_url and last_error:
+            raise RuntimeError(f"Jenkins trigger failed for '{job_name}' ({last_error})")
 
     build_number, build_url = await _resolve_queue_item(queue_url, auth)
     return build_number, build_url
+
+
+def _encode_jenkins_path(*segments: str) -> str:
+    cleaned = [s.strip("/") for s in segments if s and s.strip("/")]
+    return "/".join(f"job/{quote(seg, safe='')}" for seg in cleaned)
+
+
+def _build_trigger_url_candidates(job_name: str, branch: str) -> list[str]:
+    """Return candidate Jenkins job roots from most specific to fallback."""
+    candidates: list[str] = []
+    normalized = job_name.strip("/")
+    branch_clean = branch.strip("/")
+
+    base = normalized
+    if branch_clean and normalized.endswith(f"/{branch_clean}"):
+        base = normalized[: -(len(branch_clean) + 1)]
+
+    base_parts = [p for p in base.split("/") if p]
+    normalized_parts = [p for p in normalized.split("/") if p]
+
+    # 1) Full multibranch path: <base>/<branch>
+    if base_parts and branch_clean:
+        candidates.append(f"{settings.JENKINS_URL}/{_encode_jenkins_path(*base_parts, branch_clean)}")
+
+    # 2) Repo-level fallback: drop leading org/folder from <org>/<repo>
+    if len(base_parts) >= 2 and branch_clean:
+        candidates.append(f"{settings.JENKINS_URL}/{_encode_jenkins_path(base_parts[-1], branch_clean)}")
+
+    # 3) Plain job fallback without explicit branch
+    if base_parts:
+        candidates.append(f"{settings.JENKINS_URL}/{_encode_jenkins_path(*base_parts)}")
+    if normalized_parts:
+        candidates.append(f"{settings.JENKINS_URL}/{_encode_jenkins_path(*normalized_parts)}")
+
+    # Preserve order but drop duplicates
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate not in seen:
+            deduped.append(candidate)
+            seen.add(candidate)
+    return deduped
 
 
 async def _resolve_queue_item(
@@ -135,20 +207,57 @@ def poll_pipeline_stages(
     run_id: int,
     job_name: str,
     build_number: int,
+    build_url: str | None = None,
 ) -> dict:
     try:
-        done = asyncio.run(_sync_stages(run_id, job_name, build_number))
+        done = asyncio.run(_sync_stages(run_id, job_name, build_number, build_url))
         if not done:
             raise self.retry(countdown=10)
         return {"run_id": run_id, "done": True}
     except Exception as exc:
         if self.request.retries >= self.max_retries:
             logger.error("Stage poll exhausted retries for run %d", run_id)
-            return {"run_id": run_id, "done": False, "error": str(exc)}
+            fallback_result = "ABORTED" if not build_number else "FAILURE"
+            try:
+                asyncio.run(_finalize_exhausted_poll(run_id, fallback_result))
+            except Exception as finalize_exc:
+                logger.error(
+                    "Failed to finalize exhausted poll for run %d: %s",
+                    run_id,
+                    finalize_exc,
+                )
+            return {
+                "run_id": run_id,
+                "done": False,
+                "error": str(exc),
+                "finalized_as": fallback_result,
+            }
         raise self.retry(exc=exc, countdown=10)
 
 
-async def _sync_stages(run_id: int, job_name: str, build_number: int) -> bool:
+async def _finalize_exhausted_poll(run_id: int, fallback_result: str) -> None:
+    """Fail-safe completion for runs that never receive a terminal Jenkins status."""
+    from app.db import get_session_factory
+    from app.pipeline_models import RunStatus
+    from app.services.job_scheduler import get_run as _get_run
+    from app.services.job_scheduler import on_build_completed as _on_build_completed
+
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        run = await _get_run(session, run_id)
+        if not run:
+            return
+        if run.status in (RunStatus.COMPLETED, RunStatus.FAILED, RunStatus.ABORTED):
+            return
+        await _on_build_completed(session, run_id, fallback_result)
+
+
+async def _sync_stages(
+    run_id: int,
+    job_name: str,
+    build_number: int,
+    build_url: str | None = None,
+) -> bool:
     """
     Fetch Jenkins Workflow Stage API and reconcile with StageExecution rows.
 
@@ -176,10 +285,11 @@ async def _sync_stages(run_id: int, job_name: str, build_number: int) -> bool:
     _gr     = getattr(_pt, "get_run",            None) or _get_run
 
     encoded_job = job_name.replace("/", "/job/")
-    api_url = (
-        f"{settings.JENKINS_URL}/job/{encoded_job}/{build_number}"
-        f"/wfapi/describe"
-    )
+    if build_url:
+        build_root = build_url.rstrip("/")
+    else:
+        build_root = f"{settings.JENKINS_URL}/job/{encoded_job}/{build_number}"
+    api_url = f"{build_root}/wfapi/describe"
     auth = (settings.JENKINS_USER, settings.JENKINS_TOKEN)
 
     from app.db import get_session_factory
@@ -210,10 +320,7 @@ async def _sync_stages(run_id: int, job_name: str, build_number: int) -> bool:
                 elif status in ("SUCCESS", "FAILED", "UNSTABLE"):
                     log_excerpt = None
                     try:
-                        log_url = (
-                            f"{settings.JENKINS_URL}/job/{encoded_job}/{build_number}"
-                            f"/execution/node/{js.get('id', '')}/wfapi/log"
-                        )
+                        log_url = f"{build_root}/execution/node/{js.get('id', '')}/wfapi/log"
                         log_resp = await client.get(log_url, auth=auth)
                         if log_resp.status_code == 200:
                             log_excerpt = log_resp.json().get("text", "")[-1000:]

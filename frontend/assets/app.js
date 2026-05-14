@@ -260,7 +260,13 @@
       } else {
         runs.forEach((run) => {
           const row = document.createElement('tr');
-          const waitSeconds = run.queued_at ? Math.max(0, Math.floor((Date.now() - new Date(run.queued_at).getTime()) / 1000)) : null;
+          const waitSeconds = (() => {
+            if (!run.queued_at) return null;
+            const queuedAt = new Date(run.queued_at).getTime();
+            const endAt = run.started_at ? new Date(run.started_at).getTime() : Date.now();
+            if (!Number.isFinite(queuedAt) || !Number.isFinite(endAt)) return null;
+            return Math.max(0, Math.floor((endAt - queuedAt) / 1000));
+          })();
           row.className = 'border-b border-surface-variant hover:bg-surface-container-low transition-colors group';
           const priority = run.priority_label || `P${run.scheduling_priority || 6}`;
           const priorityReason = run.priority_reason || 'priority assigned by scheduler';
