@@ -28,12 +28,13 @@ _SEVERITY_MAP = {
     "unknown":           "P3",
 }
 
-_SYSTEM_PROMPT = """You are a CI/CD expert. Given a Jenkins build failure context,
-produce a JSON object with exactly these keys:
-  "summary"         – one sentence describing the root cause
-  "fix_suggestions" – list of up to 3 actionable fix steps (strings)
+_SYSTEM_PROMPT = """You are a CI/CD expert. Given a Jenkins build failure context, \
+produce VALID JSON with exactly these two keys:
+  "summary"         - a single quoted string: one sentence describing the root cause
+  "fix_suggestions" - a JSON array of up to 3 quoted strings, each an actionable fix step
 
-Respond with raw JSON only, no markdown fences."""
+ALL string values MUST be enclosed in double quotes. No trailing commas. \
+Respond with raw JSON only — no markdown fences, no extra text."""
 
 
 async def analyse(
@@ -94,6 +95,7 @@ async def _call_groq(user_message: str, tag: FailureTag) -> dict | None:
             ],
             "max_tokens": 512,
             "temperature": 0.2,
+            "response_format": {"type": "json_object"},
         }
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
@@ -112,7 +114,11 @@ async def _call_groq(user_message: str, tag: FailureTag) -> dict | None:
         raw = re.sub(r"\s*```$", "", raw).strip()
         if not raw:
             return None
-        parsed = json.loads(raw)
+
+        parsed = _safe_json_loads(raw)
+        if parsed is None:
+            return None
+
         summary = parsed.get("summary") or _fallback_summary(tag)
         fixes = [f for f in parsed.get("fix_suggestions", []) if isinstance(f, str)]
         return {
@@ -123,6 +129,37 @@ async def _call_groq(user_message: str, tag: FailureTag) -> dict | None:
     except Exception as exc:
         logger.warning("Groq call failed: %s", exc)
         return None
+
+
+def _safe_json_loads(raw: str) -> dict | None:
+    """Parse JSON with a lightweight repair pass for common LLM formatting errors."""
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+
+    # Attempt 1: quote unquoted string values after known string keys
+    repaired = re.sub(
+        r'"(summary)"\s*:\s*([^"\[{\n][^\n,}]*)',
+        lambda m: f'"{m.group(1)}": "{m.group(2).strip()}"',
+        raw,
+    )
+    try:
+        return json.loads(repaired)
+    except json.JSONDecodeError:
+        pass
+
+    # Attempt 2: extract "summary" value via regex as last resort
+    summary_match = re.search(r'"summary"\s*:\s*"?([^"\n,}{]+)"?', raw)
+    fixes_matches  = re.findall(r'"([^"]{10,})"', raw)
+    if summary_match:
+        return {
+            "summary": summary_match.group(1).strip(),
+            "fix_suggestions": fixes_matches[1:4] if len(fixes_matches) > 1 else [],
+        }
+
+    logger.warning("Could not parse or repair Groq JSON response: %r", raw[:200])
+    return None
 
 
 async def _call_anthropic(user_message: str, tag: FailureTag) -> dict | None:

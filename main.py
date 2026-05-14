@@ -24,6 +24,7 @@ from app.routers import ui
 from app.models import Base
 
 _sched_logger = logging.getLogger("scheduler.loop")
+_startup_logger = logging.getLogger("startup")
 
 
 async def _scheduler_loop() -> None:
@@ -99,30 +100,27 @@ async def lifespan(_app: FastAPI):
                 # For SQLite and other dialects: current_job is defined in the model,
                 # so create_all already created it — no ALTER TABLE needed.
             except Exception as alter_err:
-                import logging
-                logging.getLogger(__name__).warning("ALTER TABLE skipped: %s", alter_err)
+                __startup_logger.warning("ALTER TABLE skipped: %s", alter_err)
         if getattr(settings, "AUTO_SEED_WORKERS", False):
             async with session_factory() as session:
                 await seed_workers(session)
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning("Worker seed skipped: %s", e)
+        __startup_logger.warning("Worker seed skipped: %s", e)
 
-    startup_logger = logging.getLogger("startup")
     if not settings.JENKINS_WEBHOOK_SECRET:
-        startup_logger.warning(
+        __startup_logger.warning(
             "JENKINS_WEBHOOK_SECRET is not set — Jenkins webhook signature verification disabled"
         )
     if not settings.GITHUB_WEBHOOK_SECRET:
-        startup_logger.warning(
+        _startup_logger.warning(
             "GITHUB_WEBHOOK_SECRET is not set — GitHub webhook signature verification disabled"
         )
     if not settings.SLACK_BOT_TOKEN:
-        startup_logger.warning(
+        _startup_logger.warning(
             "SLACK_BOT_TOKEN is not set — Slack build-failure notifications disabled"
         )
     if not settings.GROQ_API_KEY and not settings.ANTHROPIC_API_KEY:
-        startup_logger.warning(
+        _startup_logger.warning(
             "Neither GROQ_API_KEY nor ANTHROPIC_API_KEY is set — LLM analysis will use template fallback"
         )
 
