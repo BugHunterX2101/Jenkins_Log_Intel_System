@@ -111,6 +111,8 @@ async def _process_async(payload: dict) -> dict:
         summary_text=analysis["summary_text"],
         fix_suggestions=analysis["fix_suggestions"],
         severity=analysis["severity"], log_url=log_url,
+        error_excerpt=error_excerpt[:600],
+        failure_type=primary_tag.category,
     )
 
     logger.info("Delivery results for %s #%d: %s", job_name, build_number, delivery)

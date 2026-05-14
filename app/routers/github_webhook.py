@@ -33,6 +33,7 @@ _FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 def _verify_github_sig(body: bytes, sig_header: str | None) -> bool:
     """Verify HMAC-SHA256 signature from GitHub. Permissive when no secret set."""
     if not _GH_SECRET:
+        logger.debug("GITHUB_WEBHOOK_SECRET not configured — accepting request without verification")
         return True
     if not sig_header or not sig_header.startswith("sha256="):
         logger.warning("GitHub webhook: missing or malformed signature header")

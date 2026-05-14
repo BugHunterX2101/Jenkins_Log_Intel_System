@@ -105,7 +105,7 @@ async def assign_worker(
 
     run_result = await session.execute(select(PipelineRun).where(PipelineRun.id == run_id))
     run_obj = run_result.scalar_one_or_none()
-    chosen.current_job = run_obj.jenkins_job_name if run_obj else None
+    chosen.current_job = (run_obj.jenkins_job_name or run_obj.repo_url) if run_obj else f"run-{run_id}"
 
     assignment = WorkerAssignment(
         run_id=run_id,

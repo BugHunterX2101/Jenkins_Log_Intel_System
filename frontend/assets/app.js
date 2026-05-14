@@ -145,7 +145,20 @@
     });
   };
 
-  const attachWebhookActions = () => {};
+  let _staleDataBanner = null;
+  const _showStaleBanner = () => {
+    if (_staleDataBanner) return;
+    _staleDataBanner = document.createElement("div");
+    _staleDataBanner.id = "stale-data-banner";
+    _staleDataBanner.className =
+      "fixed top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-white px-5 py-2 rounded shadow-lg text-sm z-50 flex items-center gap-2";
+    _staleDataBanner.innerHTML =
+      '<span class="material-symbols-outlined text-[16px]">cloud_off</span> Server unreachable — showing last known data';
+    document.body.appendChild(_staleDataBanner);
+  };
+  const _hideStaleBanner = () => {
+    if (_staleDataBanner) { _staleDataBanner.remove(); _staleDataBanner = null; }
+  };
 
   const populateQueueChart = async () => {
     const svg = document.getElementById('queue-depth-svg');
@@ -311,6 +324,7 @@
       }
     } catch (error) {
       console.error('Failed to populate queue table:', error);
+      _showStaleBanner();
     }
   };
 
@@ -320,6 +334,7 @@
       const response = await fetch('/ui/scheduler');
       if (!response.ok) throw new Error('Failed to fetch scheduler data');
       const data = await response.json();
+      _hideStaleBanner();
 
       const queuedCountEl    = document.querySelector('[data-ui="kanban-queued-count"]');
       const inprogressCountEl = document.querySelector('[data-ui="kanban-inprogress-count"]');
@@ -448,6 +463,7 @@
       }
     } catch (error) {
       console.error('Failed to populate scheduler kanban:', error);
+      _showStaleBanner();
     }
   };
 

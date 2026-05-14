@@ -152,18 +152,15 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
                 # Use new_event_loop() instead of asyncio.run() to avoid
                 # signal-handler restrictions that apply to non-main threads.
                 def _exec_in_thread(rid=run.id, wid=worker.id, stages=stage_names):
-                    import sys
-                    print(f"[scheduler] thread starting run {rid}", flush=True, file=sys.stderr)
                     # asyncpg requires SelectorEventLoop on Windows;
                     # ProactorEventLoop (the Windows default) causes silent hangs.
                     loop = asyncio.SelectorEventLoop()
                     asyncio.set_event_loop(loop)
                     try:
+                        logger.debug("Execution thread starting run %d", rid)
                         result = loop.run_until_complete(_run_execution(rid, wid, stages))
-                        print(f"[scheduler] run {rid} finished success={result}", flush=True, file=sys.stderr)
                         logger.info("Run %d execution completed: success=%s", rid, result)
                     except Exception as _exc:
-                        print(f"[scheduler] run {rid} FAILED: {_exc}", flush=True, file=sys.stderr)
                         logger.error("Run %d execution failed: %s", rid, _exc, exc_info=True)
                     finally:
                         loop.close()

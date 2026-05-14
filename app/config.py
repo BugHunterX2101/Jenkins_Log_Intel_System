@@ -41,6 +41,14 @@ class Settings(BaseSettings):
 
     # Email notifications (optional)
     SENDER_EMAIL: str = ""
+    SMTP_HOST:    str = "localhost"
+    SMTP_PORT:    int = 25
+    SMTP_USER:    str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS:     bool = False
+
+    # ngrok management API (used to auto-detect public tunnel URL)
+    NGROK_API_URL: str = "http://localhost:4040"
 
     # Scheduler: max pipeline execution threads running concurrently inside FastAPI process
     MAX_CONCURRENT_EXECUTIONS: int = 6

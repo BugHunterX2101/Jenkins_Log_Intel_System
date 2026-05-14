@@ -108,6 +108,24 @@ async def lifespan(_app: FastAPI):
         import logging
         logging.getLogger(__name__).warning("Worker seed skipped: %s", e)
 
+    startup_logger = logging.getLogger("startup")
+    if not settings.JENKINS_WEBHOOK_SECRET:
+        startup_logger.warning(
+            "JENKINS_WEBHOOK_SECRET is not set — Jenkins webhook signature verification disabled"
+        )
+    if not settings.GITHUB_WEBHOOK_SECRET:
+        startup_logger.warning(
+            "GITHUB_WEBHOOK_SECRET is not set — GitHub webhook signature verification disabled"
+        )
+    if not settings.SLACK_BOT_TOKEN:
+        startup_logger.warning(
+            "SLACK_BOT_TOKEN is not set — Slack build-failure notifications disabled"
+        )
+    if not settings.GROQ_API_KEY and not settings.ANTHROPIC_API_KEY:
+        startup_logger.warning(
+            "Neither GROQ_API_KEY nor ANTHROPIC_API_KEY is set — LLM analysis will use template fallback"
+        )
+
     tick_task = asyncio.create_task(_scheduler_loop())
 
     yield

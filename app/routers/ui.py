@@ -635,7 +635,7 @@ async def get_live_metrics(session: AsyncSession = Depends(get_session)) -> dict
                     select(SystemMetrics).order_by(SystemMetrics.timestamp.asc()).limit(count - 999)
                 )
                 for old in oldest.scalars().all():
-                    await session.delete(old)
+                    session.delete(old)
             session.add(SystemMetrics(
                 uptime_seconds=uptime_seconds,
                 memory_used_bytes=mem.rss,
@@ -739,7 +739,7 @@ async def get_ngrok_url() -> dict:
     import httpx
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
-            resp = await client.get("http://localhost:4040/api/tunnels")
+            resp = await client.get(f"{settings.NGROK_API_URL}/api/tunnels")
             if resp.status_code == 200:
                 tunnels = resp.json().get("tunnels", [])
                 for t in tunnels:
@@ -750,6 +750,27 @@ async def get_ngrok_url() -> dict:
     except Exception:
         pass
     return {"url": None, "active": False}
+
+
+@router.get("/config-status", summary="Report which optional env vars are configured")
+async def get_config_status() -> dict:
+    """Returns a map of env-var name → bool indicating whether each optional
+    integration is configured.  Values are True/False only — no secrets leaked."""
+    return {
+        "vars": {
+            "DATABASE_URL":          bool(settings.DATABASE_URL),
+            "REDIS_URL":             bool(settings.REDIS_URL),
+            "JENKINS_URL":           bool(settings.JENKINS_URL and settings.JENKINS_URL != "http://localhost:8080"),
+            "JENKINS_USER":          bool(settings.JENKINS_USER and settings.JENKINS_USER != "admin"),
+            "JENKINS_TOKEN":         bool(settings.JENKINS_TOKEN),
+            "GROQ_API_KEY":          bool(settings.GROQ_API_KEY),
+            "ANTHROPIC_API_KEY":     bool(settings.ANTHROPIC_API_KEY),
+            "SLACK_BOT_TOKEN":       bool(settings.SLACK_BOT_TOKEN),
+            "GITHUB_WEBHOOK_SECRET": bool(settings.GITHUB_WEBHOOK_SECRET),
+            "NGROK_URL":             bool(settings.NGROK_API_URL and settings.NGROK_API_URL != "http://localhost:4040"),
+            "SMTP_HOST":             bool(settings.SMTP_HOST and settings.SMTP_HOST != "localhost"),
+        }
+    }
 
 
 @router.get("/scheduler/mode", summary="Get current scheduler routing mode")

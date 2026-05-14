@@ -110,10 +110,14 @@ async def _call_groq(user_message: str, tag: FailureTag) -> dict | None:
         raw = data["choices"][0]["message"]["content"].strip()
         raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE).strip()
         raw = re.sub(r"\s*```$", "", raw).strip()
+        if not raw:
+            return None
         parsed = json.loads(raw)
+        summary = parsed.get("summary") or _fallback_summary(tag)
+        fixes = [f for f in parsed.get("fix_suggestions", []) if isinstance(f, str)]
         return {
-            "summary_text":    parsed.get("summary", _fallback_summary(tag)),
-            "fix_suggestions": parsed.get("fix_suggestions", [])[:3],
+            "summary_text":    summary,
+            "fix_suggestions": fixes[:3],
         }
 
     except Exception as exc:
@@ -124,28 +128,26 @@ async def _call_groq(user_message: str, tag: FailureTag) -> dict | None:
 async def _call_anthropic(user_message: str, tag: FailureTag) -> dict | None:
     try:
         import anthropic
-        import asyncio
-
-        def _sync_call():
-            client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-            message = client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=512,
-                system=_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_message}],
-            )
-            from anthropic.types import TextBlock
-            text_blocks = [b for b in message.content if isinstance(b, TextBlock)]
-            return text_blocks[0].text.strip() if text_blocks else ""
-
-        loop = asyncio.get_running_loop()
-        raw = await loop.run_in_executor(None, _sync_call)
+        client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+        message = await client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=512,
+            system=_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        from anthropic.types import TextBlock
+        text_blocks = [b for b in message.content if isinstance(b, TextBlock)]
+        raw = text_blocks[0].text.strip() if text_blocks else ""
         raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE).strip()
         raw = re.sub(r"\s*```$", "", raw).strip()
+        if not raw:
+            return None
         parsed = json.loads(raw)
+        summary = parsed.get("summary") or _fallback_summary(tag)
+        fixes = [f for f in parsed.get("fix_suggestions", []) if isinstance(f, str)]
         return {
-            "summary_text":    parsed.get("summary", _fallback_summary(tag)),
-            "fix_suggestions": parsed.get("fix_suggestions", [])[:3],
+            "summary_text":    summary,
+            "fix_suggestions": fixes[:3],
         }
 
     except Exception as exc:

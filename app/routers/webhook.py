@@ -20,6 +20,7 @@ _WEBHOOK_SECRET: str = settings.JENKINS_WEBHOOK_SECRET
 
 def _verify_signature(body: bytes, signature_header: str | None) -> bool:
     if not _WEBHOOK_SECRET:
+        logger.debug("Jenkins webhook secret not configured — accepting request without verification")
         return True
     if not signature_header:
         return False
