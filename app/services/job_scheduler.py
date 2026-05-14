@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import logging
 import threading
-import inspect
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -98,13 +97,7 @@ async def schedule_pipeline(
 
 
 async def get_dashboard_snapshot(session: AsyncSession, limit: int = 200) -> dict:
-    """
-    Return all PipelineRuns grouped by status for the dashboard.
-
-    FIX: Use selectinload to eagerly load stages, avoiding async lazy-load
-    MissingGreenlet errors that occur when accessing run.stages after the
-    query result is returned.
-    """
+    """Return all PipelineRuns grouped by status for the dashboard."""
     result = await session.execute(
         select(PipelineRun)
         .options(selectinload(PipelineRun.stages))
@@ -130,10 +123,7 @@ async def get_dashboard_snapshot(session: AsyncSession, limit: int = 200) -> dic
 
 
 async def get_run(session: AsyncSession, run_id: int) -> PipelineRun | None:
-    """
-    FIX: Use selectinload so run.stages is available without triggering
-    async lazy-loading (which raises MissingGreenlet in SQLAlchemy async).
-    """
+    """Fetch a single run with stages eagerly loaded."""
     result = await session.execute(
         select(PipelineRun)
         .options(selectinload(PipelineRun.stages))
@@ -167,8 +157,6 @@ async def on_build_started(
         )
     )
     assignment = assignment_result.scalar_one_or_none()
-    if inspect.isawaitable(assignment):
-        assignment = await assignment
     if assignment:
         assignment.status = AssignmentStatus.RUNNING
         assignment.started_at = datetime.now(timezone.utc)
@@ -224,14 +212,10 @@ async def on_build_completed(
     result: str,
 ) -> None:
     """
-    Finalise the run when Jenkins reports FINALIZED.
-    
-    FIXED: Now also releases the worker when the build completes, so workers
-    transition from BUSY → IDLE after Jenkins build finishes (not immediately
-    after dispatch). This ensures real-time worker metrics show accurate status.
+    Finalise the run when Jenkins reports FINALIZED and release the assigned worker.
 
-    Maps UNSTABLE -> FAILED (not ABORTED). Jenkins UNSTABLE means tests
-    passed but with warnings — it is a build failure variant, not an abort.
+    Maps UNSTABLE → FAILED (not ABORTED): Jenkins UNSTABLE means tests passed
+    with warnings — it is a build-failure variant, not an abort.
     """
     from app.worker_models import WorkerAssignment
     from app.services.worker_pool import release_worker
@@ -257,16 +241,13 @@ async def on_build_completed(
         if stage.status in (StageStatus.PENDING, StageStatus.RUNNING):
             stage.status = StageStatus.SKIPPED
 
-    # FIX: Release the worker now that the build is complete
-    # Find the WorkerAssignment for this run
+    # Release the worker by finding the WorkerAssignment for this run
     assignment_result = await session.execute(
         select(WorkerAssignment).where(
             WorkerAssignment.run_id == run_id
         )
     )
     assignment = assignment_result.scalar_one_or_none()
-    if inspect.isawaitable(assignment):
-        assignment = await assignment
     if isinstance(assignment, WorkerAssignment):
         worker_id = assignment.worker_id
         success = (result == "SUCCESS")

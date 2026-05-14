@@ -789,17 +789,6 @@ async def set_scheduler_mode(body: dict) -> dict:
     return {"mode": mode}
 
 
-# ── Priority labels ────────────────────────────────────────────────────────────
-
-_PRIORITY_LABELS = {
-    1: "P1 — Hotfix",
-    2: "P2 — Main",
-    3: "P3 — Release",
-    4: "P4 — Develop",
-    5: "P5 — Feature",
-    6: "P6 — Normal",
-}
-
 _PRIORITY_COLORS = {
     1: "bg-red-600 text-white",
     2: "bg-blue-600 text-white",
@@ -928,20 +917,3 @@ async def get_priority_queue(session: AsyncSession = Depends(get_session)) -> di
     return {"mode": mode, "jobs": jobs, "total": len(jobs)}
 
 
-@router.get("/config-status", summary="Which env vars are configured (non-empty)")
-async def config_status() -> dict:
-    """Returns a map of env-var name → bool (True = configured/non-empty)."""
-    return {
-        "vars": {
-            "DATABASE_URL":           bool(settings.DATABASE_URL),
-            "REDIS_URL":              bool(settings.REDIS_URL),
-            "JENKINS_URL":            bool(settings.JENKINS_URL and settings.JENKINS_URL != "http://localhost:8080"),
-            "JENKINS_USER":           bool(settings.JENKINS_USER and settings.JENKINS_USER != "admin"),
-            "JENKINS_TOKEN":          bool(settings.JENKINS_TOKEN),
-            "GROQ_API_KEY":           bool(settings.GROQ_API_KEY),
-            "ANTHROPIC_API_KEY":      bool(settings.ANTHROPIC_API_KEY),
-            "SLACK_BOT_TOKEN":        bool(settings.SLACK_BOT_TOKEN),
-            "GITHUB_WEBHOOK_SECRET":  bool(settings.GITHUB_WEBHOOK_SECRET),
-            "NGROK_URL":              False,
-        }
-    }

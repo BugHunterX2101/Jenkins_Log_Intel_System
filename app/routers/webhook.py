@@ -40,6 +40,54 @@ async def _schedule_failure_processing_async(payload: dict) -> None:
         logger.exception("Jenkins failure processing crashed: %s", exc)
 
 
+async def _handle_build_started(payload: dict) -> None:
+    """Link an IN_PROGRESS run to the real Jenkins build when it starts."""
+    from app.db import get_session_factory
+    from app.services.job_scheduler import on_build_started
+    from app.pipeline_models import PipelineRun, RunStatus
+    from sqlalchemy import select
+
+    build = payload.get("build", {})
+    job_name = payload.get("name", "")
+    build_number = build.get("number")
+    build_url = build.get("url", "")
+
+    if not job_name or not build_number:
+        logger.warning("Incomplete build started payload: name=%s, number=%s", job_name, build_number)
+        return
+
+    try:
+        session_factory = get_session_factory()
+        async with session_factory() as session:
+            # Find the most-recent IN_PROGRESS run for this job that hasn't been linked to a build yet
+            run_result = await session.execute(
+                select(PipelineRun)
+                .where(
+                    PipelineRun.jenkins_job_name == job_name,
+                    PipelineRun.status == RunStatus.IN_PROGRESS,
+                    PipelineRun.jenkins_build_number.is_(None),
+                )
+                .order_by(PipelineRun.started_at.desc())
+                .limit(1)
+            )
+            run = run_result.scalar_one_or_none()
+
+            if not run:
+                logger.warning(
+                    "No unlinked IN_PROGRESS run found for job=%s build=#%s — ignoring STARTED event",
+                    job_name, build_number,
+                )
+                return
+
+            await on_build_started(session, run.id, build_number, build_url)
+            logger.info(
+                "Linked run %d to Jenkins %s #%d (url=%s)",
+                run.id, job_name, build_number, build_url,
+            )
+    except Exception as exc:
+        logger.exception("Failed to handle build started for job=%s build=%s: %s", job_name, build_number, exc)
+
+
 async def _handle_build_completion(payload: dict) -> None:
     """Mark the pipeline run as completed when Jenkins build finishes."""
     from app.db import get_session_factory
@@ -105,9 +153,14 @@ async def jenkins_webhook(
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail=f"Malformed JSON payload: {exc}") from exc
     build = payload.get("build", {})
+    phase = build.get("phase", "")
+
+    # Link the run to the real Jenkins build when it starts
+    if phase == "STARTED":
+        asyncio.create_task(_handle_build_started(payload))
 
     # Handle all FINALIZED builds (SUCCESS, FAILURE, ABORTED, UNSTABLE)
-    if build.get("phase") == "FINALIZED":
+    if phase == "FINALIZED":
         # Always mark the run as completed
         asyncio.create_task(_handle_build_completion(payload))
         

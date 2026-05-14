@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     # Scheduler: max pipeline execution threads running concurrently inside FastAPI process
     MAX_CONCURRENT_EXECUTIONS: int = 6
 
+    # Worker heartbeat timeout — BUSY workers silent longer than this are auto-recovered
+    WORKER_HEARTBEAT_TIMEOUT_MINUTES: int = 30
+
     # Real-time data policy. Development/demo data must be explicitly enabled.
     AUTO_SEED_WORKERS: bool = False
     ALLOW_SYNTHETIC_PIPELINE_STAGES: bool = False

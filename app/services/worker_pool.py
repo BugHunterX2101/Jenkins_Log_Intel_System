@@ -82,16 +82,15 @@ async def assign_worker(
     run_id: int,
     language: WorkerLanguage,
 ) -> Optional[Worker]:
-    result = await session.execute(
-        select(Worker).where(Worker.status != WorkerStatus.OFFLINE)
+    idle_result = await session.execute(
+        select(Worker).where(Worker.status == WorkerStatus.IDLE).order_by(Worker.load)
     )
-    workers = list(result.scalars().all())
+    workers = list(idle_result.scalars().all())
 
-    preferred = [w for w in workers if w.language == language and w.status == WorkerStatus.IDLE]
-    fallback   = [w for w in workers if w.language == WorkerLanguage.GENERIC and w.status == WorkerStatus.IDLE]
-    any_idle   = [w for w in workers if w.status == WorkerStatus.IDLE]
+    preferred = [w for w in workers if w.language == language]
+    fallback   = [w for w in workers if w.language == WorkerLanguage.GENERIC]
 
-    candidates = preferred or fallback or any_idle
+    candidates = preferred or fallback or workers
     if not candidates:
         logger.warning("No idle workers available for run %d (language=%s)", run_id, language)
         return None

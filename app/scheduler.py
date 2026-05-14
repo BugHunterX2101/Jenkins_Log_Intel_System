@@ -56,6 +56,114 @@ def scheduler_tick() -> dict:
     return asyncio.run(_scheduler_tick_async(use_celery=True))
 
 
+async def _recover_stale_workers(Session) -> int:
+    """
+    Two-phase recovery run on every scheduler tick:
+
+    Phase 1 — Stale BUSY workers: reset workers whose heartbeat is older than
+    WORKER_HEARTBEAT_TIMEOUT_MINUTES and revert their IN_PROGRESS runs to QUEUED.
+
+    Phase 2 — Orphaned IN_PROGRESS runs: runs that have been IN_PROGRESS for
+    longer than the timeout AND have no jenkins_build_url (Jenkins never
+    acknowledged them) are scheduler artefacts — revert them to QUEUED and
+    release their assigned worker if it is still BUSY.
+
+    Returns the total number of workers/runs recovered.
+    """
+    from datetime import datetime, timezone, timedelta
+    from sqlalchemy import select
+    from app.worker_models import Worker, WorkerStatus, WorkerAssignment, AssignmentStatus
+    from app.pipeline_models import PipelineRun, RunStatus
+
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(minutes=settings.WORKER_HEARTBEAT_TIMEOUT_MINUTES)
+    recovered = 0
+
+    async with Session() as session:
+        # ── Phase 1: stale BUSY workers ──────────────────────────────────────
+        stale_result = await session.execute(
+            select(Worker).where(
+                Worker.status == WorkerStatus.BUSY,
+                Worker.last_heartbeat < cutoff,
+            )
+        )
+        for worker in stale_result.scalars().all():
+            logger.warning(
+                "Recovering stale worker %s (last_heartbeat=%s, timeout=%dm)",
+                worker.name, worker.last_heartbeat, settings.WORKER_HEARTBEAT_TIMEOUT_MINUTES,
+            )
+            assign_result = await session.execute(
+                select(WorkerAssignment).where(
+                    WorkerAssignment.worker_id == worker.id,
+                    WorkerAssignment.completed_at.is_(None),
+                )
+            )
+            for assignment in assign_result.scalars().all():
+                run_result = await session.execute(
+                    select(PipelineRun).where(
+                        PipelineRun.id == assignment.run_id,
+                        PipelineRun.status == RunStatus.IN_PROGRESS,
+                    )
+                )
+                run = run_result.scalar_one_or_none()
+                if run:
+                    run.status = RunStatus.QUEUED
+                    run.started_at = None
+                    logger.warning("Reverted run %d to QUEUED (stale worker %s)", run.id, worker.name)
+                assignment.status = AssignmentStatus.FAILED
+                assignment.completed_at = now
+                assignment.result = "TIMEOUT"
+
+            worker.status = WorkerStatus.IDLE
+            worker.load = 0.0
+            worker.current_job = None
+            worker.last_heartbeat = now
+            recovered += 1
+
+        # ── Phase 2: orphaned IN_PROGRESS runs (no Jenkins build_url, timed out) ──
+        orphan_result = await session.execute(
+            select(PipelineRun).where(
+                PipelineRun.status == RunStatus.IN_PROGRESS,
+                PipelineRun.jenkins_build_url.is_(None),
+                PipelineRun.started_at < cutoff,
+            )
+        )
+        for run in orphan_result.scalars().all():
+            logger.warning(
+                "Recovering orphaned IN_PROGRESS run %d (started_at=%s, no Jenkins build URL)",
+                run.id, run.started_at,
+            )
+            # Release the assigned worker if still BUSY
+            assign_result = await session.execute(
+                select(WorkerAssignment).where(
+                    WorkerAssignment.run_id == run.id,
+                    WorkerAssignment.completed_at.is_(None),
+                )
+            )
+            for assignment in assign_result.scalars().all():
+                worker_result = await session.execute(
+                    select(Worker).where(Worker.id == assignment.worker_id)
+                )
+                worker = worker_result.scalar_one_or_none()
+                if worker and worker.status == WorkerStatus.BUSY:
+                    worker.status = WorkerStatus.IDLE
+                    worker.load = max(0.0, worker.load - 0.5)
+                    worker.current_job = None
+                    worker.last_heartbeat = now
+                    recovered += 1
+                    logger.warning("Released worker %s held by orphaned run %d", worker.name, run.id)
+                assignment.status = AssignmentStatus.FAILED
+                assignment.completed_at = now
+                assignment.result = "TIMEOUT"
+
+            run.status = RunStatus.QUEUED
+            run.started_at = None
+
+        await session.commit()
+
+    return recovered
+
+
 async def _scheduler_tick_async(use_celery: bool = False) -> dict:
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from sqlalchemy import select, update
@@ -89,6 +197,8 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
     else:
         Session = get_session_factory()
 
+    await _recover_stale_workers(Session)
+
     assigned_count = 0
 
     mode = get_routing_mode()
@@ -111,12 +221,8 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
         stage_names = run.stage_names
 
         async with Session() as session:
-            # FIX: Race condition — two concurrent scheduler ticks could both
-            # read the same QUEUED run and dispatch it to two workers.
-            # Solution: atomically claim the run by transitioning it to
-            # IN_PROGRESS within the same transaction as assign_worker.
-            # We use an UPDATE with a WHERE clause to ensure only one tick
-            # successfully claims it (the other will see 0 rows updated).
+            # Atomically claim the run: only the tick that flips QUEUED → IN_PROGRESS
+            # proceeds; concurrent ticks see rowcount=0 and skip.
             from datetime import datetime, timezone
             claim_result = await session.execute(
                 update(PipelineRun)

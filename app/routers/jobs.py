@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 from app.services.job_scheduler import (
     get_dashboard_snapshot,
     get_run,
-    on_build_completed,
     on_stage_completed,
     on_stage_started,
     schedule_pipeline,

@@ -3,13 +3,12 @@ Jenkins Log Intelligence Engine — FastAPI application factory v1.2
 """
 
 import asyncio
-import os
 import logging
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -100,15 +99,15 @@ async def lifespan(_app: FastAPI):
                 # For SQLite and other dialects: current_job is defined in the model,
                 # so create_all already created it — no ALTER TABLE needed.
             except Exception as alter_err:
-                __startup_logger.warning("ALTER TABLE skipped: %s", alter_err)
+                _startup_logger.warning("ALTER TABLE skipped: %s", alter_err)
         if getattr(settings, "AUTO_SEED_WORKERS", False):
             async with session_factory() as session:
                 await seed_workers(session)
     except Exception as e:
-        __startup_logger.warning("Worker seed skipped: %s", e)
+        _startup_logger.warning("Worker seed skipped: %s", e)
 
     if not settings.JENKINS_WEBHOOK_SECRET:
-        __startup_logger.warning(
+        _startup_logger.warning(
             "JENKINS_WEBHOOK_SECRET is not set — Jenkins webhook signature verification disabled"
         )
     if not settings.GITHUB_WEBHOOK_SECRET:

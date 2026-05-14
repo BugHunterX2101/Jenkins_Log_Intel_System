@@ -9,12 +9,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from datetime import datetime, timezone
 from urllib.parse import quote
 
 import httpx
 from celery import Celery
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 
@@ -258,17 +256,7 @@ async def _sync_stages(
     build_number: int,
     build_url: str | None = None,
 ) -> bool:
-    """
-    Fetch Jenkins Workflow Stage API and reconcile with StageExecution rows.
-
-    FIX: The original code opened the httpx.AsyncClient in one 'async with' block,
-    closed it, then tried to reuse the closed client inside a later 'async with
-    Session()' block for fetching stage logs. This would raise
-    'RuntimeError: Cannot send a request, as the client has been closed.'
-
-    Fixed by keeping a single httpx.AsyncClient open for the entire function,
-    including the stage-log fetches.
-    """
+    """Fetch Jenkins Workflow Stage API and reconcile with StageExecution rows."""
     from app.services.job_scheduler import (
         on_stage_started as _on_stage_started,
         on_stage_completed as _on_stage_completed,
