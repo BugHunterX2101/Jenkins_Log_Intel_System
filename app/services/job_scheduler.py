@@ -155,10 +155,10 @@ async def on_build_started(
         select(WorkerAssignment).where(
             WorkerAssignment.run_id == run_id,
             WorkerAssignment.completed_at.is_(None),
-        )
+        ).limit(1)
     )
-    assignment = assignment_result.scalar_one_or_none()
-    if assignment:
+    assignment = assignment_result.scalars().first()
+    if isinstance(assignment, WorkerAssignment):
         assignment.status = AssignmentStatus.RUNNING
         assignment.started_at = datetime.now(timezone.utc)
     
@@ -217,7 +217,11 @@ async def on_build_completed(
 
     Maps UNSTABLE → FAILED (not ABORTED): Jenkins UNSTABLE means tests passed
     with warnings — it is a build-failure variant, not an abort.
+
+    For non-SUCCESS results, fires LLM root-cause analysis + Slack notification
+    in a daemon thread so the DB commit is never blocked.
     """
+    import threading
     from app.worker_models import WorkerAssignment
     from app.services.worker_pool import release_worker
     from sqlalchemy import select
@@ -225,7 +229,7 @@ async def on_build_completed(
     run = await get_run(session, run_id)
     if not run:
         return
-    
+
     now = datetime.now(timezone.utc)
     run.result = result
     run.completed_at = now
@@ -242,14 +246,25 @@ async def on_build_completed(
         if stage.status in (StageStatus.PENDING, StageStatus.RUNNING):
             stage.status = StageStatus.SKIPPED
 
-    # Release the worker by finding the active (not yet completed) assignment for this run
+    # Capture fields needed for LLM analysis BEFORE the session commits/expires them
+    _job_name    = run.jenkins_job_name
+    _build_num   = run.jenkins_build_number
+    _build_url   = run.jenkins_build_url or (
+        f"{settings.JENKINS_URL}/job/{run.jenkins_job_name}/{run.jenkins_build_number}/"
+        if run.jenkins_job_name and run.jenkins_build_number else None
+    )
+
+    # Release the worker — use first() so retried runs with multiple assignment
+    # rows (MultipleResultsFound from scalar_one_or_none) don't crash cancel.
     assignment_result = await session.execute(
-        select(WorkerAssignment).where(
+        select(WorkerAssignment)
+        .where(
             WorkerAssignment.run_id == run_id,
             WorkerAssignment.completed_at.is_(None),
         )
+        .limit(1)
     )
-    assignment = assignment_result.scalar_one_or_none()
+    assignment = assignment_result.scalars().first()
     if isinstance(assignment, WorkerAssignment):
         worker_id = assignment.worker_id
         success = (result == "SUCCESS")
@@ -259,8 +274,41 @@ async def on_build_completed(
             worker_id, result, run_id
         )
     else:
-        logger.warning("No worker assignment found for run %d", run_id)
+        logger.warning("No worker assignment found for run %d — committing status only", run_id)
         await session.commit()
+
+    # Fire LLM analysis + Slack for every failed/aborted build that has a real build number.
+    # Runs in a daemon thread so it never blocks the scheduler tick or webhook handler.
+    # _process_async has a duplicate guard so webhook-triggered and scheduler-triggered
+    # analyses for the same build don't produce two Slack messages.
+    if result != "SUCCESS" and _job_name and _build_num:
+        def _run_analysis(job=_job_name, build=_build_num, url=_build_url, res=result):
+            import asyncio
+            from app.tasks import _process_async
+            payload = {
+                "name": job,
+                "build": {
+                    "number": build,
+                    "full_url": url or f"{settings.JENKINS_URL}/job/{job}/{build}/",
+                    "status": res,
+                },
+            }
+            try:
+                loop = asyncio.SelectorEventLoop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(_process_async(payload))
+            except Exception as exc:
+                logger.error("LLM analysis failed for %s #%d: %s", job, build, exc)
+            finally:
+                loop.close()
+
+        t = threading.Thread(
+            target=_run_analysis,
+            daemon=True,
+            name=f"llm-analysis-run-{run_id}",
+        )
+        t.start()
+        logger.info("LLM analysis thread launched for %s #%d", _job_name, _build_num)
 
 
 def _derive_job_name(repo_url: str, branch: str) -> str:

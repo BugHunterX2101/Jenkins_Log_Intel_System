@@ -4,6 +4,7 @@ Scheduler Loop — the Jenkins Master brain.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import threading
 import time
@@ -27,6 +28,37 @@ def get_routing_mode() -> str:
 def set_routing_mode(mode: str) -> None:
     global _routing_mode
     _routing_mode = mode
+
+
+# ── SSE broadcast registry ────────────────────────────────────────────────────
+# Clients subscribe by registering an asyncio.Queue; each scheduler tick
+# puts a JSON-encoded SSE message into every registered queue.
+
+_sse_clients: set[asyncio.Queue] = set()
+_sse_lock = asyncio.Lock()
+
+
+async def register_sse_client(q: asyncio.Queue) -> None:
+    async with _sse_lock:
+        _sse_clients.add(q)
+
+
+async def unregister_sse_client(q: asyncio.Queue) -> None:
+    async with _sse_lock:
+        _sse_clients.discard(q)
+
+
+async def broadcast_sse(event_type: str, data: dict) -> None:
+    async with _sse_lock:
+        clients = list(_sse_clients)
+    if not clients:
+        return
+    message = f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
+    for q in clients:
+        try:
+            q.put_nowait(message)
+        except asyncio.QueueFull:
+            pass
 
 celery_app = Celery(
     "scheduler",
@@ -121,11 +153,17 @@ async def _recover_stale_workers(Session) -> int:
             recovered += 1
 
         # ── Phase 2: orphaned IN_PROGRESS runs (no Jenkins build_url, timed out) ──
+        # Also catches runs with started_at IS NULL (NULL < cutoff is always false in PG,
+        # so we must add the IS NULL arm explicitly to recover stuck ghost runs).
+        from sqlalchemy import or_
         orphan_result = await session.execute(
             select(PipelineRun).where(
                 PipelineRun.status == RunStatus.IN_PROGRESS,
                 PipelineRun.jenkins_build_url.is_(None),
-                PipelineRun.started_at < cutoff,
+                or_(
+                    PipelineRun.started_at < cutoff,
+                    PipelineRun.started_at.is_(None),
+                ),
             )
         )
         for run in orphan_result.scalars().all():
@@ -289,6 +327,42 @@ async def _scheduler_tick_async(use_celery: bool = False) -> dict:
                 await session.commit()
             logger.debug("Scheduler: no idle worker for run %d — reverting to QUEUED", run.id)
 
+    # ── Phase 6: auto-retry eligible FAILED runs ─────────────────────────────
+    from datetime import timedelta as _td
+    _retry_now = __import__('datetime').datetime.now(__import__('datetime').timezone.utc)
+    backoffs = settings.PIPELINE_RETRY_BACKOFF_SECONDS
+
+    async with Session() as session:
+        retry_result = await session.execute(
+            select(PipelineRun)
+            .where(
+                PipelineRun.status == RunStatus.FAILED,
+                PipelineRun.retry_count < PipelineRun.max_retries,
+                real_pipeline_run_clause(),
+            )
+        )
+        for run in retry_result.scalars().all():
+            if run.retry_after is None:
+                # Newly failed — schedule the first retry after backoff delay
+                delay = backoffs[min(run.retry_count, len(backoffs) - 1)]
+                run.retry_after = _retry_now + _td(seconds=delay)
+                logger.info(
+                    "Scheduled retry for run %d (attempt %d/%d, delay=%ds)",
+                    run.id, run.retry_count + 1, run.max_retries, delay,
+                )
+            elif (run.retry_after if run.retry_after.tzinfo else run.retry_after.replace(tzinfo=__import__('datetime').timezone.utc)) <= _retry_now:
+                # Backoff elapsed — re-queue for execution
+                run.retry_count += 1
+                run.status = RunStatus.QUEUED
+                run.started_at = None
+                run.completed_at = None
+                run.retry_after = None
+                logger.info(
+                    "Auto-retrying run %d (attempt %d/%d)",
+                    run.id, run.retry_count, run.max_retries,
+                )
+        await session.commit()
+
     if engine is not None:
         await engine.dispose()
     return {"queued_processed": len(queued_runs), "assigned": assigned_count}
@@ -317,11 +391,107 @@ def execute_pipeline_run(
 
 
 async def _run_execution(run_id: int, worker_id: int, stage_names: list[str]) -> bool:
-    # Worker will be released when on_build_completed() is called,
-    # which occurs when the Jenkins build finishes. The worker remains
-    # BUSY and reserved until then.
-    logger.info("Run %d dispatched to worker %d, awaiting build completion", run_id, worker_id)
-    return True
+    """
+    Execute a pipeline run against real Jenkins — no simulation fallback.
+
+    Flow:
+      1. Load run details (job_name, branch, commit_sha) from DB.
+      2. Trigger the Jenkins build via the real REST API.
+         If Jenkins is unreachable or returns an error → mark FAILED and return.
+      3. Record the real build_number and build_url on the run.
+      4. Poll Jenkins wfapi every 10 s until the build reaches a terminal status.
+         _sync_stages() calls on_build_completed() internally (which releases the
+         worker) when it detects SUCCESS / FAILURE / ABORTED / UNSTABLE.
+      5. If 120 polling attempts (~20 min) are exhausted → mark FAILURE.
+    """
+    import asyncio
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy import select
+    from app.pipeline_models import PipelineRun, RunStatus
+    from app.services.job_scheduler import on_build_started, on_build_completed, get_run
+    from app.pipeline_tasks import _trigger_jenkins, _sync_stages
+
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True,
+        pool_size=2,
+        max_overflow=1,
+    )
+    Session = async_sessionmaker(engine, expire_on_commit=False)
+
+    try:
+        # 1. Fetch run details
+        async with Session() as session:
+            result = await session.execute(
+                select(PipelineRun).where(PipelineRun.id == run_id)
+            )
+            run = result.scalar_one_or_none()
+            if not run:
+                logger.error("_run_execution: run %d not found", run_id)
+                return False
+            job_name   = run.jenkins_job_name
+            branch     = run.branch or "main"
+            commit_sha = run.commit_sha
+
+        if not job_name:
+            logger.error("_run_execution: run %d has no jenkins_job_name — cannot trigger Jenkins", run_id)
+            async with Session() as session:
+                await on_build_completed(session, run_id, "FAILURE")
+            return False
+
+        # 2. Trigger real Jenkins build — failure here means real failure
+        try:
+            build_number, build_url = await _trigger_jenkins(job_name, branch, commit_sha)
+        except Exception as exc:
+            logger.error(
+                "_run_execution: Jenkins trigger failed for run %d (%s): %s",
+                run_id, job_name, exc,
+            )
+            async with Session() as session:
+                await on_build_completed(session, run_id, "FAILURE")
+            return False
+
+        # 3. Persist real build_number and build_url
+        async with Session() as session:
+            await on_build_started(session, run_id, build_number, build_url)
+
+        logger.info(
+            "_run_execution: run %d → Jenkins build #%d at %s",
+            run_id, build_number, build_url,
+        )
+
+        # 4. Poll until terminal (max 120 × 10 s = 20 min)
+        for attempt in range(120):
+            await asyncio.sleep(10)
+            try:
+                done = await _sync_stages(run_id, job_name, build_number, build_url)
+                if done:
+                    logger.info(
+                        "_run_execution: run %d completed (poll attempt %d)",
+                        run_id, attempt + 1,
+                    )
+                    return True
+            except Exception as exc:
+                logger.warning(
+                    "_run_execution: stage-sync error for run %d (attempt %d): %s",
+                    run_id, attempt + 1, exc,
+                )
+
+        # 5. Polling exhausted — mark as FAILURE if still running
+        logger.error(
+            "_run_execution: run %d — poll exhausted after 120 attempts, finalising as FAILURE",
+            run_id,
+        )
+        async with Session() as session:
+            current = await get_run(session, run_id)
+            if current and current.status == RunStatus.IN_PROGRESS:
+                await on_build_completed(session, run_id, "FAILURE")
+
+        return False
+
+    finally:
+        await engine.dispose()
 
 
 @celery_app.task(name="app.scheduler.collect_system_metrics")

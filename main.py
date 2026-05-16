@@ -8,6 +8,7 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import psutil
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,10 +29,22 @@ _startup_logger = logging.getLogger("startup")
 
 async def _scheduler_loop() -> None:
     """Run scheduler_tick every 5 s inside the FastAPI process (no Celery needed)."""
-    from app.scheduler import _scheduler_tick_async
+    import time as _time
+    from datetime import datetime, timezone
+    from app.scheduler import _scheduler_tick_async, broadcast_sse
+    _proc = psutil.Process()
     while True:
         try:
             await _scheduler_tick_async(use_celery=False)
+            mem = _proc.memory_info()
+            vmem = psutil.virtual_memory()
+            await broadcast_sse("tick", {
+                "uptime_seconds": int(_time.time() - _proc.create_time()),
+                "memory_used_bytes": mem.rss,
+                "memory_total_bytes": vmem.total,
+                "cpu_percent": round(_proc.cpu_percent(interval=None), 1),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
         except Exception as exc:
             _sched_logger.warning("scheduler tick error: %s", exc)
         await asyncio.sleep(5)
@@ -96,6 +109,16 @@ async def lifespan(_app: FastAPI):
                           AND w.current_job IS NULL
                           AND wa.completed_at IS NULL
                     """))
+                    # Pipeline auto-retry columns (added in v1.3)
+                    await conn.execute(text(
+                        "ALTER TABLE pipeline_runs ADD COLUMN IF NOT EXISTS retry_count INTEGER NOT NULL DEFAULT 0"
+                    ))
+                    await conn.execute(text(
+                        "ALTER TABLE pipeline_runs ADD COLUMN IF NOT EXISTS max_retries INTEGER NOT NULL DEFAULT 2"
+                    ))
+                    await conn.execute(text(
+                        "ALTER TABLE pipeline_runs ADD COLUMN IF NOT EXISTS retry_after TIMESTAMP WITH TIME ZONE"
+                    ))
                 # For SQLite and other dialects: current_job is defined in the model,
                 # so create_all already created it — no ALTER TABLE needed.
             except Exception as alter_err:
@@ -206,6 +229,12 @@ async def frontend_explorer() -> FileResponse:
 @app.get("/settings.html", include_in_schema=False)
 async def frontend_settings() -> FileResponse:
     return _serve_page("settings.html")
+
+
+@app.get("/analytics", include_in_schema=False)
+@app.get("/analytics.html", include_in_schema=False)
+async def frontend_analytics() -> FileResponse:
+    return _serve_page("analytics.html")
 
 
 # ── API routers ──

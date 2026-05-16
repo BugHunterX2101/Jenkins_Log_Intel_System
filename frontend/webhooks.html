@@ -160,6 +160,7 @@
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/queue"><span class="material-symbols-outlined">database</span> Queue</a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/scheduler"><span class="material-symbols-outlined">calendar_today</span> Scheduler</a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/workers"><span class="material-symbols-outlined">engineering</span> Workers</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/analytics"><span class="material-symbols-outlined">bar_chart</span> Analytics</a>
 </nav>
 <div class="mt-auto border-t border-surface-variant pt-2 pb-4">
 <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-150 ease-in-out" href="/settings"><span class="material-symbols-outlined">settings</span> Settings</a>
@@ -287,6 +288,20 @@
 </div>
 </div>
 </section>
+<!-- LLM Failure Analysis -->
+<section class="bg-surface-container-lowest border border-surface-variant rounded-xl ambient-shadow overflow-hidden">
+<div class="px-md py-sm border-b border-surface-variant flex justify-between items-center bg-surface-container-low">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-tertiary text-[20px]">psychology</span>
+    <h3 class="font-headline-sm text-headline-sm text-on-surface">LLM Failure Analysis</h3>
+  </div>
+  <button onclick="refreshBuildEvents()" class="text-xs px-3 py-1 bg-primary text-on-primary rounded hover:bg-opacity-90 transition-colors font-label-md">Refresh</button>
+</div>
+<div id="llm-analysis" class="divide-y divide-surface-variant min-h-[60px] p-md text-on-surface-variant text-sm">
+  Loading analysis…
+</div>
+</section>
+
 <!-- Live Webhook Event Log -->
 <section class="bg-surface-container-lowest border border-surface-variant rounded-xl ambient-shadow overflow-hidden">
 <div class="px-md py-sm border-b border-surface-variant flex justify-between items-center bg-surface-container-low">

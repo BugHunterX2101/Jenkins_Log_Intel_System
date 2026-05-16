@@ -64,6 +64,10 @@ class PipelineRun(Base):
     result:       Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     duration_s:   Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
+    retry_count:  Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    max_retries:  Mapped[int] = mapped_column(Integer, nullable=False, default=2, server_default="2")
+    retry_after:  Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
     stages: Mapped[list["StageExecution"]] = relationship(
         "StageExecution", back_populates="run", cascade="all, delete-orphan",
         order_by="StageExecution.order"

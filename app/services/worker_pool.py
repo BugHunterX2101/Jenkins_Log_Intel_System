@@ -138,12 +138,14 @@ async def release_worker(
     worker.last_heartbeat = datetime.now(timezone.utc)
 
     aresult = await session.execute(
-        select(WorkerAssignment).where(
+        select(WorkerAssignment)
+        .where(
             WorkerAssignment.run_id == run_id,
             WorkerAssignment.worker_id == worker_id,
         )
+        .limit(1)
     )
-    assignment = aresult.scalar_one_or_none()
+    assignment = aresult.scalars().first()
     if assignment:
         now = datetime.now(timezone.utc)
         assignment.status       = AssignmentStatus.DONE if success else AssignmentStatus.FAILED

@@ -85,12 +85,13 @@ async def send_slack(
     ]
 
     if error_excerpt:
-        excerpt = error_excerpt[:600].strip()
+        # Show up to 1500 chars — Slack block text limit is 3000, so this fits safely
+        excerpt = error_excerpt[:1500].strip()
         blocks.append({
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"🔎 *Error Excerpt*\n```{excerpt}```",
+                "text": f"🔎 *Error Log*\n```{excerpt}```",
             },
         })
 

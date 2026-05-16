@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     AUTO_SEED_WORKERS: bool = False
     ALLOW_SYNTHETIC_PIPELINE_STAGES: bool = False
 
+    # Pipeline auto-retry on transient failures
+    PIPELINE_MAX_RETRIES: int = 2
+    PIPELINE_RETRY_BACKOFF_SECONDS: list[int] = [60, 300]
+
     # Webhook HMAC secrets — omit or leave blank to disable signature verification
     JENKINS_WEBHOOK_SECRET: str = ""
     GITHUB_WEBHOOK_SECRET: str = ""

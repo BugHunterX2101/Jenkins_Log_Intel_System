@@ -110,6 +110,44 @@ async def run_detail(
         raise HTTPException(status_code=500, detail="Database error retrieving pipeline run")
 
 
+@router.post("/{run_id:int}/retry", summary="Manually retry a failed pipeline run")
+async def retry_run(
+    run_id: int,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    from sqlalchemy import select
+    from app.pipeline_models import PipelineRun, RunStatus
+
+    result = await session.execute(select(PipelineRun).where(PipelineRun.id == run_id))
+    run = result.scalar_one_or_none()
+    if run is None:
+        raise HTTPException(status_code=404, detail=f"PipelineRun {run_id} not found")
+    if run.status != RunStatus.FAILED:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Run {run_id} is not in FAILED status (current: {run.status.value})",
+        )
+    if run.retry_count >= run.max_retries:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Run {run_id} has exhausted max retries ({run.max_retries})",
+        )
+
+    run.retry_count += 1
+    run.status = RunStatus.QUEUED
+    run.started_at = None
+    run.completed_at = None
+    run.retry_after = None
+    await session.commit()
+    logger.info("Manual retry queued for run %d (attempt %d/%d)", run_id, run.retry_count, run.max_retries)
+    return {
+        "retried": run_id,
+        "status": "QUEUED",
+        "retry_count": run.retry_count,
+        "max_retries": run.max_retries,
+    }
+
+
 @router.post("/{run_id:int}/stage-event", summary="Receive stage progress event")
 async def stage_event(
     run_id: int,

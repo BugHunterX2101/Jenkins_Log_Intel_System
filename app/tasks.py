@@ -37,6 +37,8 @@ def process_build_failure_task(self, payload: dict) -> dict:
 
 async def _process_async(payload: dict) -> dict:
     from app.db import get_session_factory
+    from app.models import BuildEvent
+    from sqlalchemy import select
 
     from app.services import classifier, log_fetcher, log_parser, notifier, pattern_store, root_cause
 
@@ -52,6 +54,20 @@ async def _process_async(payload: dict) -> dict:
 
     logger.info("Processing failure: %s #%d", job_name, build_number)
 
+    session_factory = get_session_factory()
+
+    # Duplicate guard — skip if another path already analysed this build
+    async with session_factory() as session:
+        dup = await session.execute(
+            select(BuildEvent.id)
+            .where(BuildEvent.job_name == job_name, BuildEvent.build_number == build_number)
+            .limit(1)
+        )
+        if dup.scalars().first():
+            logger.info("Analysis already exists for %s #%d — skipping duplicate", job_name, build_number)
+            return {"job": job_name, "build": build_number, "delivery": {"skipped": "duplicate"}}
+
+    # Fetch the full console log (up to 10 MB)
     embedded_log: str | None = build.get("fullLog") or build.get("log") or None
     if embedded_log:
         raw_log = embedded_log
@@ -59,23 +75,37 @@ async def _process_async(payload: dict) -> dict:
     else:
         try:
             raw_log = await log_fetcher.fetch_console_log(job_name, build_number)
+            logger.info("Fetched %d chars of console log for %s #%d", len(raw_log), job_name, build_number)
         except Exception as exc:
-            logger.warning(
-                "Failed to fetch Jenkins console log for %s #%d: %s",
-                job_name,
-                build_number,
-                exc,
-            )
+            logger.warning("Failed to fetch Jenkins console log for %s #%d: %s", job_name, build_number, exc)
             raw_log = (
                 f"Jenkins console log unavailable for {job_name} #{build_number}. "
                 f"Fetcher error: {exc}"
             )
-    blocks       = log_parser.parse(raw_log)
-    error_excerpt = "\n\n".join(b.full_text for b in blocks[:5]) if blocks else raw_log[-2000:]
-    tags         = classifier.classify(error_excerpt or raw_log)
-    primary_tag  = tags[0]
 
-    session_factory = get_session_factory()
+    # Parse ALL error blocks from the full log (no [:5] cap)
+    blocks = log_parser.parse(raw_log)
+    logger.info("Extracted %d error blocks from log for %s #%d", len(blocks), job_name, build_number)
+
+    # Build a comprehensive excerpt for the LLM:
+    #   1. All extracted error blocks (most structured signal)
+    #   2. Terminal tail of the raw log (catches final error output that may lack ERROR keywords)
+    # Combined cap: 16 000 chars — well within Groq's 128 k context window.
+    if blocks:
+        blocks_text = "\n\n".join(b.full_text for b in blocks)
+    else:
+        blocks_text = ""
+
+    terminal_tail = raw_log[-4000:] if len(raw_log) > 4000 else raw_log
+    if blocks_text and terminal_tail and terminal_tail not in blocks_text:
+        error_excerpt = (blocks_text + "\n\n--- TERMINAL OUTPUT (last 4000 chars) ---\n" + terminal_tail)[:16000]
+    elif blocks_text:
+        error_excerpt = blocks_text[:16000]
+    else:
+        error_excerpt = terminal_tail[:16000]
+
+    tags        = classifier.classify(error_excerpt or raw_log)
+    primary_tag = tags[0]
 
     async with session_factory() as session:
         patterns = await pattern_store.find_similar(session, error_excerpt)
@@ -91,7 +121,6 @@ async def _process_async(payload: dict) -> dict:
                 raw_sample=blocks[0].anchor_line,
             )
 
-        from app.models import BuildEvent
         event = BuildEvent(
             job_name=job_name, build_number=build_number,
             failure_type=primary_tag.category, confidence=primary_tag.confidence,
@@ -104,20 +133,22 @@ async def _process_async(payload: dict) -> dict:
         session.add(event)
         await session.commit()
         await session.refresh(event)
-        event_id = event.id  # save before session closes
+        event_id = event.id
+
+    # Send first 1500 chars of the error excerpt to Slack so the message is actionable
+    slack_excerpt = error_excerpt[:1500]
 
     delivery = await notifier.notify(
         job_name=job_name, build_number=build_number,
         summary_text=analysis["summary_text"],
         fix_suggestions=analysis["fix_suggestions"],
         severity=analysis["severity"], log_url=log_url,
-        error_excerpt=error_excerpt[:600],
+        error_excerpt=slack_excerpt,
         failure_type=primary_tag.category,
     )
 
     logger.info("Delivery results for %s #%d: %s", job_name, build_number, delivery)
 
-    # Update delivery_status now that notification result is known
     slack_ok = delivery.get("slack") == "OK"
     async with session_factory() as session:
         from app.models import BuildEvent as _BE

@@ -24,6 +24,7 @@
     if (label.includes("scheduler")) return "/scheduler";
     if (label.includes("workers")) return "/workers";
     if (label.includes("settings")) return "/settings";
+    if (label.includes("analytics")) return "/analytics";
     return null;
   };
 
@@ -200,6 +201,14 @@
     }
   };
 
+  const formatWait = (seconds) => {
+    if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return '—';
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+    return `${Math.floor(seconds / 86400)}d ${Math.floor((seconds % 86400) / 3600)}h`;
+  };
+
   const populateQueueMetrics = async () => {
     try {
       const response = await fetch('/ui/queue');
@@ -211,10 +220,12 @@
       const active = [...queued, ...inProg];
 
       const totalEl = document.querySelector('[data-ui="queue-total"]');
-      // F6: show active queue depth only (not historical completed/failed count)
       if (totalEl) totalEl.textContent = String(data.active_total ?? ((counts.QUEUED || 0) + (counts.IN_PROGRESS || 0)) ?? active.length);
 
       const now = Date.now();
+      // For wait metrics: time a run spent in QUEUED state before execution started.
+      // QUEUED runs: now - queued_at. IN_PROGRESS with started_at: started_at - queued_at.
+      // IN_PROGRESS with no started_at (stuck ghost): now - queued_at (shows real age).
       const elapsedWait = (run) => {
         if (!run.queued_at) return null;
         const queuedAt = new Date(run.queued_at).getTime();
@@ -222,14 +233,17 @@
         if (!Number.isFinite(queuedAt) || !Number.isFinite(endAt)) return null;
         return Math.max(0, Math.floor((endAt - queuedAt) / 1000));
       };
-      const waitTimes = active.map(elapsedWait).filter(v => v !== null);
-      const queuedWaitTimes = queued.map(elapsedWait).filter(v => v !== null);
+      // For AVG WAIT: only count runs that haven't been stuck abnormally long (> 2h cap)
+      const MAX_WAIT_CAP_S = 7200;
+      const waitTimes = active.map(elapsedWait).filter(v => v !== null && v <= MAX_WAIT_CAP_S);
+      // For LONGEST WAITING: all active, no cap — shows the worst offender
+      const allWaitTimes = active.map(elapsedWait).filter(v => v !== null);
 
       const avgWaitEl = document.querySelector('[data-ui="avg-wait-queue"]');
       if (avgWaitEl) {
         if (waitTimes.length) {
-          const avg = (waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(1);
-          avgWaitEl.innerHTML = `${avg}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
+          const avg = Math.round(waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length);
+          avgWaitEl.innerHTML = `${formatWait(avg)}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1"></span>`;
         } else {
           avgWaitEl.innerHTML = `0<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
         }
@@ -237,9 +251,10 @@
 
       const longestEl = document.querySelector('[data-ui="longest-wait"]');
       if (longestEl) {
-        if (queuedWaitTimes.length) {
-          const max = Math.max(...queuedWaitTimes);
-          longestEl.innerHTML = `${max}<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
+        if (allWaitTimes.length) {
+          const max = Math.max(...allWaitTimes);
+          const isStale = max > MAX_WAIT_CAP_S;
+          longestEl.innerHTML = `<span class="${isStale ? 'text-error' : ''}">${formatWait(max)}</span>`;
         } else {
           longestEl.innerHTML = `0<span class="text-headline-sm font-headline-sm text-on-surface-variant ml-1">sec</span>`;
         }
@@ -266,7 +281,9 @@
       // clear existing rows
       tableBody.innerHTML = '';
       const runs = (data.runs_by_status?.QUEUED || []).concat(data.runs_by_status?.IN_PROGRESS || []);
-      if (!runs.length) {
+      const failedRuns = data.runs_by_status?.FAILED || [];
+
+      if (!runs.length && !failedRuns.length) {
         const empty = document.createElement('tr');
         empty.innerHTML = '<td colspan="7" class="px-md py-6 text-center text-on-surface-variant text-sm">No active jobs in the queue</td>';
         tableBody.appendChild(empty);
@@ -291,6 +308,7 @@
             5: 'bg-secondary text-on-secondary',
             6: 'bg-surface-container-highest text-on-surface-variant',
           }[Number(run.scheduling_priority || 6)] || 'bg-surface-container-highest text-on-surface-variant';
+          const isStaleRow = waitSeconds !== null && waitSeconds > 7200;
           row.innerHTML = `
             <td class="px-md py-sm"><span class="text-code-sm font-code-sm text-surface-tint">#J-${run.id || ''}</span></td>
             <td class="px-md py-sm">
@@ -299,7 +317,7 @@
             </td>
             <td class="px-md py-sm"><span class="material-symbols-outlined text-[20px]">code</span></td>
             <td class="px-md py-sm"><div class="flex flex-col"><span class="font-medium">${escapeHtml(run.repo || '')}</span><span class="text-label-md text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span> ${escapeHtml(run.branch || '')}</span></div></td>
-            <td class="px-md py-sm font-code-sm">${waitSeconds !== null ? waitSeconds + 's' : '-'}</td>
+            <td class="px-md py-sm font-code-sm ${isStaleRow ? 'text-error font-semibold' : ''}">${waitSeconds !== null ? formatWait(waitSeconds) : '—'}${isStaleRow ? ' <span class="text-[10px] bg-error/10 text-error px-1 rounded">stale</span>' : ''}</td>
             <td class="px-md py-sm"><span class="flex items-center gap-1.5 text-secondary"><span class="material-symbols-outlined text-[16px]">sync</span> ${escapeHtml(run.status || '')}</span></td>
             <td class="px-md py-sm text-right opacity-0 group-hover:opacity-100 transition-opacity"><button class="text-outline hover:text-error transition-colors p-1" title="Cancel Job"><span class="material-symbols-outlined text-[18px]">cancel</span></button></td>
           `;
@@ -321,6 +339,68 @@
             });
           }
         });
+
+        // FAILED runs with retry info
+        if (failedRuns.length) {
+          const sep = document.createElement('tr');
+          sep.innerHTML = '<td colspan="7" class="px-md py-1 bg-surface-container-low text-label-md text-on-surface-variant uppercase tracking-wider text-[10px]">Failed — pending retry</td>';
+          tableBody.appendChild(sep);
+
+          failedRuns.forEach((run) => {
+            const retryCount = run.retry_count || 0;
+            const maxRetries = run.max_retries || 2;
+            const retryAfter = run.retry_after ? new Date(run.retry_after) : null;
+            const retriesLeft = maxRetries - retryCount;
+            const hasRetriesLeft = retriesLeft > 0;
+
+            let retryBadge = '';
+            if (retryCount > 0) {
+              retryBadge = `<span class="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-label-md rounded">Retry ${retryCount}/${maxRetries}</span>`;
+            }
+            let retryStatus = '';
+            if (retryAfter && retryAfter > Date.now()) {
+              const secsLeft = Math.ceil((retryAfter - Date.now()) / 1000);
+              retryStatus = `<span class="ml-1 text-[10px] text-outline">retrying in ${secsLeft}s</span>`;
+            }
+
+            const row = document.createElement('tr');
+            row.className = 'border-b border-surface-variant hover:bg-red-50 transition-colors group';
+            row.innerHTML = `
+              <td class="px-md py-sm"><span class="text-code-sm font-code-sm text-error">#J-${run.id || ''}</span></td>
+              <td class="px-md py-sm"><span class="flex items-center gap-1">${retryBadge}${retryStatus}</span></td>
+              <td class="px-md py-sm"><span class="material-symbols-outlined text-[20px] text-error">error</span></td>
+              <td class="px-md py-sm"><div class="flex flex-col"><span class="font-medium">${escapeHtml(run.repo || '')}</span><span class="text-label-md text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">call_split</span> ${escapeHtml(run.branch || '')}</span></div></td>
+              <td class="px-md py-sm text-label-md text-error">FAILED</td>
+              <td class="px-md py-sm text-xs text-on-surface-variant">${run.completed_at ? new Date(run.completed_at).toLocaleTimeString() : '—'}</td>
+              <td class="px-md py-sm text-right opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 justify-end">
+                ${hasRetriesLeft ? `<button class="text-primary hover:text-primary-container text-xs px-2 py-0.5 border border-primary rounded transition-colors" title="Retry Now">Retry</button>` : `<span class="text-[10px] text-outline">max retries</span>`}
+              </td>
+            `;
+            tableBody.appendChild(row);
+
+            const retryBtn = row.querySelector('button[title="Retry Now"]');
+            if (retryBtn) {
+              retryBtn.addEventListener('click', async () => {
+                retryBtn.disabled = true;
+                retryBtn.textContent = '...';
+                try {
+                  const res = await fetch(`/jobs/${run.id}/retry`, { method: 'POST' });
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `HTTP ${res.status}`);
+                  }
+                  showToast(`Run #J-${run.id} queued for retry`, false, 2500);
+                  populateQueueTable();
+                  populateQueueMetrics();
+                } catch (err) {
+                  showToast(`Retry failed: ${err.message}`, true, 3000);
+                  retryBtn.disabled = false;
+                  retryBtn.textContent = 'Retry';
+                }
+              });
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to populate queue table:', error);
@@ -443,10 +523,16 @@
               : job.queued_at
               ? new Date(job.queued_at).toLocaleTimeString()
               : '—';
+            // Show last 2 path segments of job_name to avoid "org/repo/branch / branch" verbosity
+            const shortJobName = (n) => {
+              if (!n || n === 'pipeline') return n || 'pipeline';
+              const parts = n.split('/').filter(Boolean);
+              return parts.length > 2 ? parts.slice(-2).join('/') : n;
+            };
             const label = type === 'running'
               ? `<span class="font-semibold text-primary">Job #${escapeHtml(job.id)}</span> running — ${escapeHtml(job.repo || '')}/${escapeHtml(job.branch || 'main')}`
               : type === 'assigned'
-              ? `<span class="font-semibold text-amber-600">Job #${escapeHtml(job.id)}</span> in progress — worker assigned, awaiting execution`
+              ? `<span class="font-semibold text-amber-600">Job #${escapeHtml(job.id)}</span> in progress — ${escapeHtml(job.repo || '')}/${escapeHtml(job.branch || 'main')}`
               : type === 'completed'
               ? `<span class="font-semibold text-[#10B981]">Job #${escapeHtml(job.id)} COMPLETED</span> — ${escapeHtml(job.repo || '')}/${escapeHtml(job.branch || 'main')}`
               : `<span class="font-semibold">Job #${escapeHtml(job.id)}</span> queued, ${escapeHtml(job.priority_reason || 'awaiting capacity')}`;
@@ -454,7 +540,7 @@
               <div class="w-2 h-2 mt-1.5 rounded-full ${dotColor} flex-shrink-0"></div>
               <div>
                 <div class="font-code-sm text-[12px] text-on-surface mb-1">${label}</div>
-                <div class="font-code-sm text-[10px] text-outline">${escapeHtml(ts)} • ${escapeHtml(job.job_name || 'pipeline')}</div>
+                <div class="font-code-sm text-[10px] text-outline">${escapeHtml(ts)} • ${escapeHtml(shortJobName(job.job_name))}</div>
               </div>
             `;
             decisionLog.appendChild(li);
@@ -1187,7 +1273,7 @@
     const container = document.getElementById("llm-analysis");
     if (!container) return;
 
-    container.innerHTML = '<div class="text-on-surface-variant">Loading analysis...</div>';
+    container.innerHTML = '<div class="text-on-surface-variant text-sm py-2">Loading analysis…</div>';
 
     try {
       const response = await fetch("/ui/build_events");
@@ -1195,26 +1281,42 @@
 
       const data = await response.json();
       if (!data.events || data.events.length === 0) {
-        container.innerHTML = '<div class="text-on-surface-variant">No analysis records available.</div>';
+        container.innerHTML = '<div class="text-on-surface-variant text-sm py-4 text-center">No analysis records yet — trigger a build via webhook to see LLM analysis.</div>';
         return;
       }
+
+      const severityColor = (s) => ({
+        P1: 'bg-error text-on-error', P2: 'bg-amber-500 text-white',
+        P3: 'bg-secondary text-on-secondary',
+      }[s] || 'bg-surface-container text-on-surface');
+      const typeIcon = (t) => ({
+        flaky_test: 'science', env_issue: 'key', dependency_error: 'package_2',
+        build_config: 'settings', infrastructure: 'dns', unknown: 'help',
+      }[t] || 'help');
 
       container.innerHTML = "";
       data.events.forEach((event) => {
         const block = document.createElement("div");
-        block.className = "p-sm border-b border-surface-variant";
-        const fixes = (event.fix_suggestions || []).map((fix) => `<li>${fix}</li>`).join("");
+        block.className = "p-md border-b border-surface-variant last:border-0";
+        const fixes = (event.fix_suggestions || [])
+          .map((fix) => `<li class="flex gap-2 items-start"><span class="material-symbols-outlined text-[14px] mt-0.5 text-primary flex-shrink-0">arrow_right</span><span>${escapeHtml(fix)}</span></li>`)
+          .join("");
         block.innerHTML = `
-          <div class="font-semibold">${event.job_name} #${event.build_number} - ${event.severity} (${event.failure_type})</div>
-          <div class="text-xs text-on-surface-variant">Processed: ${event.processed_at ? new Date(event.processed_at).toLocaleString() : "-"} | Delivery: ${event.delivery_status || "-"}</div>
-          <div class="mt-2">${event.summary_text || ""}</div>
-          <ul class="mt-2 text-sm text-on-surface-variant">${fixes}</ul>
-          <a class="text-primary block mt-1" href="${event.log_url || "#"}" target="_blank" rel="noreferrer">View full log</a>
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
+            <span class="material-symbols-outlined text-[18px] text-tertiary">${typeIcon(event.failure_type)}</span>
+            <span class="font-semibold text-on-surface text-sm">${escapeHtml(event.job_name)} <span class="text-outline font-normal">#${event.build_number}</span></span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-label-md ${severityColor(event.severity)}">${event.severity || '—'}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-label-md bg-surface-container text-on-surface-variant border border-outline-variant">${escapeHtml(event.failure_type || 'unknown')}</span>
+            <span class="ml-auto text-[10px] text-outline font-code-sm">${event.processed_at ? new Date(event.processed_at).toLocaleString() : '—'}</span>
+          </div>
+          <p class="text-sm text-on-surface mb-2 leading-relaxed">${escapeHtml(event.summary_text || '')}</p>
+          ${fixes ? `<ul class="flex flex-col gap-1 mb-2 text-sm text-on-surface-variant">${fixes}</ul>` : ''}
+          ${event.log_url && event.log_url !== '#' ? `<a class="text-primary text-xs flex items-center gap-1 hover:underline" href="${event.log_url}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined text-[14px]">open_in_new</span>View full log</a>` : ''}
         `;
         container.appendChild(block);
       });
     } catch (error) {
-      container.innerHTML = `<div class="text-error">Error loading analysis: ${error.message}</div>`;
+      container.innerHTML = `<div class="text-error text-sm py-2">Error loading analysis: ${escapeHtml(error.message)}</div>`;
     }
   };
 
@@ -1313,6 +1415,8 @@
         localStorage.setItem('schedulerPollMs', slider.value);
         if (_schedulerKanbanInterval) {
           clearInterval(_schedulerKanbanInterval);
+          const oldIdx = _allPollingIntervals.indexOf(_schedulerKanbanInterval);
+          if (oldIdx !== -1) _allPollingIntervals.splice(oldIdx, 1);
           _schedulerKanbanInterval = setInterval(() => {
             if (document.querySelector('[data-ui="kanban-queued-list"]')) populateSchedulerKanban();
             else clearInterval(_schedulerKanbanInterval);
@@ -1748,6 +1852,189 @@
     }
   };
 
+  // ─── Analytics page ───
+  const populateAnalytics = async () => {
+    try {
+      const res = await fetch('/ui/analytics');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const s = data.summary || {};
+
+      const setEl = (sel, v) => { const el = document.querySelector(sel); if (el) el.textContent = String(v); };
+      setEl('[data-ui="analytics-total-failures"]', s.total_failures_30d ?? '—');
+      setEl('[data-ui="analytics-common-type"]', s.most_common_type ?? '—');
+      setEl('[data-ui="analytics-worst-job"]', (s.worst_job || '—').split('/').pop());
+
+      if (typeof Chart === 'undefined') return; // Chart.js not loaded yet
+
+      const destroyChart = (id) => { const c = Chart.getChart(id); if (c) c.destroy(); };
+
+      const _showEmptyChart = (canvasId, msg) => {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        destroyChart(canvasId);
+        const parent = canvas.parentElement;
+        canvas.style.display = 'none';
+        let placeholder = parent.querySelector('.chart-empty-state');
+        if (!placeholder) {
+          placeholder = document.createElement('div');
+          placeholder.className = 'chart-empty-state flex items-center justify-center h-full text-on-surface-variant text-sm';
+          parent.appendChild(placeholder);
+        }
+        placeholder.textContent = msg;
+      };
+      const _showChart = (canvasId) => {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        canvas.style.display = '';
+        const parent = canvas.parentElement;
+        const placeholder = parent.querySelector('.chart-empty-state');
+        if (placeholder) placeholder.remove();
+      };
+
+      // Line chart — failures per day
+      const lineCtx = document.getElementById('chart-failures-by-day');
+      if (lineCtx) {
+        if ((data.failures_by_day || []).length) {
+          _showChart('chart-failures-by-day');
+          destroyChart('chart-failures-by-day');
+          new Chart(lineCtx, {
+            type: 'line',
+            data: {
+              labels: data.failures_by_day.map(d => d.date.slice(5)),
+              datasets: [{
+                label: 'Failures',
+                data: data.failures_by_day.map(d => d.count),
+                borderColor: '#ba1a1a',
+                backgroundColor: 'rgba(186,26,26,0.08)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+              }],
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+          });
+        } else {
+          _showEmptyChart('chart-failures-by-day', 'No failures recorded in the last 30 days');
+        }
+      }
+
+      // Doughnut chart — failure type distribution
+      const donutCtx = document.getElementById('chart-failure-types');
+      if (donutCtx) {
+        if ((data.failure_type_dist || []).length) {
+          _showChart('chart-failure-types');
+          destroyChart('chart-failure-types');
+          const palette = ['#ba1a1a', '#924700', '#505f76', '#0058be', '#006a60', '#6b538c'];
+          new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+              labels: data.failure_type_dist.map(d => d.type.replace(/_/g, ' ')),
+              datasets: [{ data: data.failure_type_dist.map(d => d.count), backgroundColor: palette }],
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } },
+          });
+        } else {
+          _showEmptyChart('chart-failure-types', 'No failure type data yet');
+        }
+      }
+
+      // Bar chart — top failing jobs
+      const barCtx = document.getElementById('chart-top-jobs');
+      if (barCtx) {
+        if ((data.top_failing_jobs || []).length) {
+          _showChart('chart-top-jobs');
+          destroyChart('chart-top-jobs');
+          new Chart(barCtx, {
+            type: 'bar',
+            data: {
+              labels: data.top_failing_jobs.map(d => (d.job || '').split('/').pop() || d.job),
+              datasets: [{
+                label: 'Failures',
+                data: data.top_failing_jobs.map(d => d.failures),
+                backgroundColor: 'rgba(186,26,26,0.7)',
+                borderRadius: 4,
+              }],
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+          });
+        } else {
+          _showEmptyChart('chart-top-jobs', 'No job failure data yet');
+        }
+      }
+    } catch (e) {
+      console.error('populateAnalytics failed', e);
+    }
+  };
+
+  // ─── SSE live push client ───
+  // Opens a persistent EventSource to /ui/stream. On each 'tick' event (emitted
+  // by the scheduler after every 5 s cycle) metric elements are updated directly
+  // from the payload, and page-specific refresh functions are called.
+  const initSSE = () => {
+    let es;
+    const connect = () => {
+      es = new EventSource('/ui/stream');
+
+      es.addEventListener('connected', () => {
+        console.log('[SSE] Live stream connected');
+      });
+
+      es.addEventListener('tick', (e) => {
+        try {
+          const d = JSON.parse(e.data);
+
+          // Update metric display elements directly from SSE payload
+          const uptimeEl = document.querySelector('[data-ui="backend-uptime"]');
+          if (uptimeEl && d.uptime_seconds !== undefined) {
+            const u = d.uptime_seconds;
+            const h = Math.floor(u / 3600);
+            const m = Math.floor((u % 3600) / 60);
+            const s = u % 60;
+            uptimeEl.textContent = h > 0
+              ? `${h}h ${String(m).padStart(2, '0')}m`
+              : `${m}m ${String(s).padStart(2, '0')}s`;
+          }
+          const cpuEl = document.querySelector('[data-ui="backend-cpu"]');
+          if (cpuEl && d.cpu_percent !== undefined) cpuEl.textContent = `${d.cpu_percent}%`;
+          const memEl = document.querySelector('[data-ui="backend-memory"]');
+          if (memEl && d.memory_used_bytes) {
+            const mb = Math.round(d.memory_used_bytes / 1048576);
+            const gb = (d.memory_total_bytes / 1073741824).toFixed(1);
+            memEl.innerHTML = `${mb} MB <span class="text-outline font-body-md text-body-md">/ ${gb} GB</span>`;
+            const bar = document.getElementById('backend-memory-bar');
+            if (bar) {
+              const pct = Math.round((d.memory_used_bytes / d.memory_total_bytes) * 100);
+              bar.style.setProperty('--bar-w', `${pct}%`);
+            }
+          }
+
+          // Trigger page-specific data refreshes on scheduler tick
+          if (!_metricsPaused) {
+            if (currentPath().startsWith('/queue') && document.querySelector('[data-ui="queue-table-body"]')) {
+              populateQueueTable();
+              populateQueueMetrics();
+            }
+            if (currentPath().startsWith('/workers') && document.querySelector('[data-ui="workers-list"]')) {
+              populateWorkers();
+            }
+            if (currentPath().startsWith('/scheduler') && document.querySelector('[data-ui="kanban-queued-list"]')) {
+              populateSchedulerKanban();
+            }
+          }
+        } catch (_) { /* malformed payload — ignore */ }
+      });
+
+      es.onerror = () => {
+        // EventSource auto-reconnects; log only on first error per session
+        console.warn('[SSE] Connection lost — polling continues as fallback, SSE will reconnect');
+      };
+    };
+
+    connect();
+    return () => { if (es) es.close(); };
+  };
+
   const init = () => {
     rewriteNavigation();
     attachRefreshButtons();
@@ -1835,6 +2122,15 @@
         }, 5000);
         _allPollingIntervals.push(hInterval);
       }
+      // Load LLM analysis panel and refresh every 30 s
+      if (document.getElementById('llm-analysis')) {
+        window.refreshBuildEvents();
+        const llmInterval = setInterval(() => {
+          if (document.getElementById('llm-analysis')) window.refreshBuildEvents();
+          else clearInterval(llmInterval);
+        }, 30000);
+        _allPollingIntervals.push(llmInterval);
+      }
     }
 
     if (currentPath().startsWith('/backend')) {
@@ -1861,6 +2157,15 @@
       populateSettings();
     }
 
+    if (currentPath().startsWith('/analytics')) {
+      populateAnalytics();
+      const analyticsInterval = setInterval(() => {
+        if (document.querySelector('[data-ui="analytics-total-failures"]')) populateAnalytics();
+        else clearInterval(analyticsInterval);
+      }, 60000);
+      _allPollingIntervals.push(analyticsInterval);
+    }
+
     // Populate global bootstrap/dashboard data on every page, every 10 s.
     // Previously this was guarded by [data-ui="last-updated"] which only exists
     // on index.html — causing the interval to stop immediately on all other pages
@@ -1881,7 +2186,7 @@
       _allPollingIntervals.push(repoInterval);
     }
 
-    // Start polling live metrics every 5 seconds
+    // Start polling live metrics every 5 seconds (SSE also updates metrics in real-time)
     try {
       const origPollLiveMetrics = pollLiveMetrics;
       const guardedPoll = () => { if (!_metricsPaused) origPollLiveMetrics(); };
@@ -1890,6 +2195,13 @@
       _allPollingIntervals.push(metricsInterval);
     } catch (e) {
       console.warn('Live metrics polling not available', e);
+    }
+
+    // Start SSE live stream — real-time push from scheduler ticks
+    try {
+      initSSE();
+    } catch (e) {
+      console.warn('SSE unavailable — polling continues as sole update mechanism', e);
     }
   };
 

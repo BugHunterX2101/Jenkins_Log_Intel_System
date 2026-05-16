@@ -28,19 +28,22 @@ _SEVERITY_MAP = {
     "unknown":           "P3",
 }
 
-_SYSTEM_PROMPT = """You are a CI/CD expert analyzing a real Jenkins build failure log.
+_SYSTEM_PROMPT = """You are a senior CI/CD engineer performing root-cause analysis on a real Jenkins build failure.
 
-Read the BUILD LOG EXCERPT carefully and produce VALID JSON with exactly these two keys:
+You will receive the FULL BUILD LOG (or as much as fits in context). Read every error, exception, and stack trace carefully.
+
+Produce VALID JSON with exactly these two keys:
   "summary"         - one sentence describing the SPECIFIC root cause found in the log.
-                      You MUST mention the exact error message, command, file, or package
-                      that caused the failure — not a generic category description.
-  "fix_suggestions" - a JSON array of up to 3 strings. Each suggestion MUST reference
-                      specific details visible in the log: exact error text, package names,
-                      file paths, line numbers, or failing commands. Do NOT give generic
-                      category advice that ignores the actual log content.
+                      You MUST cite the exact error message, failing command, package name,
+                      file path, or line number that caused the failure.
+                      Do NOT give a generic category label — reference what the log actually says.
+  "fix_suggestions" - a JSON array of exactly 3 strings. Every suggestion MUST be grounded in
+                      specific evidence from the log: quote the exact error text, name the exact
+                      package or file, or reference the exact failing command.
+                      Do NOT give generic advice that ignores the log content.
 
 ALL string values MUST be enclosed in double quotes. No trailing commas.
-Respond with raw JSON only — no markdown fences, no extra text."""
+Respond with raw JSON only — no markdown fences, no preamble, no extra text."""
 
 
 async def analyse(
@@ -62,11 +65,11 @@ async def analyse(
             if m.resolution_text
         )
 
-    # Put the raw log excerpt FIRST so the LLM anchors to it, not the category label
+    # Put the full log first so the LLM anchors to real evidence, not the category label
     user_message = (
-        f"BUILD LOG EXCERPT (analyze this):\n"
+        f"FULL BUILD LOG:\n"
         f"{'─' * 60}\n"
-        f"{error_excerpt[:2500]}\n"
+        f"{error_excerpt}\n"
         f"{'─' * 60}\n\n"
         f"Job: {job_name} | Build: #{build_number} | "
         f"Classifier hint: {primary_tag.category} (matched: {primary_tag.matched_rule})"
@@ -103,7 +106,7 @@ async def _call_groq(user_message: str, tag: FailureTag) -> dict | None:
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user",   "content": user_message},
             ],
-            "max_tokens": 512,
+            "max_tokens": 800,
             "temperature": 0.2,
             "response_format": {"type": "json_object"},
         }

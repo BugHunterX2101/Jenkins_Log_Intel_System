@@ -4,6 +4,7 @@ Jenkins REST API client.
 
 import asyncio
 import logging
+from urllib.parse import quote
 
 import httpx
 
@@ -15,8 +16,17 @@ _MAX_LOG_BYTES = 10 * 1024 * 1024   # 10 MB
 _RETRY_DELAYS  = (2, 4, 8)
 
 
+def _jenkins_job_path(job: str) -> str:
+    """Convert a Jenkins job name (possibly multibranch with '/') to a valid URL path.
+
+    'org/repo/branch' → 'job/org/job/repo/job/branch'
+    """
+    segments = [s for s in job.split("/") if s]
+    return "/".join(f"job/{quote(seg, safe='')}" for seg in segments)
+
+
 async def fetch_console_log(job: str, build_number: int) -> str:
-    url  = f"{settings.JENKINS_URL}/job/{job}/{build_number}/consoleText"
+    url  = f"{settings.JENKINS_URL}/{_jenkins_job_path(job)}/{build_number}/consoleText"
     auth = (settings.JENKINS_USER, settings.JENKINS_TOKEN)
 
     last_exc: Exception | None = None

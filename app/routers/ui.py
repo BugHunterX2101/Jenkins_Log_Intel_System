@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 
 import psutil
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy import case, delete, func, select, update
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -300,6 +302,9 @@ async def get_queue_data(session: AsyncSession = Depends(get_session)) -> dict:
                     "started_at": run.started_at.isoformat() if run.started_at else None,
                     "completed_at": run.completed_at.isoformat() if run.completed_at else None,
                     "duration_s": run.duration_s,
+                    "retry_count": getattr(run, "retry_count", 0),
+                    "max_retries": getattr(run, "max_retries", 2),
+                    "retry_after": run.retry_after.isoformat() if getattr(run, "retry_after", None) else None,
                 })
 
         return {
@@ -406,18 +411,22 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
         }
 
     def _run_card(run: PipelineRun, estimated_wait: str | None = None) -> dict:
+        repo_short = _repo_short_name(run.repo_url)
+        branch = run.branch or "main"
         card = {
             "id": run.id,
-            "repo": _repo_short_name(run.repo_url),
-            "branch": run.branch,
+            "repo": repo_short,
+            "branch": branch,
             "author": run.author,
             "job_name": run.jenkins_job_name,
             "estimated_wait": estimated_wait or "—",
             "queued_at": run.queued_at.isoformat() if run.queued_at else None,
         }
         card.update(_run_priority_payload(run))
-        card["summary"] = f"{card.get('job_name') or 'job'} / {card.get('branch') or 'main'}"
-        card["description"] = f"{card.get('repo', '')} triggered by {card.get('author') or 'system'}"
+        # Use repo short-name for summary so multibranch job names like
+        # "org/repo/branch" don't produce "org/repo/branch / branch" duplication.
+        card["summary"] = f"{repo_short or run.jenkins_job_name or 'job'} / {branch}"
+        card["description"] = f"{repo_short or ''} triggered by {run.author or 'system'}"
         return card
 
     queued_jobs = [_run_card(run) for run in queued_runs]
@@ -436,35 +445,38 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     in_progress_jobs = []
     for run in inprog_assigned_runs[:10]:
         elapsed = int((_now - run.started_at).total_seconds()) if run.started_at else 0
+        _repo = _repo_short_name(run.repo_url)
+        _br   = run.branch or "main"
         in_progress_jobs.append({
             "id": run.id,
-            "repo": _repo_short_name(run.repo_url),
-            "branch": run.branch,
+            "repo": _repo,
+            "branch": _br,
             "job_name": run.jenkins_job_name,
             "started": run.started_at.isoformat() if run.started_at else None,
             "duration_s": elapsed,
-            "summary": f"{run.jenkins_job_name or 'job'} / {run.branch or 'main'}",
+            "summary": f"{_repo or run.jenkins_job_name or 'job'} / {_br}",
             **_run_priority_payload(run),
         })
 
     # running = Jenkins actively executing stages (RUNNING assignment status)
     running_jobs = []
     for run in inprog_running_runs[:10]:
-        # duration_s is None while the job is still running; compute elapsed from started_at
         if run.duration_s is not None:
             elapsed = run.duration_s
         elif run.started_at:
             elapsed = int((_now - run.started_at).total_seconds())
         else:
             elapsed = 0
+        _repo = _repo_short_name(run.repo_url)
+        _br   = run.branch or "main"
         running_jobs.append({
             "id": run.id,
-            "repo": _repo_short_name(run.repo_url),
-            "branch": run.branch,
+            "repo": _repo,
+            "branch": _br,
             "job_name": run.jenkins_job_name,
             "started": run.started_at.isoformat() if run.started_at else None,
             "duration_s": elapsed,
-            "summary": f"{run.jenkins_job_name or 'job'} / {run.branch or 'main'}",
+            "summary": f"{_repo or run.jenkins_job_name or 'job'} / {_br}",
             **_run_priority_payload(run),
         })
 
@@ -480,19 +492,20 @@ async def get_scheduler_data(session: AsyncSession = Depends(get_session)) -> di
     except Exception as exc:
         logger.warning("get_scheduler_data: DB error fetching completed jobs — %s", exc)
         completed_runs_list = []
-    completed_jobs = [
-        {
+    completed_jobs = []
+    for run in completed_runs_list:
+        _repo = _repo_short_name(run.repo_url)
+        _br   = run.branch or "main"
+        completed_jobs.append({
             "id": run.id,
-            "repo": _repo_short_name(run.repo_url),
-            "branch": run.branch,
+            "repo": _repo,
+            "branch": _br,
             "job_name": run.jenkins_job_name,
             "completed": run.completed_at.isoformat() if run.completed_at else None,
             "duration_s": run.duration_s or 0,
-            "summary": f"{run.jenkins_job_name or 'job'} / {run.branch or 'main'}",
+            "summary": f"{_repo or run.jenkins_job_name or 'job'} / {_br}",
             **_run_priority_payload(run),
-        }
-        for run in completed_runs_list
-    ]
+        })
 
     return {
         "queued": queued_jobs,
@@ -534,8 +547,8 @@ async def cancel_run(run_id: int, session: AsyncSession = Depends(get_session)) 
     except HTTPException:
         raise
     except Exception as exc:
-        logger.warning("cancel_run: DB error for run %s — returning 404: %s", run_id, exc)
-        raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+        logger.warning("cancel_run: error for run %s — %s", run_id, exc)
+        raise HTTPException(status_code=500, detail=f"Cancel failed: {exc}")
 
 
 @router.post("/queue/flush", summary="Remove queued pipeline runs")
@@ -749,7 +762,9 @@ async def _detect_ngrok_public_url() -> str | None:
                 for t in resp.json().get("tunnels", []):
                     addr = t.get("config", {}).get("addr", "")
                     if t.get("proto") == "https" and ("8000" in addr or "localhost" in addr):
-                        return t["public_url"].rstrip("/")
+                        pub = t.get("public_url")
+                        if pub:
+                            return pub.rstrip("/")
     except Exception:
         pass
     return None
@@ -929,4 +944,129 @@ async def get_priority_queue(session: AsyncSession = Depends(get_session)) -> di
 
     return {"mode": mode, "jobs": jobs, "total": len(jobs)}
 
+
+@router.get("/stream", summary="Server-Sent Events stream for live dashboard push")
+async def sse_stream(request: Request):
+    """Long-lived SSE connection. Scheduler pushes a 'tick' event after every 5 s cycle."""
+    from app.scheduler import register_sse_client, unregister_sse_client
+
+    queue: asyncio.Queue = asyncio.Queue(maxsize=20)
+    await register_sse_client(queue)
+
+    async def event_generator():
+        try:
+            yield 'event: connected\ndata: {"status":"ok"}\n\n'
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    msg = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    yield msg
+                except asyncio.TimeoutError:
+                    yield "event: ping\ndata: {}\n\n"
+        finally:
+            await unregister_sse_client(queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@router.get("/analytics", summary="Failure analytics aggregations for trend charts")
+async def get_analytics(session: AsyncSession = Depends(get_session)) -> dict:
+    """Returns 30-day failure trends, type distribution, top failing jobs, and duration stats."""
+    from datetime import datetime, timezone, timedelta
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+
+    try:
+        day_result = await session.execute(
+            select(
+                func.date_trunc("day", BuildEvent.processed_at).label("day"),
+                func.count(BuildEvent.id).label("count"),
+            )
+            .where(BuildEvent.processed_at >= cutoff, real_build_event_clause())
+            .group_by(func.date_trunc("day", BuildEvent.processed_at))
+            .order_by(func.date_trunc("day", BuildEvent.processed_at))
+        )
+        failures_by_day = [
+            {
+                "date": row.day.strftime("%Y-%m-%d") if hasattr(row.day, "strftime") else str(row.day)[:10],
+                "count": int(row.count),
+            }
+            for row in day_result.all()
+        ]
+
+        type_result = await session.execute(
+            select(BuildEvent.failure_type, func.count(BuildEvent.id).label("count"))
+            .where(real_build_event_clause())
+            .group_by(BuildEvent.failure_type)
+            .order_by(func.count(BuildEvent.id).desc())
+        )
+        failure_type_dist = [
+            {"type": row.failure_type or "unknown", "count": int(row.count)}
+            for row in type_result.all()
+        ]
+
+        job_result = await session.execute(
+            select(BuildEvent.job_name, func.count(BuildEvent.id).label("failures"))
+            .where(real_build_event_clause())
+            .group_by(BuildEvent.job_name)
+            .order_by(func.count(BuildEvent.id).desc())
+            .limit(5)
+        )
+        top_failing_jobs = [
+            {"job": row.job_name or "unknown", "failures": int(row.failures)}
+            for row in job_result.all()
+        ]
+
+        dur_result = await session.execute(
+            select(
+                PipelineRun.status,
+                func.avg(PipelineRun.duration_s).label("avg_s"),
+                func.count(PipelineRun.id).label("count"),
+            )
+            .where(PipelineRun.duration_s.isnot(None), real_pipeline_run_clause())
+            .group_by(PipelineRun.status)
+        )
+        avg_build_duration = [
+            {
+                "status": row.status.value if hasattr(row.status, "value") else str(row.status),
+                "avg_s": round(float(row.avg_s), 1) if row.avg_s else 0,
+                "count": int(row.count),
+            }
+            for row in dur_result.all()
+        ]
+
+        total_failures_30d = sum(d["count"] for d in failures_by_day)
+        most_common_type = failure_type_dist[0]["type"] if failure_type_dist else "—"
+        worst_job = top_failing_jobs[0]["job"] if top_failing_jobs else "—"
+
+    except Exception as exc:
+        logger.warning("get_analytics: DB error — %s", exc)
+        failures_by_day = []
+        failure_type_dist = []
+        top_failing_jobs = []
+        avg_build_duration = []
+        total_failures_30d = 0
+        most_common_type = "—"
+        worst_job = "—"
+
+    return {
+        "failures_by_day": failures_by_day,
+        "failure_type_dist": failure_type_dist,
+        "top_failing_jobs": top_failing_jobs,
+        "avg_build_duration": avg_build_duration,
+        "summary": {
+            "total_failures_30d": total_failures_30d,
+            "most_common_type": most_common_type,
+            "worst_job": worst_job,
+        },
+    }
 
